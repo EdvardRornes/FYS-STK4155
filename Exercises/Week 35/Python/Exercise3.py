@@ -28,7 +28,7 @@ MSE_train = mean_squared_error(y_train, y_tilde_train)
 MSE_test  = mean_squared_error(y_test, y_tilde_test)
 
 # c)
-poly_deg      = 15
+poly_deg      = 50
 MSE_train_arr = np.zeros(poly_deg-1)
 MSE_test_arr  = np.zeros(poly_deg-1)
 degrees       = np.linspace(2, poly_deg, poly_deg-1, dtype=int)
@@ -52,5 +52,5 @@ plt.plot(degrees, MSE_test_arr, label="MSE_test")
 plt.xlabel('Polynomial Degree')
 plt.ylabel('MSE')
 plt.legend()
+plt.savefig('mse.pdf')
 plt.show()
-plt.savefig("mse.pdf")
