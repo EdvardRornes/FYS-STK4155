@@ -31,11 +31,11 @@ print(f"Own model:   beta = ({b0}, {b1}, {b2})")
 
 poly = PolynomialFeatures(degree=2)
 X = poly.fit_transform(x)
-clf = LinearRegression()
-clf.fit(X,y)
+model = LinearRegression()
+model.fit(X,y)
 
-y_predicted = clf.predict(X)
-print(f"Scikitlearn: beta = ({clf.intercept_}, {clf.coef_[0,1]}, {clf.coef_[0,2]})")
+y_predicted = model.predict(X)
+print(f"Scikitlearn: beta = ({model.intercept_}, {model.coef_[0,1]}, {model.coef_[0,2]})")
 
 ## MSE & R2
 print(f"MSE: {mean_squared_error(y, y_predicted)}")
