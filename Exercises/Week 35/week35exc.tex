@@ -36,43 +36,43 @@ margin=1.5in,
 \author{Edvard B. Rørnes, Isak O. Rukan, Anton A. Brekke}
 \begin{document}
 	\maketitle
-\section*{Exercise 1}
-Show that
-\begin{itemize}
-	\item $\pdv{(\mathbf{a}^T\textbf{x})}{\textbf{x}}=\textbf{a}^T$
+	\section*{Exercise 1}
+	Show that
+	\begin{itemize}
+		\item $\pdv{(\mathbf{a}^T\textbf{x})}{\textbf{x}}=\textbf{a}^T$
+		
+		Using the summation notation where repeated indices are summed over, lower (upper) indices correspond to row (column) vectors and $\delta_{ij}$ as the Euclidean metric we have
+		\begin{align*}
+			\pdv{(a_ix^i)}{x^j}=a_i\pdv{x^i}{x^j}+x^i\pdv{a_i}{x^j}=a_i\delta^i_j+0=a_j,
+		\end{align*}
+		which corresponds to $\textbf{a}^T$ in matrix notation. 
+		
+		\item $\pdv{(\mathbf{a}^T\textbf{A}\textbf{a})}{\textbf{a}}=\textbf{a}^T(\textbf{A}+\textbf{A}^T)$
+		\begin{align*}
+			\pdv{(a_i\tensor{A}{^i_j}a^j)}{a^k}&=a_i\tensor{A}{^i_j}\pdv{a^j}{a^k}+\pdv{a_i}{a^k}\tensor{A}{^i_j}a^j=a_i\tensor{A}{^i_j}\delta^j_k+\delta_{ik}\tensor{A}{^i_j}a^j\\
+			&=a_i\tensor{A}{^i_k}+\tensor{A}{_k_j}a^j=a_i\tensor{A}{^i_k}+\tensor{A}{_k^i}a_i=a_i(\tensor{A}{^i_k}+\tensor{A}{_k^i})
+		\end{align*}
+		which corresponds to $\textbf{a}^T(\textbf{A}+\textbf{A}^T)$ in matrix notation.
+		
+		\item $\pdv{(\textbf{x}-\textbf{As})^T(\textbf{x}-\textbf{As})}{\textbf{s}}=-2(\textbf{x}-\textbf{As})^T\textbf{A}$
+		\begin{align*}
+			\pdv{(x_i-s_j\tensor{A}{_i^j})(x^i-\tensor{A}{^i_k}s^k)}{s^l}&=-\pdv{s_j}{s^l}\tensor{A}{_i^j}(x^i-\tensor{A}{^i_k}s^k)-(x_i-s_j\tensor{A}{_i^j})\tensor{A}{^i_k}\pdv{s^k}{s^l}\\
+			&=-\delta_{jl}\tensor{A}{_i^j}(x^i-\tensor{A}{^i_k}s^k)-(x_i-s_j\tensor{A}{_i^j})\tensor{A}{^i_k}\delta^k_l\\
+			&=-\tensor{A}{_i_l}(x^i-\tensor{A}{^i_j}s^j)-(x_i-s_j\tensor{A}{_i^j})\tensor{A}{^i_l}\\
+			&=-\tensor{A}{^i_l}(x_i-\tensor{A}{_i^j}s_j)-(x_i-s_j\tensor{A}{_i^j})\tensor{A}{^i_l}\\
+			&=-2(x_i-\tensor{A}{_i^j}s_j)\tensor{A}{^i_l}
+		\end{align*}
+		which is $-2(\textbf{x}-\textbf{As})^T\textbf{A}$. The next derivative is
+		\begin{align*}
+			\frac{\p^2(x_i-s_j\tensor{A}{_i^j})(x^i-\tensor{A}{^i_k}s^k)}{\p s^l\p s^o}& = 2\tensor{A}{_i^j}\tensor{A}{^i_l}\delta_{oj}=2\tensor{A}{_i_o}\tensor{A}{^i_l}
+		\end{align*}
+		which is $2\textbf{A}^T\textbf{A}$  (if we differentiated w.r.t. $\textbf{s}^T$ which I do not see why we don't? If this is the case just multiply by $\delta^{oj}$).
+	\end{itemize}
 	
-	Using the summation notation where repeated indices are summed over, lower (upper) indices correspond to row (column) vectors and $\delta_{ij}$ as the Euclidean metric we have
-	\begin{align*}
-		\pdv{(a_ix^i)}{x^j}=a_i\pdv{x^i}{x^j}+x^i\pdv{a_i}{x^j}=a_i\delta^i_j+0=a_j,
-	\end{align*}
-	which corresponds to $\textbf{a}^T$ in matrix notation. 
+	\section*{Exercise 2}
+	The relatively low value for MSE suggests that our model's predictions are close to the actual values, and thus indicating a good fit. The value of $R^2$ is almost $1$ suggesting that most of the variance in the data is accounted for. Increasing (decreasing) the coefficient in front of the noise term unsurprisingly suggests that we have a worse (better) fit to the data as there is more (less) randomness involved.
 	
-	\item $\pdv{(\mathbf{a}^T\textbf{A}\textbf{a})}{\textbf{a}}=\textbf{a}^T(\textbf{A}+\textbf{A}^T)$
-	\begin{align*}
-		\pdv{(a_i\tensor{A}{^i_j}a^j)}{a^k}&=a_i\tensor{A}{^i_j}\pdv{a^j}{a^k}+\pdv{a_i}{a^k}\tensor{A}{^i_j}a^j=a_i\tensor{A}{^i_j}\delta^j_k+\delta_{ik}\tensor{A}{^i_j}a^j\\
-		&=a_i\tensor{A}{^i_k}+\tensor{A}{_k_j}a^j=a_i\tensor{A}{^i_k}+\tensor{A}{_k^i}a_i=a_i(\tensor{A}{^i_k}+\tensor{A}{_k^i})
-	\end{align*}
-	which corresponds to $\textbf{a}^T(\textbf{A}+\textbf{A}^T)$ in matrix notation.
+	\section*{Exercise 3}
+	The optimal range for the polynomial degree seems to be around $10-12$ from running the code a few times. This is where the test data consistently has the lowest MSE suggesting that the model can be generalized to other cases. The lower end underfits the data resulting in a large MSE for both the test and training data. The MSE of the training data will of course be lower for higher polynomials, but will overfit the data as can be seen by the test data MSE diverging if one tries to run for, e.g. degree 30.
 	
-	\item $\pdv{(\textbf{x}-\textbf{As})^T(\textbf{x}-\textbf{As})}{\textbf{s}}=-2(\textbf{x}-\textbf{As})^T\textbf{A}$
-	\begin{align*}
-		\pdv{(x_i-s_j\tensor{A}{_i^j})(x^i-\tensor{A}{^i_k}s^k)}{s^l}&=-\pdv{s_j}{s^l}\tensor{A}{_i^j}(x^i-\tensor{A}{^i_k}s^k)-(x_i-s_j\tensor{A}{_i^j})\tensor{A}{^i_k}\pdv{s^k}{s^l}\\
-		&=-\delta_{jl}\tensor{A}{_i^j}(x^i-\tensor{A}{^i_k}s^k)-(x_i-s_j\tensor{A}{_i^j})\tensor{A}{^i_k}\delta^k_l\\
-		&=-\tensor{A}{_i_l}(x^i-\tensor{A}{^i_j}s^j)-(x_i-s_j\tensor{A}{_i^j})\tensor{A}{^i_l}\\
-		&=-\tensor{A}{^i_l}(x_i-\tensor{A}{_i^j}s_j)-(x_i-s_j\tensor{A}{_i^j})\tensor{A}{^i_l}\\
-		&=-2(x_i-\tensor{A}{_i^j}s_j)\tensor{A}{^i_l}
-	\end{align*}
-	which is $-2(\textbf{x}-\textbf{As})^T\textbf{A}$. The next derivative is
-	\begin{align*}
-		 \frac{\p^2(x_i-s_j\tensor{A}{_i^j})(x^i-\tensor{A}{^i_k}s^k)}{\p s^l\p s^o}& = 2\tensor{A}{_i^j}\tensor{A}{^i_l}\delta_{oj}=2\tensor{A}{_i_o}\tensor{A}{^i_l}
-	\end{align*}
-	which (if we differentiated w.r.t. $\textbf{s}^T$ which I do not see why we don't? If this is the case just multiply by $\delta^{oj}$) is $2\textbf{A}^T\textbf{A}$ .
-\end{itemize}
-
-\section*{Exercise 2}
-The relatively low value for MSE suggests that our model's predictions are close to the actual values, and thus indicating a good fit. The value of $R^2$ is almost $1$ suggesting that most of the variance in the data is accounted for. Increasing (decreasing) the coefficient in front of the noise term unsurprisingly suggests that we have a worse (better) fit to the data as there is more randomness involved.
-
-\section*{Exercise 3}
-The optimal range for the polynomial degree seems to be around $10-12$ from running the code a few times. This is where the test data consistently has the lowest MSE suggesting that the model can be generalized to other cases. The lower end underfits the data resulting in a large MSE for both the test and training data. The MSE of the training data will of course be lower for higher polynomials, but will overfit the data as can be seen by the test data MSE diverging if one tries to run for, e.g. degree 30.
-
 \end{document}
