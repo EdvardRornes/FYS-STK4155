@@ -1,0 +1,110 @@
+\documentclass{article}
+
+\usepackage{subfiles}
+\usepackage{graphicx}% Include figure files
+\usepackage{dcolumn}% Align table columns on decimal point
+\usepackage{bm}% bold math
+\usepackage{float}
+\usepackage{mathtools, mathrsfs}
+\usepackage{physics}
+\usepackage{tcolorbox}
+\usepackage{enumerate}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{tikz}
+\usepackage{tensor}
+\usetikzlibrary{positioning}
+\usepackage[compat=1.1.0]{tikz-feynman}
+%\usepackage{hyperref}% add hypertext capabilities
+%\usepackage[mathlines]{lineno}% Enable numbering of text and display math
+%\linenumbers\relax % Commence numbering lines
+
+\usepackage[%Uncomment any one of the following lines to test 
+%%scale=0.7, marginratio={1:1, 2:3}, ignoreall,% default settings
+%%text={7in,10in},centering,
+margin=1.5in,
+%%total={6.5in,8.75in}, top=1.2in, left=0.9in, includefoot,
+%%height=10in,a5paper,hmargin={3cm,0.8in},
+]{geometry}
+
+\newcommand{\Hp}{\mathcal{H}}
+\renewcommand{\L}{\mathcal{L}}
+\renewcommand{\O}{\mathcal{O}}
+\newcommand{\f}[2]{\frac{#1}{#2}}
+\newcommand{\MS}{\overline{\text{MS}}}
+\newcommand{\p}{\partial}
+\title{FYS-STK4155 Week 36}
+\author{Edvard B. Rørnes, Isak O. Rukan, Anton A. Brekke}
+\begin{document}
+	\maketitle
+	\section*{Exercise 1}
+	Show that the expectation value and variance of $\bm y$ is
+	\begin{align*}
+		\mathbb{E}(y_i)=\sum_{j}x_{ij}\beta_j=\bm X_{i,*}\bm\beta,\quad 
+		\text{Var}(y_i)=\sigma^2
+	\end{align*}
+	where $\bm y$ is defined by $\bm y=f(\bm x)+\bm \varepsilon$. Here $\bm \varepsilon\sim N(0,\sigma^2)$ is a normal distributed error and $f(\bm x)$ is the approximated function given our model $\tilde{\bm y}$ obtained by minimizing $(\bm y-\tilde{\bm y})^2$ with $\tilde{\bm y}=\bm X\bm \beta$. With the OLS expression for $\hat{\bm \beta}$ also show that 
+	\begin{align*}
+		\mathbb{E}(\hat{\bm \beta})=\bm\beta
+	\end{align*}
+	and
+	\begin{align*}
+		\text{Var}(\hat{\bm \beta})=\sigma^2(\bm X^T\bm X)^{-1}
+	\end{align*}
+	\textbf{Solution:} \\
+	Trivially $\mathbb{E}(\varepsilon_i)=0$ from its definition. Thus from the definition of $\bm y$ we have that
+	\begin{align*}
+		\mathbb{E}(y_i)=\mathbb{E}(f(x_i))=\bm X_{i,*}\beta
+	\end{align*}
+	Similarly the variance is given by
+	\begin{align*}
+		\text{Var}(y_i)&=\mathbb{E}\{[y_i-\mathbb{E}(y_i)]^2\}=\mathbb{E}\{(\bm X_{i,*}\beta+\varepsilon_i)^2\}-(\bm X_{i,*}\bm\beta)^2\\
+		&=(\bm X_{i,*}\bm\beta)^2+\mathbb{E}(\varepsilon_i^2)+2\mathbb{E}(\varepsilon_i)\bm X_{i,*}\bm\beta-(\bm X_{i,*}\bm\beta)^2\\
+		&=\text{Var}(\varepsilon_i^2)=\sigma^2
+	\end{align*}
+	The optimal parameters $\beta$ for OLS are given by
+	\begin{align*}
+		\hat{\bm \beta}_\text{OSL}=(\bm X^T\bm X)^{-1}\bm X^T\bm y
+	\end{align*}
+	which yields the expectation value
+	\begin{align*}
+		\mathbb{E}(\hat{\bm\beta}_\text{OLS})=\mathbb{E}[ (\bm X^T\bm X)^{-1}\bm X^T\bm y]=(\bm X^T\bm X)^{-1}\bm X^T \mathbb{E}[\bm y]=(\bm X^T\bm X)^{-1}\bm X^T\bm X\bm\beta=\bm\beta.
+	\end{align*}
+	and the variance
+	\begin{align*}
+			\text{Var}(\hat{\bm\beta}_\text{OLS})&=\mathbb E\{ [\bm\beta-\mathbb E(\bm\beta)] [\bm\beta-\mathbb E(\bm\beta)]^T\}\\
+			&=\mathbb E\{ [(\bm X^T\bm X)^{-1}\bm X^T\bm y-\bm\beta][(\bm X^T\bm X)^{-1}\bm X^T\bm y-\bm\beta]^T\}\\
+			&=(\bm X^T\bm X)^{-1}\bm X^T\mathbb E\{\bm y\bm y^T\}\bm X(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T\\
+			&=(\bm X^T\bm X)^{-1}\bm X^T[\bm X\bm\beta\bm\beta^T\bm X^T+\sigma^2]\bm X(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T\\
+			&=\bm\beta\bm\beta^T+\sigma^2(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T=\sigma^2(\bm X^T \bm X)^{-1}
+	\end{align*}
+	
+	
+	\section*{Exercise 2}
+	Show that
+	\begin{align*}
+		\mathbb{E}(\hat{\bm \beta}_\text{Ridge})&=(\bm X^T\bm X+\lambda\bm I)^{-1}(\bm X^T\bm X)\bm\beta\\
+		\text{Var}(\hat{\bm \beta}_\text{Ridge})&=\sigma^2(\bm X^T \bm X+\lambda\bm I)^{-1}\bm X^T\bm X\{(\bm X^T \bm X+\lambda\bm I)^{-1}\}^T
+	\end{align*}
+	\textbf{Solution:}\\
+	We have that
+	\begin{align*}
+		&\hat{\bm \beta}_\text{Ridge}=(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm{y}
+	\end{align*}
+	thus
+	\begin{align*}
+		\mathbb{E}(\hat{\bm \beta}_\text{Ridge})&=\mathbb{E}[(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm{y}]\\
+		&=(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\mathbb{E}[\bm{y}]\\
+		&=(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm X\bm\beta_\text{OLS}
+	\end{align*}
+	and
+	\begin{align*}
+		\text{Var}(\hat{\bm \beta}_\text{Ridge})&=\mathbb E\{ [\bm\beta_\text{Ridge}-\mathbb E(\bm\beta)] [\bm\beta_\text{Ridge}-\mathbb E(\bm\beta)]^T\}\\
+		&=\mathbb E\{ [(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm{y}-\bm\beta][(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm{y}-\bm\beta]^T\}\\
+		&=(\bm X^T\bm X+\lambda\bm{I})^{-1}\bm X^T\mathbb E\{\bm y\bm y^T\}\bm X\{(\bm X^T\bm X+\lambda\bm{I})^{-1}\}^T-\bm\beta\bm\beta^T\\
+		&=(\bm X^T\bm X+\lambda\bm{I})^{-1}\bm X^T[\bm X\bm\beta\bm\beta^T\bm X^T+\sigma^2]\bm X(\bm X^T\bm X+\lambda\bm{I})^{-1}-\bm\beta\bm\beta^T\\
+		&=\bm\beta\bm\beta^T+\sigma^2(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T=\sigma^2(\bm X^T \bm X)^{-1}
+	\end{align*}
+	
+	
+	
+\end{document}
