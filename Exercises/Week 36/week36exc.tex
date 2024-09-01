@@ -1,0 +1,100 @@
+\documentclass{article}
+
+\usepackage{subfiles}
+\usepackage{graphicx}% Include figure files
+\usepackage{dcolumn}% Align table columns on decimal point
+\usepackage{bm}% bold math
+\usepackage{float}
+\usepackage{mathtools, mathrsfs}
+\usepackage{physics}
+\usepackage{tcolorbox}
+\usepackage{enumerate}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{tikz}
+\usepackage{tensor}
+\usetikzlibrary{positioning}
+\usepackage[compat=1.1.0]{tikz-feynman}
+%\usepackage{hyperref}% add hypertext capabilities
+%\usepackage[mathlines]{lineno}% Enable numbering of text and display math
+%\linenumbers\relax % Commence numbering lines
+
+\usepackage[%Uncomment any one of the following lines to test 
+%%scale=0.7, marginratio={1:1, 2:3}, ignoreall,% default settings
+%%text={7in,10in},centering,
+margin=1.5in,
+%%total={6.5in,8.75in}, top=1.2in, left=0.9in, includefoot,
+%%height=10in,a5paper,hmargin={3cm,0.8in},
+]{geometry}
+
+\newcommand{\Hp}{\mathcal{H}}
+\renewcommand{\L}{\mathcal{L}}
+\renewcommand{\O}{\mathcal{O}}
+\newcommand{\f}[2]{\frac{#1}{#2}}
+\newcommand{\MS}{\overline{\text{MS}}}
+\newcommand{\p}{\partial}
+\title{FYS-STK4155 Week 36}
+\author{Edvard B. Rørnes, Isak O. Rukan, Anton A. Brekke}
+\begin{document}
+	\maketitle
+	\section*{Exercise 1}
+	\begin{enumerate}[a)]
+		\item Show that the optimal parameters for Ridge regression are given by
+		\begin{align}
+			\bm{\beta}=(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm{y}
+		\end{align}
+		\textbf{Solution:}
+		The cost function for ridge regression is given by
+		\begin{align}
+			C_\text{Ridge}&=\frac{1}{n}(\bm{y}-\bm{X}\bm{\beta})^2+\lambda\bm{\beta}^2
+			\label{eq:ridgecost}
+		\end{align}
+		Taking the derivative of the cost function w.r.t. $\bm{\beta}$ and setting it to zero whilst using $\pdv{\bm{a}^2}{\bm{a}}=2\bm{a}^T$ and the result from the previous exercise set:
+		\begin{align*}
+			\pdv{(\bm{x}-\bm{As})^T(\bm{x}-\bm{As})}{\bm{s}}=-2(\bm{x}-\bm{As})^T\bm{A}
+		\end{align*}
+		we have
+		\begin{align*}
+			0&=\pdv{C_\text{Ridge}}{\bm{\beta}}=-\f2n(\bm{y}-\bm{X}\bm{\beta})^T\bm{X}+2\lambda\bm{\beta}^T\\
+			&=\f2n(\bm{\beta}^T\bm{X}^T\bm{X}-\bm{y}^T\bm{X})+2\lambda\bm{\beta}^T\\
+			0&=\bm{\beta}^T(\bm{X}^T\bm{X}+\tilde{\lambda}\bm{I})-\bm{y}^T\bm{X}\\
+			\bm{\beta}^T&=\bm{y}^T\bm{X}(\bm{X}^T\bm{X}+\tilde{\lambda}\bm{I})^{-1}\\
+			\bm{\beta}&=(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm{y}
+		\end{align*}
+		where we defined $\tilde{\lambda}\equiv n\lambda$, renamed $\tilde{\lambda}\to\lambda$ and used that the matrix in the parenthesis is a symmetric matrix and thus its inverse must also be symmetric. The constraint requirement $\bm{\beta}^2\leq t$ for some $t<\infty$ is just a requirement so that we can choose our arbitrary parameter $\lambda\geq0$ to be sufficiently small s.t. the cost function (\ref{eq:ridgecost}) does not diverge.
+		
+		\item Show that for OSL the solution in terms of the eigenvectors of the orthogonal matrix $U$ is given by
+		\begin{align*}
+			\tilde{\bm{y}}_\text{OLS}=\bm{X}\bm{\beta}=\sum_{j=0}^{p-1}\bm{u}_j\bm{u}_j^T\bm{y}
+		\end{align*}
+		and that the corresponding equation for Ridge is given by
+		\begin{align*}
+			\tilde{\bm{y}}_\text{Ridge}=\bm{X}\bm{\beta}_\text{Ridge}=\bm{U\Sigma V}^T(\bm{V\Sigma}^2\bm{V}^T+\lambda\bm{I})^{-1}(\bm{U\Sigma T}^T)^T\bm{y}=\sum_{j=0}^{p-1}\bm{u}_j\bm{u}_j^T\frac{\sigma_j^2}{\sigma_j^2+\lambda}\bm{y}
+		\end{align*}
+		where $\bm{u}_i$ are the columns of $\bm{U}$ from the SVD of the matrix $\bm{X}$. Give an interpretation of the results.
+		
+		\textbf{Solution:}
+		
+		Using the orthogonality of $\bm U$ and $\bm V$, $(\bm{AB})^T=\bm B^T\bm A^T$ and $(\bm{AB})^{-1}=\bm B^{-1}\bm A^{-1}$ we have
+		\begin{align*}
+			\tilde{\bm{y}}_\text{OSL}&=\bm{X\beta}_\text{OSL}=\bm{X}(\bm{X}^T\bm{X})^{-1}\bm{X}^T\bm{y}\\
+			&=\bm{U\Sigma V}^T((\bm{U\Sigma V}^T)^T\bm{U\Sigma V}^T)^{-1}(\bm{U\Sigma V}^T)^T\bm{y}\\
+			&=\bm{U\Sigma V}^T(\bm{V}\bm{\Sigma}^T\bm{\Sigma}\bm{V}^T)^{-1}\bm{V}\bm{\Sigma}^T\bm{U}^T\bm{y}\\
+			&=\bm{U\Sigma V}^T(\bm{V}^T)^{-1}\bm{\Sigma}^{-1}(\bm{\Sigma}^T)^{-1}\bm{V}^{-1}\bm{V}\bm{\Sigma}^T\bm{U}^T\bm{y}\\
+			&=\bm{U}\bm{U}^T\bm{y}=\sum_{j=0}^{p-1}\bm{u}_j\bm{u}_j^T\bm{y}
+		\end{align*}
+		where the last equality holds due to $\bm U$ being orthogonal. The next case is similar but now we need to use that $\bm\Sigma$ is diagonal and that the inverse of a diagonal matrix contains the inverse element of on the diagonal.
+		\begin{align*}
+			\tilde{\bm{y}}_\text{Ridge}&=\bm{X\beta}_\text{Ridge}=\bm{X}(\bm{X}^T\bm{X}+\lambda\bm I)^{-1}\bm{X}^T\bm{y}\\
+			&=\bm{U\Sigma V}^T((\bm{U\Sigma V}^T)^T\bm{U\Sigma V}^T+\lambda\bm I)^{-1}(\bm{U\Sigma V}^T)^T\bm{y}\\
+			&=\bm{U\Sigma V}^T(\bm{V}\bm{\Sigma}^T\bm{\Sigma}\bm{V}^T+\lambda\bm I)^{-1}\bm{V}\bm{\Sigma}^T\bm{U}^T\bm{y}\\
+			&=\bm{U\Sigma V}^T(\bm{V}({\bm\Sigma}^T\bm{\Sigma}+\lambda\bm I)\bm{V}^T)^{-1}\bm{V}\bm{\Sigma}^T\bm{U}^T\bm{y}\\
+			&=\bm{U\Sigma }({\bm\Sigma}^T\bm{\Sigma}+\lambda\bm I)^{-1}\bm{\Sigma}^T\bm{U}^T\bm{y}\\
+			&=\sum_{j=0}^{p-1}\bm{u}_j\bm{u}_j^T\frac{\sigma_j^2}{\sigma_j^2+\lambda}\bm{y}
+		\end{align*}
+		where once again the last step is valid due to the orthogonality of $\bm U$ and $\sigma_j$ are the elements on the diagonal of $\bm\Sigma$. Since $\lambda\geq0$ then this added factor compared to OSL is $\leq1$. The larger $\lambda$ is the smaller this factor becomes and is the so-called a "shrinkage" factor. 
+	\end{enumerate}
+	
+	\section*{Exercise 2}
+	
+	
+\end{document}
