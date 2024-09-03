@@ -48,6 +48,7 @@ aps,
 \usepackage{mathtools}
 \usepackage{xcolor}
 \usepackage{physics}
+\usepackage{dsfont}
 \usepackage{tcolorbox}
 \usepackage{float}
 \usepackage{tensor}
@@ -88,8 +89,7 @@ aps,
 
 \begin{document}
 	
-\title{The Large Scale Structure of the Cosmic Microwave Background}
-
+\title{Project 1}
 \author{Edvard B. Rørnes}
 \email{e.b.rornes@fys.uio.no}
 \author{Anton A. Brekke}
@@ -97,20 +97,23 @@ aps,
 \author{Isak O. Rukan}
 \email{asdfafs}
 \affiliation{Institute of Physics, University of Oslo,\\0371 Oslo,  Norway}
-
 \date{\today}
+
 \begin{abstract}
-	asdfasdf
+	Abstracting very cool
 \end{abstract}
+
 \maketitle
 \tableofcontents
+
 \section{Introduction}
-intro thingy
+The methods used in this project are Ordinary Least Squares (OLS), Ridge regression and Least Absolute Shrinkage and Selection Operator (LASSO) regression. 
 
 \section{Theory}
 The general structure of all our models is that we have some data set $\{x_i,y_i\}$ where $i\in\{0,1...,n-1\}$ where $x_i$ are independent variables whilst $y_i$ are dependent variables. The data is assumed to be described by
 \begin{align}
 	\bm y=f(\bm x)+\bm \varepsilon
+	\label{eq:data}
 \end{align}
 where $f$ is some continuous function which takes $\bm x$ as input and $\bm\varepsilon$ is a normal distributed error $\bm\varepsilon\sim\mathcal{N}(0,\sigma^2)$. The function $f$ will then be approximated with a model $\tilde{\bm y}$ in which we will consider a polynomial expansion with coefficients $\beta_i$:
 \begin{align}
@@ -120,13 +123,85 @@ defining the $n\times p$ design matrix $(\bm X)_{ij}=(x_i)^j$ we can rewrite thi
 \begin{align}
 	\tilde{\bm y}=\bm X\bm\beta
 \end{align}
-
+Further, each model will be defined with a different cost function $C(\bm\beta)$ which we minimize to find the coefficients for each respective model.
 
 \subsection{OLS}
+OLS is a primitive method used in linear regression to estimate coefficients of a linear model. The cost function in OLS is simply defined as the residual sum of squares (RSS)
+\begin{align*}
+	C_\text{OLS}(\bm\beta)=\text{RSS}(\bm\beta)=(\bm y-\tilde{\bm y})^2=(y_i-X_{ij}\beta_j)^2
+\end{align*}
+where we employ the summation notation where repeated indices are summed over. As mentioned prior, the coefficients $\bm\beta$ are found by minimizing the cost function, i.e. taking the derivative w.r.t. $\bm\beta$. This results in
+\begin{align*}
+	\bm\beta_\text{OLS}=(\bm X^T\bm X)^{-1}\bm X^T\bm y
+\end{align*}
+which yields the model
+\begin{align}
+	\tilde{\bm y}_\text{OLS}=\bm X\bm \beta_\text{OLS}
+\end{align}
+Assuming our data takes the form of (\ref{eq:data}) then the expectation value $\bm y$ is
+\begin{align*}
+	\mathbb{E}(y_i)=\mathbb{E}(f(x_i))=\bm X_{i,*}\beta
+\end{align*}
+since $\mathbb{E}(\varepsilon_i)=0$ follows from its definition. The variance of $\bm y$ is given by
+\begin{align*}
+	\text{Var}(y_i)&=\mathbb{E}\{[y_i-\mathbb{E}(y_i)]^2\}=\mathbb{E}\{(\bm X_{i,*}\beta+\varepsilon_i)^2\}-(\bm X_{i,*}\bm\beta)^2\\
+	&=(\bm X_{i,*}\bm\beta)^2+\mathbb{E}(\varepsilon_i^2)+2\mathbb{E}(\varepsilon_i)\bm X_{i,*}\bm\beta-(\bm X_{i,*}\bm\beta)^2\\
+	&=\text{Var}(\varepsilon_i^2)=\sigma^2
+\end{align*}
+which shows that $y_i\sim\mathcal{N}(\bm X_{i,*}\bm\beta,\sigma^2)$. The expectation value of the optimal parameters $\hat{\bm\beta}$ can be found to be
+\begin{align*}
+	\mathbb{E}(\hat{\bm\beta}_\text{OLS})&=\mathbb{E}[ (\bm X^T\bm X)^{-1}\bm X^T\bm y]\\
+	&=(\bm X^T\bm X)^{-1}\bm X^T \mathbb{E}[\bm y]\\
+	&=(\bm X^T\bm X)^{-1}\bm X^T\bm X\bm\beta=\bm\beta.
+\end{align*}
+with the variance
+\begin{align*}
+	\text{Var}(\hat{\bm\beta}_\text{OLS})&=\mathbb E\{ [\bm\beta-\mathbb E(\bm\beta)] [\bm\beta-\mathbb E(\bm\beta)]^T\}\\
+	&=\mathbb E\{ [(\bm X^T\bm X)^{-1}\bm X^T\bm y-\bm\beta]\\
+	&\quad\times[(\bm X^T\bm X)^{-1}\bm X^T\bm y-\bm\beta]^T\}\\
+	&=(\bm X^T\bm X)^{-1}\bm X^T\mathbb E\{\bm y\bm y^T\}\bm X(\bm X^T\bm X)^{-1}\\
+	&\quad-\bm\beta\bm\beta^T\\
+	&=(\bm X^T\bm X)^{-1}\bm X^T[\bm X\bm\beta\bm\beta^T\bm X^T+\sigma^2]\bm X(\bm X^T\bm X)^{-1}\\
+	&\quad-\bm\beta\bm\beta^T\\
+	&=\bm\beta\bm\beta^T+\sigma^2(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T\\
+	&=\sigma^2(\bm X^T \bm X)^{-1}
+\end{align*}
 
 \subsection{Ridge}
+Ridge regression is an extension of OLS where define the cost function as a modified version of the OLS cost function with an added penalty term which is proportional to the coefficients $\beta_i^2$:
+\begin{align}
+	C_\text{Ridge}(\bm\beta)=C_\text{OLS}(\bm\beta)+\lambda\bm\beta^2
+	\label{eq:ridgecost}
+\end{align}
+Here $\lambda\geq0$ is a regularization parameter which controls the strength of this additional penalty. This regulator essentially drives the magnitude of these coefficients allowing for more tweaking in the parameter space. This parametrization of course includes the constraint that $\bm{\beta}^2\leq t$ for some $t<\infty$ such that we can choose our arbitrary parameter $\lambda\geq0$ to be sufficiently small s.t. the cost function (\ref{eq:ridgecost}) does not diverge. The optimal parameters for Ridge regressions can again be found by the same process as for OLS:
+\begin{align*}
+	0&=\pdv{C_\text{Ridge}}{\bm{\beta}}=-\f2n(\bm{y}-\bm{X}\bm{\beta})^T\bm{X}+2\lambda\bm{\beta}^T\\
+	&=\f2n(\bm{\beta}^T\bm{X}^T\bm{X}-\bm{y}^T\bm{X})+2\lambda\bm{\beta}^T\\
+	0&=\bm{\beta}^T(\bm{X}^T\bm{X}+\tilde{\lambda}\bm{I})-\bm{y}^T\bm{X}\\
+	\bm{\beta}^T&=\bm{y}^T\bm{X}(\bm{X}^T\bm{X}+\tilde{\lambda}\bm{I})^{-1}\\
+	\bm{\beta}&=(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm{y}
+\end{align*}
+where we defined $\tilde{\lambda}\equiv n\lambda$, renamed $\tilde{\lambda}\to\lambda$ and used that the matrix in the parenthesis is a symmetric matrix and thus its inverse must also be symmetric. Here we can see that the effect of adding this pentalty term is essentially taking $(\bm X^T\bm X)^{-1}\to(\bm X^T\bm X+\lambda\bm I)^{-1}$ when compared to the OLS case. In the past this was generally the starting point for Ridge regression in the cases where the matrix $\bm X^T\bm X$ was not invertible. \color{red}(If we want to keep this next part we need to mention SVD) \color{black}A direct way of seeing the effect of the regulator is by considering
+\begin{align*}
+	\tilde{\bm{y}}_\text{Ridge}&=\bm{X\beta}_\text{Ridge}=\bm{X}(\bm{X}^T\bm{X}+\lambda\bm I)^{-1}\bm{X}^T\bm{y}\\
+	&=\bm{U\Sigma V}^T((\bm{U\Sigma V}^T)^T\bm{U\Sigma V}^T+\lambda\bm I)^{-1}(\bm{U\Sigma V}^T)^T\bm{y}\\
+	&=\bm{U\Sigma V}^T(\bm{V}\bm{\Sigma}^T\bm{\Sigma}\bm{V}^T+\lambda\bm I)^{-1}\bm{V}\bm{\Sigma}^T\bm{U}^T\bm{y}\\
+	&=\bm{U\Sigma V}^T(\bm{V}({\bm\Sigma}^T\bm{\Sigma}+\lambda\bm I)\bm{V}^T)^{-1}\bm{V}\bm{\Sigma}^T\bm{U}^T\bm{y}\\
+	&=\bm{U\Sigma }({\bm\Sigma}^T\bm{\Sigma}+\lambda\bm I)^{-1}\bm{\Sigma}^T\bm{U}^T\bm{y}\\
+	&=\sum_{j=0}^{p-1}\bm{u}_j\bm{u}_j^T\frac{\sigma_j^2}{\sigma_j^2+\lambda}\bm{y}
+\end{align*}
+where the last step is valid due to the orthogonality of $\bm U$ and $\sigma_j$ are the elements on the diagonal of $\bm\Sigma$. Since $\lambda\geq0$ then this added factor compared to OSL is $\leq1$. The larger $\lambda$ is the smaller this factor becomes and is the so-called a "shrinkage" factor. 
 
 \subsection{LASSO}
+Similarly to Ridge, LASSO also includes a penalty factor. The cost function in this case is instead defined to be
+\begin{align}
+	C_\text{Ridge}(\bm\beta)=C_\text{OLS}(\bm\beta)+\lambda||\bm\beta||_1
+\end{align}
+where
+\begin{align*}
+	||\bm\beta||_k\equiv\sum_{i=0}^{n-1}|\beta_i|^k
+\end{align*}
+is the $L^k$ norm of $\bm\beta$. This has the added benefit of being able to set certain parameters to be $0$ instead of suppressing them, at the cost of losing analytical expressions in non-trivial cases.
 
 \subsection{Resampling}
 
@@ -148,46 +223,7 @@ defining the $n\times p$ design matrix $(\bm X)_{ij}=(x_i)^j$ we can rewrite thi
 
 
 \section*{Part d)}
-Show that the expectation value and variance of $\bm y$ is
-\begin{align*}
-	\mathbb{E}(y_i)=\sum_{j}x_{ij}\beta_j=\bm X_{i,*}\bm\beta,\quad 
-	\text{Var}(y_i)=\sigma^2
-\end{align*}
-where $\bm y$ is defined by $\bm y=f(\bm x)+\bm \varepsilon$. Here $\bm \varepsilon\sim N(0,\sigma^2)$ is a normal distributed error and $f(\bm x)$ is the approximated function given our model $\tilde{\bm y}$ obtained by minimizing $(\bm y-\tilde{\bm y})^2$ with $\tilde{\bm y}=\bm X\bm \beta$. With the OLS expression for $\hat{\bm \beta}$ also show that 
-\begin{align*}
-	\mathbb{E}(\hat{\bm \beta})=\bm\beta
-\end{align*}
-and
-\begin{align*}
-	\text{Var}(\hat{\bm \beta})=\sigma^2(\bm X^T\bm X)^{-1}
-\end{align*}
-\textbf{Solution:} \\
-Trivially $\mathbb{E}(\varepsilon_i)=0$ from its definition. Thus from the definition of $\bm y$ we have that
-\begin{align*}
-	\mathbb{E}(y_i)=\mathbb{E}(f(x_i))=\bm X_{i,*}\beta
-\end{align*}
-Similarly the variance is given by
-\begin{align*}
-	\text{Var}(y_i)&=\mathbb{E}\{[y_i-\mathbb{E}(y_i)]^2\}=\mathbb{E}\{(\bm X_{i,*}\beta+\varepsilon_i)^2\}-(\bm X_{i,*}\bm\beta)^2\\
-	&=(\bm X_{i,*}\bm\beta)^2+\mathbb{E}(\varepsilon_i^2)+2\mathbb{E}(\varepsilon_i)\bm X_{i,*}\bm\beta-(\bm X_{i,*}\bm\beta)^2\\
-	&=\text{Var}(\varepsilon_i^2)=\sigma^2
-\end{align*}
-The optimal parameters $\beta$ for OLS are given by
-\begin{align*}
-	\hat{\bm \beta}_\text{OSL}=(\bm X^T\bm X)^{-1}\bm X^T\bm y
-\end{align*}
-which yields the expectation value
-\begin{align*}
-	\mathbb{E}(\hat{\bm\beta}_\text{OLS})=\mathbb{E}[ (\bm X^T\bm X)^{-1}\bm X^T\bm y]=(\bm X^T\bm X)^{-1}\bm X^T \mathbb{E}[\bm y]=(\bm X^T\bm X)^{-1}\bm X^T\bm X\bm\beta=\bm\beta.
-\end{align*}
-and the variance
-\begin{align*}
-	\text{Var}(\hat{\bm\beta}_\text{OLS})&=\mathbb E\{ [\bm\beta-\mathbb E(\bm\beta)] [\bm\beta-\mathbb E(\bm\beta)]^T\}\\
-	&=\mathbb E\{ [(\bm X^T\bm X)^{-1}\bm X^T\bm y-\bm\beta][(\bm X^T\bm X)^{-1}\bm X^T\bm y-\bm\beta]^T\}\\
-	&=(\bm X^T\bm X)^{-1}\bm X^T\mathbb E\{\bm y\bm y^T\}\bm X(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T\\
-	&=(\bm X^T\bm X)^{-1}\bm X^T[\bm X\bm\beta\bm\beta^T\bm X^T+\sigma^2]\bm X(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T\\
-	&=\bm\beta\bm\beta^T+\sigma^2(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T=\sigma^2(\bm X^T \bm X)^{-1}
-\end{align*}
+
 
 
 \section*{Part e)}
