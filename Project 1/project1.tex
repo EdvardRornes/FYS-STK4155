@@ -1,0 +1,211 @@
+% ****** Start of file apssamp.tex ******
+%
+%   This file is part of the APS files in the REVTeX 4.2 distribution.
+%   Version 4.2a of REVTeX, December 2014
+%
+%   Copyright (c) 2014 The American Physical Society.
+%
+%   See the REVTeX 4 README file for restrictions and more information.
+%
+% TeX'ing this file requires that you have AMS-LaTeX 2.0 installed
+% as well as the rest of the prerequisites for REVTeX 4.2
+%
+% See the REVTeX 4 README file
+% It also requires running BibTeX. The commands are as follows:
+%
+%  1)  latex apssamp.tex
+%  2)  bibtex apssamp
+%  3)  latex apssamp.tex
+%  4)  latex apssamp.tex
+%
+\documentclass[%
+reprint,
+%superscriptaddress,
+%groupedaddress,
+%unsortedaddress,
+%runinaddress,
+%frontmatterverbose, 
+%preprint,
+%preprintnumbers,
+%nofootinbib,
+%nobibnotes,
+%bibnotes,
+amsmath,amssymb,
+aps,
+%pra,
+%prb,
+%rmp,
+%prstab,
+%prstper,
+%floatfix,
+]{revtex4-2}
+
+\usepackage{subfiles}
+\usepackage{graphicx}% Include figure files
+\usepackage{dcolumn}% Align table columns on decimal point
+\usepackage{bm}% bold math
+\usepackage{float}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{physics}
+\usepackage{tcolorbox}
+\usepackage{float}
+\usepackage{tensor}
+\usepackage{hyperref}% add hypertext capabilities
+%\usepackage[mathlines]{lineno}% Enable numbering of text and display math
+%\linenumbers\relax % Commence numbering lines
+
+%\usepackage[showframe,%Uncomment any one of the following lines to test 
+%%scale=0.7, marginratio={1:1, 2:3}, ignoreall,% default settings
+%%text={7in,10in},centering,
+%%margin=1.5in,
+%%total={6.5in,8.75in}, top=1.2in, left=0.9in, includefoot,
+%%height=10in,a5paper,hmargin={3cm,0.8in},
+%]{geometry}
+\newcommand{\Hp}{\mathcal{H}}
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}
+\renewcommand{\figurename}{Fig.}
+\renewcommand{\tablename}{Table}
+\makeatletter
+\renewcommand{\subsubsection}{%
+	\@startsection
+	{subsubsection}%
+	{3}%
+	{\z@}%
+	{.8cm \@plus1ex \@minus .2ex}%
+	{.5cm}%
+	{\normalfont\small\centering}%
+}
+\makeatother
+\renewcommand{\L}{\mathcal{L}}
+\renewcommand{\O}{\mathcal{O}}
+\newcommand{\f}[2]{\frac{#1}{#2}}
+\newcommand{\p}{\partial}
+
+
+
+\begin{document}
+	
+\title{The Large Scale Structure of the Cosmic Microwave Background}
+
+\author{Edvard B. Rørnes}
+\email{e.b.rornes@fys.uio.no}
+\author{Anton A. Brekke}
+\email{asdf}
+\author{Isak O. Rukan}
+\email{asdfafs}
+\affiliation{Institute of Physics, University of Oslo,\\0371 Oslo,  Norway}
+
+\date{\today}
+\begin{abstract}
+	asdfasdf
+\end{abstract}
+\maketitle
+\tableofcontents
+\section{Introduction}
+intro thingy
+
+\section{Theory}
+The general structure of all our models is that we have some data set $\{x_i,y_i\}$ where $i\in\{0,1...,n-1\}$ where $x_i$ are independent variables whilst $y_i$ are dependent variables. The data is assumed to be described by
+\begin{align}
+	\bm y=f(\bm x)+\bm \varepsilon
+\end{align}
+where $f$ is some continuous function which takes $\bm x$ as input and $\bm\varepsilon$ is a normal distributed error $\bm\varepsilon\sim\mathcal{N}(0,\sigma^2)$. The function $f$ will then be approximated with a model $\tilde{\bm y}$ in which we will consider a polynomial expansion with coefficients $\beta_i$:
+\begin{align}
+	\tilde{y}_i=\sum_{j=0}^{p-1}\beta_j x_i^j
+\end{align}
+defining the $n\times p$ design matrix $(\bm X)_{ij}=(x_i)^j$ we can rewrite this as
+\begin{align}
+	\tilde{\bm y}=\bm X\bm\beta
+\end{align}
+
+
+\subsection{OLS}
+
+\subsection{Ridge}
+
+\subsection{LASSO}
+
+\subsection{Resampling}
+
+\subsection{Bias-Variance}
+
+\section{Implementation}
+
+\section{Results}
+
+\subsection{OLS}
+
+\subsection{Ridge}
+
+\subsection{LASSO}
+
+\section{Discussion}
+
+\section{Conclusion}
+
+
+\section*{Part d)}
+Show that the expectation value and variance of $\bm y$ is
+\begin{align*}
+	\mathbb{E}(y_i)=\sum_{j}x_{ij}\beta_j=\bm X_{i,*}\bm\beta,\quad 
+	\text{Var}(y_i)=\sigma^2
+\end{align*}
+where $\bm y$ is defined by $\bm y=f(\bm x)+\bm \varepsilon$. Here $\bm \varepsilon\sim N(0,\sigma^2)$ is a normal distributed error and $f(\bm x)$ is the approximated function given our model $\tilde{\bm y}$ obtained by minimizing $(\bm y-\tilde{\bm y})^2$ with $\tilde{\bm y}=\bm X\bm \beta$. With the OLS expression for $\hat{\bm \beta}$ also show that 
+\begin{align*}
+	\mathbb{E}(\hat{\bm \beta})=\bm\beta
+\end{align*}
+and
+\begin{align*}
+	\text{Var}(\hat{\bm \beta})=\sigma^2(\bm X^T\bm X)^{-1}
+\end{align*}
+\textbf{Solution:} \\
+Trivially $\mathbb{E}(\varepsilon_i)=0$ from its definition. Thus from the definition of $\bm y$ we have that
+\begin{align*}
+	\mathbb{E}(y_i)=\mathbb{E}(f(x_i))=\bm X_{i,*}\beta
+\end{align*}
+Similarly the variance is given by
+\begin{align*}
+	\text{Var}(y_i)&=\mathbb{E}\{[y_i-\mathbb{E}(y_i)]^2\}=\mathbb{E}\{(\bm X_{i,*}\beta+\varepsilon_i)^2\}-(\bm X_{i,*}\bm\beta)^2\\
+	&=(\bm X_{i,*}\bm\beta)^2+\mathbb{E}(\varepsilon_i^2)+2\mathbb{E}(\varepsilon_i)\bm X_{i,*}\bm\beta-(\bm X_{i,*}\bm\beta)^2\\
+	&=\text{Var}(\varepsilon_i^2)=\sigma^2
+\end{align*}
+The optimal parameters $\beta$ for OLS are given by
+\begin{align*}
+	\hat{\bm \beta}_\text{OSL}=(\bm X^T\bm X)^{-1}\bm X^T\bm y
+\end{align*}
+which yields the expectation value
+\begin{align*}
+	\mathbb{E}(\hat{\bm\beta}_\text{OLS})=\mathbb{E}[ (\bm X^T\bm X)^{-1}\bm X^T\bm y]=(\bm X^T\bm X)^{-1}\bm X^T \mathbb{E}[\bm y]=(\bm X^T\bm X)^{-1}\bm X^T\bm X\bm\beta=\bm\beta.
+\end{align*}
+and the variance
+\begin{align*}
+	\text{Var}(\hat{\bm\beta}_\text{OLS})&=\mathbb E\{ [\bm\beta-\mathbb E(\bm\beta)] [\bm\beta-\mathbb E(\bm\beta)]^T\}\\
+	&=\mathbb E\{ [(\bm X^T\bm X)^{-1}\bm X^T\bm y-\bm\beta][(\bm X^T\bm X)^{-1}\bm X^T\bm y-\bm\beta]^T\}\\
+	&=(\bm X^T\bm X)^{-1}\bm X^T\mathbb E\{\bm y\bm y^T\}\bm X(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T\\
+	&=(\bm X^T\bm X)^{-1}\bm X^T[\bm X\bm\beta\bm\beta^T\bm X^T+\sigma^2]\bm X(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T\\
+	&=\bm\beta\bm\beta^T+\sigma^2(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T=\sigma^2(\bm X^T \bm X)^{-1}
+\end{align*}
+
+
+\section*{Part e)}
+Show that you can rewrite
+\begin{align*}
+	C(\bm X,\bm \beta)=\frac{1}{n}\sum_{i=0}^{n-1}(y_i-\tilde y_i)^2=\mathbb{E}[(\bm y-\tilde{\bm y})^2]
+\end{align*}
+as
+\begin{align*}
+	\mathbb{E}[(\bm y-\tilde{\bm y})^2]=\text{Bias}[\tilde y]+\text{Var}[\tilde{y}]+\sigma^2
+\end{align*}
+where
+\begin{align*}
+	\text{Bias}[\tilde y]=\mathbb{E}\!\left[(\bm y-\mathbb{E}[\tilde{\bm y}])^2\right]
+\end{align*}
+and
+\begin{align*}
+	\text{Var}[\tilde{y}]=\mathbb{E}\!\left[(\tilde{\bm y}-\mathbb{E}[\tilde{\bm y}])^2\right]=\frac{1}{n}\sum_i(\tilde y_i-\mathbb{E}[\tilde{\bm y}])^2
+\end{align*}
+	
+\end{document}
