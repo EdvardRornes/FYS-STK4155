@@ -62,7 +62,7 @@ margin=1.5in,
 		\end{align*}
 		where we defined $\tilde{\lambda}\equiv n\lambda$, renamed $\tilde{\lambda}\to\lambda$ and used that the matrix in the parenthesis is a symmetric matrix and thus its inverse must also be symmetric. The constraint requirement $\bm{\beta}^2\leq t$ for some $t<\infty$ is just a requirement so that we can choose our arbitrary parameter $\lambda\geq0$ to be sufficiently small s.t. the cost function (\ref{eq:ridgecost}) does not diverge.
 		
-		\item Show that for OSL the solution in terms of the eigenvectors of the orthogonal matrix $U$ is given by
+		\item Show that for OLS the solution in terms of the eigenvectors of the orthogonal matrix $U$ is given by
 		\begin{align*}
 			\tilde{\bm{y}}_\text{OLS}=\bm{X}\bm{\beta}=\sum_{j=0}^{p-1}\bm{u}_j\bm{u}_j^T\bm{y}
 		\end{align*}
@@ -76,7 +76,7 @@ margin=1.5in,
 		
 		Using the orthogonality of $\bm U$ and $\bm V$, $(\bm{AB})^T=\bm B^T\bm A^T$ and $(\bm{AB})^{-1}=\bm B^{-1}\bm A^{-1}$ we have
 		\begin{align*}
-			\tilde{\bm{y}}_\text{OSL}&=\bm{X\beta}_\text{OSL}=\bm{X}(\bm{X}^T\bm{X})^{-1}\bm{X}^T\bm{y}\\
+			\tilde{\bm{y}}_\text{OLS}&=\bm{X\beta}_\text{OLS}=\bm{X}(\bm{X}^T\bm{X})^{-1}\bm{X}^T\bm{y}\\
 			&=\bm{U\Sigma V}^T((\bm{U\Sigma V}^T)^T\bm{U\Sigma V}^T)^{-1}(\bm{U\Sigma V}^T)^T\bm{y}\\
 			&=\bm{U\Sigma V}^T(\bm{V}\bm{\Sigma}^T\bm{\Sigma}\bm{V}^T)^{-1}\bm{V}\bm{\Sigma}^T\bm{U}^T\bm{y}\\
 			&=\bm{U\Sigma V}^T(\bm{V}^T)^{-1}\bm{\Sigma}^{-1}(\bm{\Sigma}^T)^{-1}\bm{V}^{-1}\bm{V}\bm{\Sigma}^T\bm{U}^T\bm{y}\\
@@ -91,10 +91,10 @@ margin=1.5in,
 			&=\bm{U\Sigma }({\bm\Sigma}^T\bm{\Sigma}+\lambda\bm I)^{-1}\bm{\Sigma}^T\bm{U}^T\bm{y}\\
 			&=\sum_{j=0}^{p-1}\bm{u}_j\bm{u}_j^T\frac{\sigma_j^2}{\sigma_j^2+\lambda}\bm{y}
 		\end{align*}
-		where once again the last step is valid due to the orthogonality of $\bm U$ and $\sigma_j$ are the elements on the diagonal of $\bm\Sigma$. Since $\lambda\geq0$ then this added factor compared to OSL is $\leq1$. The larger $\lambda$ is the smaller this factor becomes and is the so-called a "shrinkage" factor. 
+		where once again the last step is valid due to the orthogonality of $\bm U$ and $\sigma_j$ are the elements on the diagonal of $\bm\Sigma$. Since $\lambda\geq0$ then this added factor compared to OLS is $\leq1$. The larger $\lambda$ is the smaller this factor becomes and is the so-called a "shrinkage" factor. 
 	\end{enumerate}
 	
 	\section*{Exercise 2}
-	
+	For low values of $\lambda$ we see that both Ridge and OLS are practically the same no matter the polynomial degree. For deg $=5$ we see that as $\lambda$ increases both the train and test data MSE for Ridge increase. Here we are underfitting the data and thus when $\lambda$ increases we are effectively underfitting the data even more. This can be seen to generally be true for deg $=10$ as well but here there is more variance when trying out different seeds. For deg $=15$ however we see that increasing $\lambda$ actually decreases the test MSE whilst still slightly increasing the training MSE. In this case it is because we are overfitting with the data. Since large $\lambda$ corresponds to penalizing large coefficients, this effectively works to reduce the overfitting. For the largest value of $\lambda$ this eventually overshoots and we essentially go back to underfitting the data as with the lower polynomial degrees.
 	
 \end{document}
