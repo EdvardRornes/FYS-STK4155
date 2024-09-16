@@ -39,7 +39,7 @@ for week in range(week_start, week_end + 1):
 
 # Loop through each project
 for project in range(project_start, project_end + 1):
-    project_folder = f"Project {project}"
+    project_folder = f"Project{project}"
     project_path = os.path.join(os.getcwd(), project_folder)  # Update to use current working directory
 
     # Check if the project folder exists
