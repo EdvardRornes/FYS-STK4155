@@ -40,6 +40,10 @@ for deg in degrees:
     y_pred_train_ols = predict_ridge(X_train, beta_ols)
     y_pred_test_ols = predict_ridge(X_test, beta_ols)
     
+    print(np.size(X_train))
+    print(np.size(y_pred_train_ols))
+    plt.plot(X_train, y_pred_train_ols)
+    plt.show()
     mse_train_ols = mean_squared_error(y_train, y_pred_train_ols)
     mse_test_ols = mean_squared_error(y_test, y_pred_test_ols)
     
