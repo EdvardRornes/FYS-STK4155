@@ -29,7 +29,7 @@
 
 ### Part e:
 
-- [ ] (Week 38) Show that $\mathbb{E}[(\boldsymbol y-\tilde{\boldsymbol y})^2]=\text{Bias}[\tilde y]+\text{Var}[\tilde y]+\sigma^2$, where $\text{Bias}[\tilde y]=\mathbb{E}\left[(\boldsymbol y-\mathbb E[\tilde{\boldsymbol y}])^2\right]$ and $\text{Var}[\tilde y]=\mathbb E\left[(\tilde{\boldsymbol y}-\mathbb E[\tilde{\boldsymbol y}])^2\right]=\frac1n\sum_i (\tilde y_i-\mathbb E[\tilde{\boldsymbol y}])^2$. 
+- [ ] (Week 38) Show that $$\mathbb{E}[(\boldsymbol y-\tilde{\boldsymbol y})^2]=\text{Bias}[\tilde y]+\text{Var}[\tilde y]+\sigma^2$$, where $$\text{Bias}[\tilde y]=\mathbb{E}\left[(\boldsymbol y-\mathbb E[\tilde{\boldsymbol y}])^2\right]$$ and $$\text{Var}[\tilde y]=\mathbb E\left[(\tilde{\boldsymbol y}-\mathbb E[\tilde{\boldsymbol y}])^2\right]=\frac1n\sum_i (\tilde y_i-\mathbb E[\tilde{\boldsymbol y}])^2$$
 - [ ] Perform a bias-variance analysis of the Franke function by studying the MSE value as a function of the complexity of the model. 
 - [ ] Discuss the bias and variance trade-off as a function of your model complexity (the degree of the polynomial), the number of data points, and possibly also the training and test data using the **bootstrap** resampling method.
 
@@ -37,7 +37,7 @@
 
 - [ ] Implement the $k$-fold cross-validation algorithm (using Scikit-Learn) and evaluate again the MSE function resulting from the test folds. 
 - [ ] Compare the MSE you get from your cross-validation code with the one you got from your bootstrap code. 
-- [ ]Comment on your results. Try 5-10 folds. Do this with OLS, Ridge and LASSO regression.
+- [ ] Comment on your results. Try 5-10 folds. Do this with OLS, Ridge and LASSO regression.
 
 ### Part g:
 
