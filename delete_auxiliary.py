@@ -15,7 +15,7 @@ auxiliary_extensions = ['.aux', '.log', '.out', '.toc', '.nav', '.snm', '.vrb', 
 
 # Loop through each week
 for week in range(week_start, week_end + 1):
-    week_folder = f"Week {week}"
+    week_folder = f"Week{week}"
     week_path = os.path.join(exercises_dir, week_folder)
 
     # Check if the week folder exists

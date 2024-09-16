@@ -71,11 +71,11 @@ margin=1.5in,
 	\end{align*}
 	and the variance
 	\begin{align*}
-			\text{Var}(\hat{\bm\beta}_\text{OLS})&=\mathbb E\{ [\bm\beta-\mathbb E(\bm\beta)] [\bm\beta-\mathbb E(\bm\beta)]^T\}\\
-			&=\mathbb E\{ [(\bm X^T\bm X)^{-1}\bm X^T\bm y-\bm\beta][(\bm X^T\bm X)^{-1}\bm X^T\bm y-\bm\beta]^T\}\\
-			&=(\bm X^T\bm X)^{-1}\bm X^T\mathbb E\{\bm y\bm y^T\}\bm X(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T\\
-			&=(\bm X^T\bm X)^{-1}\bm X^T[\bm X\bm\beta\bm\beta^T\bm X^T+\sigma^2]\bm X(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T\\
-			&=\bm\beta\bm\beta^T+\sigma^2(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T=\sigma^2(\bm X^T \bm X)^{-1}
+		\text{Var}(\hat{\bm\beta}_\text{OLS})&=\mathbb E\{ [\bm\beta-\mathbb E(\bm\beta)] [\bm\beta-\mathbb E(\bm\beta)]^T\}\\
+		&=\mathbb E\{ [(\bm X^T\bm X)^{-1}\bm X^T\bm y-\bm\beta][(\bm X^T\bm X)^{-1}\bm X^T\bm y-\bm\beta]^T\}\\
+		&=(\bm X^T\bm X)^{-1}\bm X^T\mathbb E\{\bm y\bm y^T\}\bm X(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T\\
+		&=(\bm X^T\bm X)^{-1}\bm X^T[\bm X\bm\beta\bm\beta^T\bm X^T+\sigma^2]\bm X(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T\\
+		&=\bm\beta\bm\beta^T+\sigma^2(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T=\sigma^2(\bm X^T \bm X)^{-1}
 	\end{align*}
 	
 	
@@ -94,15 +94,16 @@ margin=1.5in,
 	\begin{align*}
 		\mathbb{E}(\hat{\bm \beta}_\text{Ridge})&=\mathbb{E}[(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm{y}]\\
 		&=(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\mathbb{E}[\bm{y}]\\
-		&=(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm X\bm\beta_\text{OLS}
+		&=(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm X\bm\beta
 	\end{align*}
 	and
 	\begin{align*}
 		\text{Var}(\hat{\bm \beta}_\text{Ridge})&=\mathbb E\{ [\bm\beta_\text{Ridge}-\mathbb E(\bm\beta)] [\bm\beta_\text{Ridge}-\mathbb E(\bm\beta)]^T\}\\
 		&=\mathbb E\{ [(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm{y}-\bm\beta][(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm{y}-\bm\beta]^T\}\\
-		&=(\bm X^T\bm X+\lambda\bm{I})^{-1}\bm X^T\mathbb E\{\bm y\bm y^T\}\bm X\{(\bm X^T\bm X+\lambda\bm{I})^{-1}\}^T-\bm\beta\bm\beta^T\\
-		&=(\bm X^T\bm X+\lambda\bm{I})^{-1}\bm X^T[\bm X\bm\beta\bm\beta^T\bm X^T+\sigma^2]\bm X(\bm X^T\bm X+\lambda\bm{I})^{-1}-\bm\beta\bm\beta^T\\
-		&=\bm\beta\bm\beta^T+\sigma^2(\bm X^T\bm X)^{-1}-\bm\beta\bm\beta^T=\sigma^2(\bm X^T \bm X)^{-1}
+		&=(\bm X^T\bm X+\lambda\bm{I})^{-1}\bm X^T\mathbb E\{\bm y\bm y^T\}\bm X [(\bm X^T\bm X+\lambda\bm{I})^{-1}]^{T}-\bm\beta\bm\beta^T\\
+		&=(\bm X^T\bm X+\lambda\bm{I})^{-1}\bm X^T[\bm X\bm\beta\bm\beta^T\bm X^T+\sigma^2]\bm X[(\bm X^T\bm X+\lambda\bm{I})^{-1}]^{T}-\bm\beta\bm\beta^T\\
+		&= \beta\beta^T+ \sigma^2\left( \bm{X}^T \bm{X} + \lambda \bm{I} \right)^{-1} \bm{X}^T \bm{X} [\left( \bm{X}^T \bm{X} + \lambda \bm{I} \right)^{-1}]^{T}  - \beta\beta^T \\
+		&= \sigma^2\left( \bm{X}^T \bm{X} + \lambda \bm{I} \right)^{-1} \bm{X}^T \bm{X} [\left( \bm{X}^T \bm{X} + \lambda \bm{I} \right)^{-1}]^{T}.
 	\end{align*}
 	
 	

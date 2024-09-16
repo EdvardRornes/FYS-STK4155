@@ -93,9 +93,7 @@ aps,
 \author{Edvard B. Rørnes}
 \email{e.b.rornes@fys.uio.no}
 \author{Isak O. Rukan}
-\email{asdfafs}
-\author{Anton A. Brekke}
-\email{asdf}
+\email{Insert Email}
 \affiliation{Institute of Physics, University of Oslo,\\0371 Oslo,  Norway}
 \date{\today}
 
@@ -140,11 +138,11 @@ which yields the model
 \end{align}
 Assuming our data takes the form of (\ref{eq:data}) then the expectation value $\bm y$ is
 \begin{align*}
-	\mathbb{E}(y_i)=\mathbb{E}(f(x_i))=\bm X_{i,*}\beta
+	\mathbb{E}(y_i)=\mathbb{E}(f(x_i))=\bm X_{i,*}\bm\beta
 \end{align*}
 since $\mathbb{E}(\varepsilon_i)=0$ follows from its definition. The variance of $\bm y$ is given by
 \begin{align*}
-	\text{Var}(y_i)&=\mathbb{E}\{[y_i-\mathbb{E}(y_i)]^2\}=\mathbb{E}\{(\bm X_{i,*}\beta+\varepsilon_i)^2\}-(\bm X_{i,*}\bm\beta)^2\\
+	\text{Var}(y_i)&=\mathbb{E}\{[y_i-\mathbb{E}(y_i)]^2\}=\mathbb{E}\{(\bm X_{i,*}\bm\beta+\varepsilon_i)^2\}-(\bm X_{i,*}\bm\beta)^2\\
 	&=(\bm X_{i,*}\bm\beta)^2+\mathbb{E}(\varepsilon_i^2)+2\mathbb{E}(\varepsilon_i)\bm X_{i,*}\bm\beta-(\bm X_{i,*}\bm\beta)^2\\
 	&=\text{Var}(\varepsilon_i^2)=\sigma^2
 \end{align*}
@@ -195,13 +193,18 @@ where the last step is valid due to the orthogonality of $\bm U$ and $\sigma_j$ 
 \subsection{LASSO}
 Similarly to Ridge, LASSO also includes a penalty factor. The cost function in this case is instead defined to be
 \begin{align}
-	C_\text{Ridge}(\bm\beta)=C_\text{OLS}(\bm\beta)+\lambda||\bm\beta||_1
+	C_\text{LASSO}(\bm\beta)=C_\text{OLS}(\bm\beta)+\lambda||\bm\beta||_1
+	\label{eq:cost_ridge}
 \end{align}
 where
 \begin{align*}
 	||\bm\beta||_k\equiv\sum_{i=0}^{n-1}|\beta_i|^k
 \end{align*}
-is the $L^k$ norm of $\bm\beta$. This has the added benefit of being able to set certain parameters to be $0$ instead of suppressing them, at the cost of losing analytical expressions in non-trivial cases.
+is the $L^k$ norm of $\bm\beta$. Taking the derivative of (\ref{eq:cost_ridge}) w.r.t. $\bm \beta$ and requiring that this becomes zero we have
+\begin{align}
+	0=\pdv{C_\text{LASSO}}{\bm\beta}=-2\bm X^T(\bm y-\bm X\bm\beta)+\lambda\,\text{sgn}(\bm\beta)
+\end{align}
+This has the added benefit of being able to set certain parameters to be $0$ instead of suppressing them, at the cost of losing analytical expressions for $\hat{\bm\beta}$ in non-trivial cases.
 
 \subsection{Resampling}
 
