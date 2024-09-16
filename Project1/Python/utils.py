@@ -1,5 +1,8 @@
 import numpy as np
 import sklearn
+import pandas as pd
+
+from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
 from sklearn.linear_model import Lasso
 from sklearn.metrics import mean_squared_error, r2_score
@@ -8,20 +11,44 @@ from sklearn.model_selection import train_test_split
 
 # Franke function
 def Franke(x, y):
-    term1 = 0.75 * np.exp(-(0.25 * (9 * x - 2) ** 2) - 0.25 * ((9 * y - 2) ** 2))
-    term2 = 0.75 * np.exp(-((9 * x + 1) ** 2) / 49.0 - 0.1 * (9 * y + 1))
-    term3 = 0.5 * np.exp(-(9 * x - 7) ** 2 / 4.0 - 0.25 * ((9 * y - 3) ** 2))
-    term4 = -0.2 * np.exp(-(9 * x - 4) ** 2 - (9 * y - 7) ** 2)
+    term1 = 0.75*np.exp(-(0.25*(9*x - 2)**2) - 0.25*((9*y - 2)**2))
+    term2 = 0.75*np.exp(-((9*x + 1)**2)/49.0 - 0.1*(9*y + 1))
+    term3 = 0.5*np.exp(-(9*x - 7)**2/4.0 - 0.25*((9*y - 3)**2))
+    term4 = -0.2*np.exp(-(9*x - 4)**2 - (9*y - 7)**2)
     return term1 + term2 + term3 + term4
 
 # Creates a polynomial design matrix up to degree 'deg'
-def Design_Matrix(x, y, deg):
-    terms = [(x ** i * y ** j) for i in range(deg + 1) for j in range(deg + 1 - i)]
-    return np.vstack(terms).T
+def Design_Matrix(x: np.ndarray, y: np.ndarray, deg: int) -> np.ndarray:
+    """ Calculates the feature matrix X, and scales X and z (if scale = True).
+
+    ## Parameters
+        x (ndarray): x-values of data points.
+        y (ndarray): y-values of data points.
+        z (ndarray): z-values of data points.
+        deg (int): Degree of polynomial fit.
+        scale (bool, default=True): If True, scale X and z before returning.
+
+    ## Returns
+        X (ndarray): Feature matrix (Scaled if scale=True).
+    """
+
+    ## Create feature matrix
+    xy_dic = {
+        "x": x,
+        "y": y
+    }
+    xy = pd.DataFrame(xy_dic)
+
+    poly = PolynomialFeatures(degree=deg)
+    X = poly.fit_transform(xy) # Find feature matrix
+
+    return X
+
 
 # Ridge regression, lambd = 0 for OLS
 def Ridge_Reg(X, y, lambd):
     XTX = X.T @ X
+    y = y.reshape(-1, 1)
     return np.linalg.pinv(XTX + lambd * np.identity(XTX.shape[0])) @ X.T @ y
 
 # LASSO regression using sklearn's Lasso class

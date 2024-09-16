@@ -3,24 +3,24 @@
 
 ### Part a:
 
-- [ ] Perform OLS reg using polynomials in $x$ and $y$ up to fifth order. 
-- [ ] Evaluate MSE and $R^2$. Plot the MSE and $R^2$ as a function of the polynomial degree. 
-- [ ] Plot the parameters $\beta$ as you increase the order of the polynomials. Comment on the results. Note: Code must include scaling/centering of the data and a split in training and test data. 
-- [ ] **Present a critical discussion why and why not you have scaled the data. If we have then explain why.**
+- [x] Perform OLS reg using polynomials in $x$ and $y$ up to fifth order. 
+- [x] Evaluate MSE and $R^2$. Plot the MSE and $R^2$ as a function of the polynomial degree. 
+- [ ] Plot the parameters $\beta$ as you increase the order of the polynomials. Comment on the results. Note: Code must include scaling/centering of the data and a split in training and test data. **Struggling with this point, see OLS.py for what I have done regarding this @Isak**
+- [ ] Present a critical discussion why and why not you have scaled the data. If we have then explain why.
 
 ### Part b:
 
-- [ ] Write own code for Ridge regression.
+- [x] Write own code for Ridge regression.
 - [ ] Perform the same analysis as above but now for different values of $\lambda$.
 - [ ] Compare and analyze the results with those obtained in the previous part with OLS.
-- [ ] Study the dependence on $\lambda$.
+- [x] Study the dependence on $\lambda$. **Done but in a very stupid way, please see Ridge.py and try to make this cleaner :)**
 
 ### Part c:
 
-- [ ] Write own code for Ridge regression. Use Scikit-learn. 
+- [x] Write own code for LASSO regression. Use Scikit-learn. 
 - [ ] Perform the same analysis as above but now for different values of $\lambda$.
 - [ ] Compare and analyze the results with those obtained in the previous part with OLS and Ridge.
-- [ ] Study the dependence on $\lambda$.
+- [x] Study the dependence on $\lambda$. **Same as above**
 - [ ] Scikit-learn excludes the intercept by default. Give a critical deiscussion of the three methods and a judgement of which model fits the data best.
 
 ### Part d:

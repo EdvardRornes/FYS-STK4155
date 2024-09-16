@@ -1,66 +1,101 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import PolynomialFeatures
-from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
 from utils import *
 
-np.random.seed()
-n = 100
-x = np.sort(np.random.rand(n))
-y = np.sort(np.random.rand(n))
+# Latex fonts
+plt.rcParams['text.usetex'] = True
+plt.rcParams['axes.titlepad'] = 25 
+
+font = {'family' : 'euclid',
+        'weight' : 'bold',
+        'size'   : 25}
+
+# Generate data
+np.random.seed(2023)
+N = 100  # Number of data points
+x = np.sort(np.random.rand(N))
+y = np.sort(np.random.rand(N))
 z = Franke(x, y)
-# Noise
-noise = 0.1
-z = z + noise*np.random.normal(0, 1, z.shape)
+z = z + 0.1 * np.random.normal(N, 1, z.shape)  # Add some noise to the data
 
-degrees = 5
-for i in range(degrees):
-    poly = PolynomialFeatures(degree = i)
-    X = Design_Matrix(x, y, i)
-    X_train, X_test, z_train, z_test = train_test_split(X, z, test_size = 0.3)
+deg_max = 5
+degrees = np.arange(1, deg_max+1)
+MSE_train = np.zeros(len(degrees))
+MSE_test = np.zeros(len(degrees))
+R2_train = np.zeros(len(degrees))
+R2_test = np.zeros(len(degrees))
+beta_coefficients = [0]*(deg_max+1)
+# beta_coefficients = [] # See below
+
+for deg in range(deg_max):
+    # Create polynomial features
+    X = Design_Matrix(x, y, degrees[deg])
+    # Split into training and testing and scale
+    X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.25, random_state=42)
     X_train, X_test, z_train, z_test = scale_data(X_train, X_test, z_train, z_test)
-    MSE_train = MSE(z, z_train)
-    MSE_test = MSE(z, z_test)
-    R2_train = R2(z, z_train)
-    R2_test = R2(z, z_test)
+
+    beta_coefficients[deg], MSE_train[deg], MSE_test[deg], R2_train[deg], R2_test[deg] = OLS_fit(X_train, X_test, z_train, z_test)
+    
+    '''
+    # I have troubles when trying to plot the different β's. What GPT proposed is that instead of using the above we instead do this
+
+    beta[deg], MSE_train[deg], MSE_test[deg], R2_train[deg], R2_test[deg] = OLS_fit(X_train, X_test, z_train, z_test)
+
+    # Flatten beta if necessary
+    if beta.ndim == 2:
+        beta = beta.flatten()
+    
+    beta_coefficients.append(beta)
+    '''
 
 
-model = LinearRegression()
-model.fit(X_train, y_train)
-
-y_tilde_train = model.predict(X_train)
-y_tilde_test  = model.predict(X_test)
-
-MSE_train = mean_squared_error(y_train, y_tilde_train)
-MSE_test  = mean_squared_error(y_test, y_tilde_test)
-
-# c)
-poly_deg      = 15
-MSE_train_arr = np.zeros(poly_deg-1)
-MSE_test_arr  = np.zeros(poly_deg-1)
-degrees       = np.linspace(2, poly_deg, poly_deg-1, dtype=int)
-
-for deg in degrees:
-    poly15 = PolynomialFeatures(degree = deg)
-    X = poly15.fit_transform(x)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.15)
-
-    model = LinearRegression()
-    model.fit(X_train, y_train)
-
-    y_tilde_train = model.predict(X_train)
-    y_tilde_test  = model.predict(X_test)
-
-    MSE_train_arr[deg-2] = mean_squared_error(y_train, y_tilde_train)
-    MSE_test_arr[deg-2]  = mean_squared_error(y_test, y_tilde_test)
-
-plt.plot(degrees, MSE_train_arr, label="MSE_train")
-plt.plot(degrees, MSE_test_arr, label="MSE_test")
-plt.xlabel('Polynomial Degree')
-plt.ylabel('MSE')
+# Plot MSE
+plt.figure(figsize=(10, 6))
+plt.plot(degrees, MSE_train, label=r"MSE train", lw=2.5)
+plt.plot(degrees, MSE_test, label=r"MSE test", lw=2.5)
+plt.xlabel(r'Degree')
+plt.ylabel(r'MSE')
+plt.xlim(1, deg_max)
+plt.title(r"OLS MSE")
 plt.legend()
-plt.savefig('mse.pdf')
+plt.grid(True)
+plt.savefig(f'Figures/OLS-MSE-degree.pdf')
+
+# Plot R²
+plt.figure(figsize=(10, 6))
+plt.plot(degrees, R2_train, label=r"$R^2$ train", lw=2.5)
+plt.plot(degrees, R2_test, label=r"$R^2$ test", lw=2.5)
+plt.xlabel(r'Degree')
+plt.ylabel(r'$R^2$')
+plt.xlim(1, deg_max)
+plt.title(r"OLS $R^2$")
+plt.legend()
+plt.grid(True)
+plt.savefig(f'Figures/OLS-R2-degree.pdf')
 plt.show()
+
+'''
+# With the commented code previously we can then get an omega scuffed plot using the below. Isak you know how to do this?
+
+# Process beta coefficients for plotting
+max_len = max([len(beta) for beta in beta_coefficients])
+beta_array = np.full((deg_max, max_len), np.nan)
+for i, beta in enumerate(beta_coefficients):
+    beta_array[i, :len(beta)] = beta
+
+# Plot the beta coefficients
+plt.figure(figsize=(10, 6))
+for i in range(max_len):
+    plt.plot(degrees, beta_array[:, i], label=rf'$\beta_{i}$', lw=2.5)
+
+plt.xlabel(r'Degree')
+plt.ylabel(r'$\beta$ values')
+plt.xlim(1, deg_max)
+plt.title(r'OLS $\beta$ coefficients')
+plt.legend()
+plt.grid(True)
+plt.savefig(f'Figures/OLS-beta-degree.pdf')
+plt.show()
+'''
