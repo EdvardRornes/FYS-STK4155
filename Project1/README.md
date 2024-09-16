@@ -21,7 +21,7 @@
 - [ ] Perform the same analysis as above but now for different values of $\lambda$.
 - [ ] Compare and analyze the results with those obtained in the previous part with OLS and Ridge.
 - [x] Study the dependence on $\lambda$. **Same as above**
-- [ ] Scikit-learn excludes the intercept by default. Give a critical deiscussion of the three methods and a judgement of which model fits the data best.
+- [ ] Scikit-learn excludes the intercept by default. Give a critical discussion of the three methods and a judgement of which model fits the data best.
 
 ### Part d:
 
