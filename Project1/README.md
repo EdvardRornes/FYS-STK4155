@@ -25,11 +25,11 @@
 
 ### Part d:
 
-- [x] Show that $\mathbb{E}(y_i)=\bm X_{i,*}\bm\beta$, $\text{Var}(y_i)=\sigma^2$, $\mathbb{E}(\hat{\bm\beta})=\bm\beta$ and $\text{Var}(\hat{\bm\beta})=\sigma^2(\bm X^T\bm X)^{-1}$.
+- [x] Show that $\mathbb{E}(y_i)=\boldsymbol X_{i,*}\boldsymbol\beta$, $\text{Var}(y_i)=\sigma^2$, $\mathbb{E}(\hat{\boldsymbol\beta})=\boldsymbol\beta$ and $\text{Var}(\hat{\boldsymbol\beta})=\sigma^2(\boldsymbol X^T\boldsymbol X)^{-1}$.
 
 ### Part e:
 
-- [ ] (Week 38) Show that $\mathbb{E}[(\bm y-\tilde{\bm y})^2]=\text{Bias}[\tilde y]+\text{Var}[\tilde y]+\sigma^2$, where $\text{Bias}[\tilde y]=\mathbb{E}\left[(\bm y-\mathbb E[\tilde{\bm y}])^2\right] and $\text{Var}[\tilde y]=\mathbb E\left[(\tilde{\bm y}-\mathbb E[\tilde{\bm y}])^2\right]=\frac1n\sum_i (\tilde y_i-\mathbb E[\tilde{\bm y}])^2$. 
+- [ ] (Week 38) Show that $\mathbb{E}[(\boldsymbol y-\tilde{\boldsymbol y})^2]=\text{Bias}[\tilde y]+\text{Var}[\tilde y]+\sigma^2$, where $\text{Bias}[\tilde y]=\mathbb{E}\left[(\boldsymbol y-\mathbb E[\tilde{\boldsymbol y}])^2\right] and $\text{Var}[\tilde y]=\mathbb E\left[(\tilde{\boldsymbol y}-\mathbb E[\tilde{\boldsymbol y}])^2\right]=\frac1n\sum_i (\tilde y_i-\mathbb E[\tilde{\boldsymbol y}])^2$. 
 - [ ] Perform a bias-variance analysis of the Franke function by studying the MSE value as a function of the complexity of the model. 
 - [ ] Discuss the bias and variance trade-off as a function of your model complexity (the degree of the polynomial), the number of data points, and possibly also the training and test data using the **bootstrap** resampling method.
 
