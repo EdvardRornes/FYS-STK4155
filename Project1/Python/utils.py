@@ -96,7 +96,8 @@ def Ridge_fit(X_train, X_test, y_train, y_test, lambd):
 # LASSO fitting
 def LASSO_fit(X_train, X_test, y_train, y_test, lambd):
     # Configure and fit LASSO model
-    model = linear_model.Lasso(lambd, fit_intercept=False, max_iter=int(1e6), tol=1e-2)
+    # Lowering the tolerance causes it to not converge and increasing max iterations causes it to be very slow
+    model = linear_model.Lasso(lambd, fit_intercept=False, max_iter=int(1e5), tol=1e-1) 
     model.fit(X_train, y_train)
 
     # Predictions on training and testing data
