@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from utils import *
 
@@ -8,19 +7,27 @@ from utils import *
 plt.rcParams['text.usetex'] = True
 plt.rcParams['axes.titlepad'] = 25 
 
-font = {'family' : 'euclid',
-        'weight' : 'bold',
-        'size'   : 25}
+plt.rcParams.update({
+    'font.family' : 'euclid',
+    'font.weight' : 'bold',
+    'font.size': 17,       # General font size
+    'axes.labelsize': 17,  # Axis label font size
+    'axes.titlesize': 22,  # Title font size
+    'xtick.labelsize': 22, # X-axis tick label font size
+    'ytick.labelsize': 22, # Y-axis tick label font size
+    'legend.fontsize': 17, # Legend font size
+    'figure.titlesize': 25 # Figure title font size
+})
 
 # Generate data
-np.random.seed(2023)
+np.random.seed(2024)
 N = 100  # Number of data points
 x = np.sort(np.random.rand(N))
 y = np.sort(np.random.rand(N))
 z = Franke(x, y)
 z = z + 0.1 * np.random.normal(N, 1, z.shape)  # Add some noise to the data
 
-deg_max = 5
+deg_max = 8
 degrees = np.arange(1, deg_max+1)
 MSE_train = np.zeros(len(degrees))
 MSE_test = np.zeros(len(degrees))
