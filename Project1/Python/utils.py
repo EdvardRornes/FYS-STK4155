@@ -19,19 +19,6 @@ def Franke(x, y):
 
 # Creates a polynomial design matrix up to degree 'deg'
 def Design_Matrix(x: np.ndarray, y: np.ndarray, deg: int) -> np.ndarray:
-    """ Calculates the feature matrix X, and scales X and z (if scale = True).
-
-    ## Parameters
-        x (ndarray): x-values of data points.
-        y (ndarray): y-values of data points.
-        z (ndarray): z-values of data points.
-        deg (int): Degree of polynomial fit.
-        scale (bool, default=True): If True, scale X and z before returning.
-
-    ## Returns
-        X (ndarray): Feature matrix (Scaled if scale=True).
-    """
-
     ## Create feature matrix
     xy_dic = {
         "x": x,
@@ -40,10 +27,9 @@ def Design_Matrix(x: np.ndarray, y: np.ndarray, deg: int) -> np.ndarray:
     xy = pd.DataFrame(xy_dic)
 
     poly = PolynomialFeatures(degree=deg)
-    X = poly.fit_transform(xy) # Find feature matrix
+    X = poly.fit_transform(xy)
 
     return X
-
 
 # Ridge regression, lambd = 0 for OLS
 def Ridge_Reg(X, y, lambd):
@@ -178,11 +164,11 @@ def Cross_Validation(X, y, k, model, lambd=0):
 
         # Model selection: 0 for OLS, 1 for Ridge, 2 for LASSO
         if model == 0:
-            MSE_train_array[i], MSE_test_array[i], R2_train, R2_test, beta = OLS_fit(X_train, X_test, y_train, y_test)
+            beta, MSE_train_array[i], MSE_test_array[i], R2_train, R2_test = OLS_fit(X_train, X_test, y_train, y_test)
         elif model == 1:
-            MSE_train_array[i], MSE_test_array[i], R2_train, R2_test, beta = Ridge_fit(X_train, X_test, y_train, y_test, lambd)
+            beta, MSE_train_array[i], MSE_test_array[i], R2_train, R2_test = Ridge_fit(X_train, X_test, y_train, y_test, lambd)
         elif model == 2:
-            MSE_train_array[i], MSE_test_array[i], R2_train, R2_test, beta = LASSO_fit(X_train, X_test, y_train, y_test, lambd)
+            beta, MSE_train_array[i], MSE_test_array[i], R2_train, R2_test = LASSO_fit(X_train, X_test, y_train, y_test, lambd)
         else:
             print("Model argument must be 0 for OLS, 1 for Ridge, or 2 for LASSO")
         
