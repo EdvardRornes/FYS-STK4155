@@ -1,0 +1,75 @@
+\documentclass{article}
+
+\usepackage{subfiles}
+\usepackage{graphicx}% Include figure files
+\usepackage{dcolumn}% Align table columns on decimal point
+\usepackage{bm}% bold math
+\usepackage{float}
+\usepackage{mathtools, mathrsfs}
+\usepackage{physics}
+\usepackage{tcolorbox}
+\usepackage{enumerate}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{tikz}
+\usepackage{tensor}
+\usetikzlibrary{positioning}
+\usepackage[compat=1.1.0]{tikz-feynman}
+%\usepackage{hyperref}% add hypertext capabilities
+%\usepackage[mathlines]{lineno}% Enable numbering of text and display math
+%\linenumbers\relax % Commence numbering lines
+
+\usepackage[%Uncomment any one of the following lines to test 
+%%scale=0.7, marginratio={1:1, 2:3}, ignoreall,% default settings
+%%text={7in,10in},centering,
+margin=1.5in,
+%%total={6.5in,8.75in}, top=1.2in, left=0.9in, includefoot,
+%%height=10in,a5paper,hmargin={3cm,0.8in},
+]{geometry}
+
+\newcommand{\Hp}{\mathcal{H}}
+\renewcommand{\L}{\mathcal{L}}
+\renewcommand{\O}{\mathcal{O}}
+\newcommand{\f}[2]{\frac{#1}{#2}}
+\newcommand{\MS}{\overline{\text{MS}}}
+\newcommand{\p}{\partial}
+\title{FYS-STK4155 Week 36}
+\author{Edvard B. Rørnes, Isak O. Rukan, Anton A. Brekke}
+\begin{document}
+	\maketitle
+	\section*{Exercise 1}
+	Show that
+	\begin{align*}
+		\mathbb{E}[(\bm y-\tilde{\bm y})^2]=\text{Bias}[\tilde{\bm y}]+\text{Var}[\tilde{\bm y}]+\sigma^2
+	\end{align*}
+	where $\bm y$ is defined by $\bm y=f(\bm x)+\bm \varepsilon$, $\bm \varepsilon\sim N(0,\sigma^2)$ is a normal distributed error and $f(\bm x)$ is the approximated function given our model $\tilde{\bm y}$ obtained by minimizing $(\bm y-\tilde{\bm y})^2$ with $\tilde{\bm y}=\bm X\bm \beta$. Explain what the terms mean and discuss their interpretations. Perform then a bias-variance analysis of a simple one-dimensional function by studying the MSE value as a function of the complexity of your model. Use OLS only. Discuss the bias and variance trade-off as function of your model complexity (the degree of the polynomial) and the number of data points.
+	\textbf{Solution:} \\
+	For ease of notation we write $f(\bm x)=f$ and simply ignore vector notation since everything is a scalar in the end. Then we have
+	\begin{align*}
+		\mathbb{E}[(\bm y-\tilde{\bm y})^2]&=\mathbb{E}[(f+\bm\varepsilon-\tilde{\bm y})^2]=\mathbb{E}[(f-\tilde{\bm y})^2]+2\underbrace{\mathbb{E}[(f-\tilde{\bm y})\bm\varepsilon]}_{=\,0}+\underbrace{\mathbb{E}[\bm\varepsilon^2]}_{=\,\sigma^2}\\
+		&=\mathbb{E}[((f-\mathbb{E}[\tilde{\bm y}])-(\tilde{\bm y}-\mathbb{E}[\tilde{\bm y}]))^2]+\sigma^2\\
+		&=\mathbb{E}[(f-\mathbb{E}[\tilde{\bm y}]))^2]+\mathbb{E}[(\tilde{\bm y}-\mathbb{E}[\tilde{\bm y}])^2]-2\,\mathbb{E}[((f-\mathbb{E}[\tilde{\bm y}])(\tilde{\bm y}-\mathbb{E}[\tilde{\bm y}]))]+\sigma^2\\
+		&=\text{Bias}[\tilde{\bm y}]+\text{Var}[\tilde{\bm y}]+\sigma^2-2\,\mathbb{E}[(f-\mathbb{E}[\tilde{\bm y}])(\tilde{\bm y}-\mathbb{E}[\tilde{\bm y}])]
+	\end{align*}
+	where $\mathbb{E}[(f-\tilde{\bm y})\bm\varepsilon]=0$ is justified by $\bm\varepsilon$ being independent and we note that the wrong definition of the Bias is given in the problem text (with that definition $\sigma^2$ gets put into the `Bias'). All that remains is to show that the last term is 0. Since $\mathbb{E}[f]=f$ and $\mathbb{E}[f\,\mathbb{E}[\tilde{\bm y}]]=f\,\mathbb{E}[\mathbb{E}[\tilde{\bm y}]]=f\,\mathbb{E}[\tilde{\bm y}]$ then
+	\begin{align*}
+		\mathbb{E}[(f-\mathbb{E}[\tilde y])(\tilde{\bm y}-\mathbb{E}[\tilde y])]&=\mathbb{E}[f\tilde{\bm y}-f\,\mathbb{E}[\tilde{\bm y}]-\tilde{\bm y}\,\mathbb{E}[\tilde y]+\mathbb{E}^2[\tilde{\bm y}]]\\
+		&=f\,\mathbb{E}[\tilde{\bm y}]-f\,\mathbb{E}[\tilde{\bm y}]-\mathbb{E}^2[\tilde{\bm y}]+\mathbb{E}^2[\tilde{\bm y}]=0
+	\end{align*}
+	Since I have already written it in down I just want to quickly show why (I believe at least) the definition given in the problem text is wrong:
+	\begin{align*}
+		\mathbb{E}[(\bm y-\tilde{\bm y})^2]&=\mathbb{E}[((\bm y-\mathbb{E}[\tilde y])-(\tilde{\bm y}-\mathbb{E}[\tilde y]))^2]\\
+		&=\mathbb{E}[(\bm y-\mathbb{E}[\tilde y])^2]+\mathbb{E}[(\tilde{\bm y}-\mathbb{E}[\tilde y])^2]-2\,\mathbb{E}[(\bm y-\mathbb{E}[\tilde y])(\tilde{\bm y}-\mathbb{E}[\tilde y])]\\
+		&\hspace{-2mm}\underbrace{=}_{\text{wrong}}\text{Bias}[\tilde{\bm y}]+\text{Var}[\tilde{\bm y}]-2\,\mathbb{E}[(\bm y-\mathbb{E}[\tilde y])(\tilde{\bm y}-\mathbb{E}[\tilde y])]
+	\end{align*}
+	Then we have
+	\begin{align*}
+		\mathbb{E}[(\bm y-\mathbb{E}[\tilde y])(\tilde{\bm y}-\mathbb{E}[\tilde y])]&=\mathbb{E}[(f+\bm\varepsilon-\mathbb{E}[\tilde y])(\tilde{\bm y}-\mathbb{E}[\tilde y])]\\
+		&=\mathbb{E}[(f-\mathbb{E}[\tilde y])(\tilde{\bm y}-\mathbb{E}[\tilde y])]+\mathbb{E}[\bm\varepsilon(\tilde{\bm y}-\mathbb{E}[\tilde y])]
+	\end{align*}
+	I have already shown explicitly that the first term is $0$ and the second term is 0 due to the same reasons as above. So with this definition we would get the wrong result that
+	\begin{align*}
+		\mathbb{E}[(\bm y-\tilde{\bm y})^2]&=\text{Bias}[\tilde{\bm y}]+\text{Var}[\tilde{\bm y}]
+	\end{align*}
+	
+		
+\end{document}
