@@ -6,7 +6,7 @@ from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
 from sklearn.linear_model import Lasso
 from sklearn.metrics import mean_squared_error, r2_score
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 
 # Franke function
@@ -63,19 +63,34 @@ def R2(x, y):
     return r2_score(x, y)
 
 # Scales the input data using StandardScaler
-def scale_data(X_train, X_test, y_train, y_test):
-    scaler_X = StandardScaler()
-    scaler_y = StandardScaler()
-    
-    # Fit on training data and transform both training and testing sets
-    X_train_scaled = scaler_X.fit_transform(X_train)
-    X_test_scaled = scaler_X.transform(X_test)
-    
-    # Scale target values
-    y_train_scaled = scaler_y.fit_transform(y_train.reshape(-1, 1)).flatten()
-    y_test_scaled = scaler_y.transform(y_test.reshape(-1, 1)).flatten()
-    
-    return X_train_scaled, X_test_scaled, y_train_scaled, y_test_scaled
+def scale_data(X_train, X_test, y_train, y_test, scaler_type="StandardScalar", b=1, a=0):
+    if scaler_type.upper() == "STANDARDSCALAR":
+        scaler_X = StandardScaler()
+        scaler_y = StandardScaler()
+        
+        # Fit on training data and transform both training and testing sets
+        X_train_scaled = scaler_X.fit_transform(X_train)
+        X_test_scaled = scaler_X.transform(X_test)
+        
+        # Scale target values
+        y_train_scaled = scaler_y.fit_transform(y_train.reshape(-1, 1)).flatten()
+        y_test_scaled = scaler_y.transform(y_test.reshape(-1, 1)).flatten()
+        
+        return X_train_scaled, X_test_scaled, y_train_scaled, y_test_scaled
+
+    if scaler_type.upper() in ["MINMAX", "MIN_MAX"]:
+        scaler_X = MinMaxScaler()
+        scaler_y = MinMaxScaler()
+        
+        # Fit on training data and transform both training and testing sets
+        X_train_scaled = scaler_X.fit_transform(X_train)
+        X_test_scaled = scaler_X.transform(X_test)
+        
+        # Scale target values
+        y_train_scaled = scaler_y.fit_transform(y_train.reshape(-1, 1)).flatten()
+        y_test_scaled = scaler_y.transform(y_test.reshape(-1, 1)).flatten()
+        
+        return X_train_scaled, X_test_scaled, y_train_scaled, y_test_scaled
 
 # OLS fitting
 def OLS_fit(X_train, X_test, y_train, y_test):
