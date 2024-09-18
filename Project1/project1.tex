@@ -209,6 +209,30 @@ This has the added benefit of being able to set certain parameters to be $0$ ins
 \subsection{Resampling}
 
 \subsection{Bias-Variance}
+A key part of... is the so-called Bias-Variance Trade-Off. For ease of notation we write $f(\bm x)=f$ and simply ignore vector notation since everything is a scalar in the end. Then we have
+\begin{align*}
+	\mathbb{E}[(\bm y-\tilde{\bm y})^2]&=\mathbb{E}[(f+\bm\varepsilon-\tilde{\bm y})^2]\\
+	&=\mathbb{E}[(f-\tilde{\bm y})^2]+2\underbrace{\mathbb{E}[(f-\tilde{\bm y})\bm\varepsilon]}_{=\,0}+\underbrace{\mathbb{E}[\bm\varepsilon^2]}_{=\,\sigma^2}\\
+	&=\mathbb{E}[((f-\mathbb{E}[\tilde{\bm y}])-(\tilde{\bm y}-\mathbb{E}[\tilde{\bm y}]))^2]+\sigma^2\\
+	&=\mathbb{E}[(f-\mathbb{E}[\tilde{\bm y}]))^2]+\mathbb{E}[(\tilde{\bm y}-\mathbb{E}[\tilde{\bm y}])^2]\\
+	&-2\,\mathbb{E}[((f-\mathbb{E}[\tilde{\bm y}])(\tilde{\bm y}-\mathbb{E}[\tilde{\bm y}]))]+\sigma^2\\
+	&=\text{Bias}[\tilde{\bm y}]+\text{Var}[\tilde{\bm y}]+\sigma^2\\
+	&-2\,\mathbb{E}[(f-\mathbb{E}[\tilde{\bm y}])(\tilde{\bm y}-\mathbb{E}[\tilde{\bm y}])]
+\end{align*}
+where $\mathbb{E}[(f-\tilde{\bm y})\bm\varepsilon]=0$ is justified by $\bm\varepsilon$ being independent and we note that the wrong definition of the Bias is given in the problem text (with that definition $\sigma^2$ gets put into the `Bias'). All that remains is to show that the last term is 0. Since $\mathbb{E}[f]=f$ and $\mathbb{E}[f\,\mathbb{E}[\tilde{\bm y}]]=f\,\mathbb{E}[\mathbb{E}[\tilde{\bm y}]]=f\,\mathbb{E}[\tilde{\bm y}]$ then
+\begin{align*}
+	\mathbb{E}[(f-\mathbb{E}[\tilde y])(\tilde{\bm y}-\mathbb{E}[\tilde y])]&=\mathbb{E}[f\tilde{\bm y}-f\,\mathbb{E}[\tilde{\bm y}]-\tilde{\bm y}\,\mathbb{E}[\tilde y]+\mathbb{E}^2[\tilde{\bm y}]]\\
+	&=f\,\mathbb{E}[\tilde{\bm y}]-f\,\mathbb{E}[\tilde{\bm y}]-\mathbb{E}^2[\tilde{\bm y}]+\mathbb{E}^2[\tilde{\bm y}]=0
+\end{align*}
+which proves the claim. 
+
+The LHS of (\ref{eq:MSE-bias-var}) is the expected value of the MSE which tells us how well the model's predictions match the true data on average. The equation shows that we can decompose this expected MSE into 3 different components.
+\begin{itemize}
+	\item Bias: This quantity measures how much the model's average prediction differs from its true value. A high bias implies that the model is underfitting the data of is simply too simplistic.
+	\item Var: The variance measures how much the model's predictions vary when trained on different datasets. It captures the sensitivity of the model to small changes in the training data. A high variance suggests overfitting, meaning it performs well on the training data but may be capturing noise or false patterns.
+	\item $\sigma^2$: This is the irreducible error or noise in the data itself which cannot be explained by the model.
+\end{itemize}
+The idea is to minimize the LHS of (\ref{eq:MSE-bias-var}), so clearly we want to minimize both the bias and the variance at the same time. However these are correlated to one another, so lowering the e.g. the bias will in general increase the variance. So Bias-Variance Tradeoff is essentially trying to optimize the complexity of the model such that we neither overfit nor underfit the model such that it can be generalized to other cases. These quantities can then be used as means to fine tune a model.
 
 \section{Implementation}
 For this project the surface we will consider is given by the Franke function
@@ -218,16 +242,33 @@ For this project the surface we will consider is given by the Franke function
 	&+\frac{1}{2}\exp(-\frac{(9x-7)^2}{4}-\frac{(9y-3)^2}{4})\nonumber\\
 	&-\frac{1}{5}\exp(-(9x-4)^2-(9y-7)^2)
 \end{align}
-This function maps a surface defined on the interval $x,y\in[0,1]$. To perform an analysis on this function we perform a polynomial fit up to degree $n$ where
+This function maps a surface defined on the interval $x,y\in[0,1]$. To perform an analysis on this function we consider a polynomial fit up to degree $n$ where
+\begin{align}
+	\tilde{\bm{z}}&=\f1{n+1}\sum_{i=0}^{n}\bigg(\bm\beta_{00}\label{eq:bmz}\\
+	&+\bm\beta_{10}x_i+\bm\beta_{11}y_i\nonumber\\
+	&+\bm\beta_{20}x_i^2+\bm\beta_{21}x_iy_i+\bm\beta_{22}y_i^2\nonumber\\
+	&+...\nonumber\\
+	&+\bm\beta_{n0}x_i^n+\bm\beta_{n1}x_i^{n-1}y+...+\bm\beta_{n(n-1)}x_iy_i^{n-1}+\bm\beta_{nn}y_i^n\bigg)\nonumber\\
+	&=\frac{1}{n+1}\sum_{i,j=0}^{n}\sum_{\substack{k=0}}^{i}\bm\beta_{jk} x^{j-k}_i y^{k}_i\equiv \bm X\bm\beta\nonumber
+\end{align}
+where the components $x_i$ and $y_i$ are entries in the input vectors $\bm x^T=\begin{bmatrix} x_0&...&x_n \end{bmatrix}$ and $\bm y^T=\begin{bmatrix} y_0& ...&y_n \end{bmatrix}$ respectively which are our independent variables. Each $\bm\beta_{ij}$ is a $\frac{(n+1)(n+2)}{2}$ component vector with a single non-zero entry with magnitude $\beta_{ij}$ and the design matrix $\bm X$ is then an $(n+1)\times\frac{(n+1)(n+2)}{2}$ matrix of the form:
 \begin{align*}
-	\tilde{\bm{z}}&=\beta_{00}\\
-	&+\beta_{10}x+\beta_{11}y\\
-	&+\beta_{20}x^2+\beta_{21}xy+\beta_{22}y^2\\
-	&+...\\
-	&+\beta_{n0}x^n+\beta_{n1}x^{n-1}y+...+\beta_{n(n-1)}xy^{n-1}+\beta_{nn}y^n\\
-	&\equiv \bm X\bm\beta
+	\bm X=\frac{1}{n+1}\begin{bmatrix}
+		1 & x_0 & y_0 & x^2_0 & x_0y_0 & y_0^2 & ... & x_0^n & ... & y_0^n\\
+		1 & x_1 & y_1 & x_1^2 & x_1y_1 & y_1^2 & ... & x_1^n & ... & y_1^n\\
+		\vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots & \vdots & \ddots & \vdots\\
+		1 & x_n & y_n & x_n^2 & x_ny_n & y_n^2 & ... & x_n^n & ... & y_n^n
+	\end{bmatrix}
 \end{align*}
-i.e. the elements of the design matrix $(\bm X)_{ij}=x^{i-j}y^{j}$ for $n\geq i\geq j$. 
+and the $\bm\beta$ vector contains the $\frac{(n+1)(n+2)}{2}$ components 
+\begin{align*}
+	\bm\beta^T=\begin{bmatrix}
+		\beta_{00}&\beta_{10}&\beta_{11}&\beta_{20}&\beta_{21}&\beta_{22}&...&\beta_{n(n-1)}&\beta_{nn}
+	\end{bmatrix}
+\end{align*}
+It should now be clear which unit vectors correspond to each term in (\ref{eq:bmz}).
+
+We then generated data with the Franke function and used an $x$-$(x-1)$ train-test split. This was chosen because... Next we 
 \section{Results}
 
 \subsection{OLS}
