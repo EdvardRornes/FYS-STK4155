@@ -38,10 +38,11 @@ margin=1.5in,
 	\maketitle
 	\section*{Exercise 1}
 	Show that
-	\begin{align*}
+	\begin{align}
 		\mathbb{E}[(\bm y-\tilde{\bm y})^2]=\text{Bias}[\tilde{\bm y}]+\text{Var}[\tilde{\bm y}]+\sigma^2
-	\end{align*}
-	where $\bm y$ is defined by $\bm y=f(\bm x)+\bm \varepsilon$, $\bm \varepsilon\sim N(0,\sigma^2)$ is a normal distributed error and $f(\bm x)$ is the approximated function given our model $\tilde{\bm y}$ obtained by minimizing $(\bm y-\tilde{\bm y})^2$ with $\tilde{\bm y}=\bm X\bm \beta$. Explain what the terms mean and discuss their interpretations. Perform then a bias-variance analysis of a simple one-dimensional function by studying the MSE value as a function of the complexity of your model. Use OLS only. Discuss the bias and variance trade-off as function of your model complexity (the degree of the polynomial) and the number of data points.
+		\label{eq:MSE-bias-var}
+	\end{align}
+	where $\bm y$ is defined by $\bm y=f(\bm x)+\bm \varepsilon$, $\bm \varepsilon\sim N(0,\sigma^2)$ is a normal distributed error and $f(\bm x)$ is the approximated function given our model $\tilde{\bm y}$ obtained by minimizing $(\bm y-\tilde{\bm y})^2$ with $\tilde{\bm y}=\bm X\bm \beta$. Explain what the terms mean and discuss their interpretations. Perform then a bias-variance analysis of a simple one-dimensional function by studying the MSE value as a function of the complexity of your model. Use OLS only. Discuss the bias and variance trade-off as function of your model complexity (the degree of the polynomial) and the number of data points.\\
 	\textbf{Solution:} \\
 	For ease of notation we write $f(\bm x)=f$ and simply ignore vector notation since everything is a scalar in the end. Then we have
 	\begin{align*}
@@ -55,6 +56,16 @@ margin=1.5in,
 		\mathbb{E}[(f-\mathbb{E}[\tilde y])(\tilde{\bm y}-\mathbb{E}[\tilde y])]&=\mathbb{E}[f\tilde{\bm y}-f\,\mathbb{E}[\tilde{\bm y}]-\tilde{\bm y}\,\mathbb{E}[\tilde y]+\mathbb{E}^2[\tilde{\bm y}]]\\
 		&=f\,\mathbb{E}[\tilde{\bm y}]-f\,\mathbb{E}[\tilde{\bm y}]-\mathbb{E}^2[\tilde{\bm y}]+\mathbb{E}^2[\tilde{\bm y}]=0
 	\end{align*}
+	which proves the claim. 
+	
+	The LHS of (\ref{eq:MSE-bias-var}) is the expected value of the MSE which tells us how well the model's predictions match the true data on average. The equation shows that we can decompose this expected MSE into 3 different components.
+	\begin{itemize}
+		\item Bias: This quantity measures how much the model's average prediction differs from its true value. A high bias implies that the model is underfitting the data of is simply too simplistic.
+		\item Var: The variance measures how much the model's predictions vary when trained on different datasets. It captures the sensitivity of the model to small changes in the training data. A high variance suggests overfitting, meaning it performs well on the training data but may be capturing noise or false patterns.
+		\item $\sigma^2$: This is the irreducible error or noise in the data itself which cannot be explained by the model.
+	\end{itemize}
+	The idea is to minimize the LHS of (\ref{eq:MSE-bias-var}), so clearly we want to minimize both the bias and the variance at the same time. However these are correlated to one another, so lowering the e.g. the bias will in general increase the variance. So Bias-Variance Tradeoff is essentially trying to optimize the complexity of the model such that we neither overfit nor underfit the model such that it can be generalized to other cases. These quantities can then be used as means to fine tune a model.
+	
 	Since I have already written it in down I just want to quickly show why (I believe at least) the definition given in the problem text is wrong:
 	\begin{align*}
 		\mathbb{E}[(\bm y-\tilde{\bm y})^2]&=\mathbb{E}[((\bm y-\mathbb{E}[\tilde y])-(\tilde{\bm y}-\mathbb{E}[\tilde y]))^2]\\

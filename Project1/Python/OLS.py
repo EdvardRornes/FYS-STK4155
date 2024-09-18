@@ -48,7 +48,7 @@ for deg in range(deg_max):
     '''
     # I have troubles when trying to plot the different β's. What GPT proposed is that instead of using the above we instead do this
 
-    beta[deg], MSE_train[deg], MSE_test[deg], R2_train[deg], R2_test[deg] = OLS_fit(X_train, X_test, z_train, z_test)
+    beta, MSE_train[deg], MSE_test[deg], R2_train[deg], R2_test[deg] = OLS_fit(X_train, X_test, z_train, z_test)
 
     # Flatten beta if necessary
     if beta.ndim == 2:
@@ -99,7 +99,9 @@ for i in range(max_len):
 
 plt.xlabel(r'Degree')
 plt.ylabel(r'$\beta$ values')
+plt.yscale('log')
 plt.xlim(1, deg_max)
+plt.ylim(1e-1,1e5)
 plt.title(r'OLS $\beta$ coefficients')
 plt.legend()
 plt.grid(True)
