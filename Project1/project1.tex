@@ -32,7 +32,7 @@ reprint,
 %bibnotes,
 amsmath,amssymb,
 aps,
-%pra,
+pra,
 %prb,
 %rmp,
 %prstab,
@@ -210,6 +210,10 @@ This has the added benefit of being able to set certain parameters to be $0$ ins
 
 \subsection{Bias-Variance}
 A key part of... is the so-called Bias-Variance Trade-Off. For ease of notation we write $f(\bm x)=f$ and simply ignore vector notation since everything is a scalar in the end. Then we have
+\begin{align}
+	\mathbb{E}[(\bm y-\tilde{\bm y})^2]=\text{Bias}[\tilde{\bm y}]+\text{Var}[\tilde{\bm y}]+\sigma^2
+	\label{eq:MSE-bias-var}
+\end{align}
 \begin{align*}
 	\mathbb{E}[(\bm y-\tilde{\bm y})^2]&=\mathbb{E}[(f+\bm\varepsilon-\tilde{\bm y})^2]\\
 	&=\mathbb{E}[(f-\tilde{\bm y})^2]+2\underbrace{\mathbb{E}[(f-\tilde{\bm y})\bm\varepsilon]}_{=\,0}+\underbrace{\mathbb{E}[\bm\varepsilon^2]}_{=\,\sigma^2}\\
@@ -270,6 +274,48 @@ It should now be clear which unit vectors correspond to each term in (\ref{eq:bm
 
 We then generated data with the Franke function and used an $x$-$(x-1)$ train-test split. This was chosen because... Next we 
 \section{Results}
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/OLS-MSE-degree.pdf}
+	\caption{Caption for your figure}
+	\label{fig:OLS_mse_degree}
+\end{figure}
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/OLS-R2-degree.pdf}
+	\caption{Caption for your figure}
+	\label{fig:OLS_r2_degree}
+\end{figure}
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=\linewidth]{Python/Figures/OLS-beta-degree.pdf}
+\caption{Caption for your figure}
+\label{fig:OLS_beta_degree}
+\end{figure}
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/Ridge-MSE-degree.pdf}
+	\caption{Caption for your figure}
+	\label{fig:ridge_mse_degree}
+\end{figure}
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/Ridge-R2-degree.pdf}
+	\caption{Caption for your figure}
+	\label{fig:ridge_r2_degree}
+\end{figure}
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/LASSO-MSE-degree.pdf}
+	\caption{Caption for your figure}
+	\label{fig:lasso_mse_degree}
+\end{figure}
+\begin{figure}[ht!]
+\centering
+\includegraphics[width=\linewidth]{Python/Figures/LASSO-R2-degree.pdf}
+\caption{Caption for your figure}
+\label{fig:lasso_r2_degree}
+\end{figure}
 
 \subsection{OLS}
 
@@ -280,24 +326,6 @@ We then generated data with the Franke function and used an $x$-$(x-1)$ train-te
 \section{Discussion}
 
 \section{Conclusion}
-
-\section*{Part e)}
-Show that you can rewrite
-\begin{align*}
-	C(\bm X,\bm \beta)=\frac{1}{n}\sum_{i=0}^{n-1}(y_i-\tilde y_i)^2=\mathbb{E}[(\bm y-\tilde{\bm y})^2]
-\end{align*}
-as
-\begin{align*}
-	\mathbb{E}[(\bm y-\tilde{\bm y})^2]=\text{Bias}[\tilde y]+\text{Var}[\tilde{y}]+\sigma^2
-\end{align*}
-where
-\begin{align*}
-	\text{Bias}[\tilde y]=\mathbb{E}\!\left[(\bm y-\mathbb{E}[\tilde{\bm y}])^2\right]
-\end{align*}
-and
-\begin{align*}
-	\text{Var}[\tilde{y}]=\mathbb{E}\!\left[(\tilde{\bm y}-\mathbb{E}[\tilde{\bm y}])^2\right]=\frac{1}{n}\sum_i(\tilde y_i-\mathbb{E}[\tilde{\bm y}])^2
-\end{align*}
 Test bib \cite{Planck:2018vyg}
 
 % Bibliography

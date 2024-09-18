@@ -99,30 +99,6 @@ plt.title(rf"Ridge $R^2$")
 plt.grid(True)
 plt.savefig(f'Figures/Ridge-R2-degree.pdf')
 
-'''
-# With the commented code previously we can then get an omega scuffed plot using the below. Isak you know how to do this?
-
-# Process beta coefficients for plotting
-max_len = max([len(beta) for beta in beta_coefficients])
-beta_array = np.full((deg_max, max_len), np.nan)
-for i, beta in enumerate(beta_coefficients):
-    beta_array[i, :len(beta)] = beta
-
-# Plot the beta coefficients
-plt.figure(figsize=(10, 6))
-for i in range(max_len):
-    plt.plot(degrees, beta_array[:, i], label=rf'$\beta_{i}$', lw=2.5)
-
-plt.xlabel(r'Degree')
-plt.ylabel(r'$\beta$ values')
-plt.xlim(1, deg_max)
-plt.title(r'Ridge $\beta$ coefficients')
-plt.legend()
-plt.grid(True)
-plt.savefig(f'Figures/Ridge-beta-degree.pdf')
-plt.show()
-'''
-
 lambda_exp_start = -10
 lambda_exp_stop = -1
 lambda_num = 100

@@ -5,20 +5,20 @@
 
 - [x] Perform OLS reg using polynomials in $x$ and $y$ up to fifth order. 
 - [x] Evaluate MSE and $R^2$. Plot the MSE and $R^2$ as a function of the polynomial degree. 
-- [ ] Plot the parameters $\beta$ as you increase the order of the polynomials. Comment on the results. Note: Code must include scaling/centering of the data and a split in training and test data. **ER: Struggling with this point, see OLS.py for what I have done regarding this @Isak. Not sure if we are just supposed to pick a single $\beta$, otherwise this look ugly af.**
+- [x] Plot the parameters $\beta$ as you increase the order of the polynomials. Comment on the results. Note: Code must include scaling/centering of the data and a split in training and test data. **ER: Struggling with this point, see OLS.py for what I have done regarding this @Isak. Not sure if we are just supposed to pick a single $\beta$, otherwise this look ugly af.**
 - [ ] Present a critical discussion why and why not you have scaled the data. If we have then explain why. **ER: I have scaled it but other than it just being convenient I am not sure. The previous point also states that we have to do it??**
 
 ### Part b:
 
 - [x] Write own code for Ridge regression.
-- [ ] Perform the same analysis as above but now for different values of $\lambda$. **ER: Only missing the $\beta$ part.**
+- [ ] Perform the same analysis as above but now for different values of $\lambda$. **ER: Copy what was done for OLS**
 - [ ] Compare and analyze the results with those obtained in the previous part with OLS.
 - [x] Study the dependence on $\lambda$.
 
 ### Part c:
 
 - [x] Write own code for LASSO regression. Use Scikit-learn. Scikit-learn excludes the intercept by default. **Not really sure what including/excluding intercept really means...**
-- [ ] Perform the same analysis as above but now for different values of $\lambda$. **ER: Only missing the $\beta$ part.**
+- [ ] Perform the same analysis as above but now for different values of $\lambda$. **ER: Copy what was done for OLS**
 - [ ] Compare and analyze the results with those obtained in the previous part with OLS and Ridge.
 - [x] Study the dependence on $\lambda$.
 - [ ] Give a critical discussion of the three methods and a judgement of which model fits the data best.
