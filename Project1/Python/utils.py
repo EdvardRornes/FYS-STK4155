@@ -18,7 +18,7 @@ def Franke(x, y):
     return term1 + term2 + term3 + term4
 
 # Creates a polynomial design matrix up to degree 'deg'
-def Design_Matrix(x: np.ndarray, y: np.ndarray, deg: int) -> np.ndarray:
+def Design_Matrix(x: np.ndarray, y: np.ndarray, deg: int) -> np.ndarray:            
     ## Create feature matrix
     xy_dic = {
         "x": x,
@@ -29,6 +29,21 @@ def Design_Matrix(x: np.ndarray, y: np.ndarray, deg: int) -> np.ndarray:
     poly = PolynomialFeatures(degree=deg)
     X = poly.fit_transform(xy)
 
+    return X
+
+def Design_matrix2D(x:np.ndarray, y:np.ndarray, p:int):
+    
+    N = len(x)                          # Number of data points
+    num_cols = (p + 1) * (p + 2) // 2   # Number of columns
+    
+    X = np.zeros((N, num_cols))         # Initialize the design matrix
+    
+    col_idx = 0
+    for degree in range(p+1):
+        for k in range(degree+1):
+            X[:, col_idx] = (x ** (degree - k)) * (y ** k)
+            col_idx += 1
+    
     return X
 
 # Ridge regression, lambd = 0 for OLS

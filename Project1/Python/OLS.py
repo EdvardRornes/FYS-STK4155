@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from utils import *
 
@@ -7,56 +8,62 @@ from utils import *
 plt.rcParams['text.usetex'] = True
 plt.rcParams['axes.titlepad'] = 25 
 
-plt.rcParams.update({
-    'font.family' : 'euclid',
-    'font.weight' : 'bold',
-    'font.size': 17,       # General font size
-    'axes.labelsize': 17,  # Axis label font size
-    'axes.titlesize': 22,  # Title font size
-    'xtick.labelsize': 22, # X-axis tick label font size
-    'ytick.labelsize': 22, # Y-axis tick label font size
-    'legend.fontsize': 17, # Legend font size
-    'figure.titlesize': 25 # Figure title font size
-})
+font = {'family' : 'euclid',
+        'weight' : 'bold',
+        'size'   : 25}
 
 # Generate data
-np.random.seed(2024)
+np.random.seed(2023)
 N = 100  # Number of data points
 x = np.sort(np.random.rand(N))
 y = np.sort(np.random.rand(N))
 z = Franke(x, y)
+
 z = z + 0.1 * np.random.normal(N, 1, z.shape)  # Add some noise to the data
 
-deg_max = 8
+deg_max = 5
 degrees = np.arange(1, deg_max+1)
 MSE_train = np.zeros(len(degrees))
 MSE_test = np.zeros(len(degrees))
 R2_train = np.zeros(len(degrees))
 R2_test = np.zeros(len(degrees))
-beta_coefficients = [0]*(deg_max+1)
+beta_coefficients = [0]*deg_max
 # beta_coefficients = [] # See below
 
 for deg in range(deg_max):
     # Create polynomial features
-    X = Design_Matrix(x, y, degrees[deg])
+    X = Design_matrix2D(x, y, degrees[deg])
     # Split into training and testing and scale
     X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.25, random_state=42)
     X_train, X_test, z_train, z_test = scale_data(X_train, X_test, z_train, z_test)
 
     beta_coefficients[deg], MSE_train[deg], MSE_test[deg], R2_train[deg], R2_test[deg] = OLS_fit(X_train, X_test, z_train, z_test)
-    
-    '''
-    # I have troubles when trying to plot the different β's. What GPT proposed is that instead of using the above we instead do this
 
-    beta, MSE_train[deg], MSE_test[deg], R2_train[deg], R2_test[deg] = OLS_fit(X_train, X_test, z_train, z_test)
+# Plotting the beta's
+M = np.max([np.max(k) for k in beta_coefficients])
+minor_ticks = np.arange(0, len(beta_coefficients[-1]), 1)
+major_ticks = [n*(n+1)/2 for n in range(deg_max)]
+_, ax = plt.subplots(figsize=(10, 6))
 
-    # Flatten beta if necessary
-    if beta.ndim == 2:
-        beta = beta.flatten()
-    
-    beta_coefficients.append(beta)
-    '''
+for i in range(len(beta_coefficients)):
+    N = len(beta_coefficients[i])
+    num = range(N)
+    deg = i + 1
+    tmp = np.log(np.abs(beta_coefficients[i]) + 1e-1)
 
+    ax.plot(num, tmp, label=rf"$p={deg}$")
+
+ax.set_xticks(minor_ticks)
+ax.grid(which="both", axis="x")
+ax.set_xlabel(r"$\beta_n$")
+ax.set_ylabel(r"$\ln|\beta + 0.1|$")
+
+y0 = ax.get_ylim()
+plt.vlines(major_ticks, y0[0], y0[1], colors="black", alpha=0.3)
+plt.ylim(y0[0], y0[1])
+plt.xlim(0, N + 1)
+plt.legend(loc="upper right")
+plt.show()
 
 # Plot MSE
 plt.figure(figsize=(10, 6))
@@ -99,9 +106,7 @@ for i in range(max_len):
 
 plt.xlabel(r'Degree')
 plt.ylabel(r'$\beta$ values')
-plt.yscale('log')
 plt.xlim(1, deg_max)
-plt.ylim(1e-1,1e5)
 plt.title(r'OLS $\beta$ coefficients')
 plt.legend()
 plt.grid(True)
