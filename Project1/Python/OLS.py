@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
-from sklearn.preprocessing import StandardScaler
+
 from sklearn.model_selection import train_test_split
 from utils import *
 import time
@@ -25,13 +25,13 @@ plt.rcParams.update({
 
 # Generate data
 # np.random.seed(2024)
-N = 100  # Number of data points
+N = 50  # Number of data points
 x = np.sort(np.random.rand(N))
 y = np.sort(np.random.rand(N))
 z = Franke(x, y)
 z = z + 0.1 * np.random.normal(N, 1, z.shape)  # Add some noise to the data
 
-deg_max = 15
+deg_max = 8
 degrees = np.arange(1, deg_max+1)
 MSE_train = np.zeros(len(degrees))
 MSE_test = np.zeros(len(degrees))

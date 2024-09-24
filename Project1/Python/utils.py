@@ -1,6 +1,6 @@
 import numpy as np
-import sklearn
 import pandas as pd
+import rasterio
 
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
@@ -210,3 +210,18 @@ def Cross_Validation(X, y, k, model, lambd=0):
     MSE_test_std = np.std(MSE_test_array)
 
     return MSE_train_mean, MSE_train_std, MSE_test_mean, MSE_test_std
+
+def get_latitude_and_conversion(filename):
+    with rasterio.open(filename) as dataset:
+        meta = dataset.meta
+
+        # Extract the transform (Affine object)
+        transform = meta['transform']
+        # The latitude is the y-coordinate of the top left corner
+        latitude = transform[5]
+        # Calculate the latitude conversion factor in meters per degree
+        lat_conversion = 111412.84 * np.cos(np.radians(latitude))
+        # Calculate the distance per degree of longitude at this latitude
+        lon_conversion = 111412.84 * np.cos(np.radians(latitude))
+
+        return latitude, lat_conversion, lon_conversion

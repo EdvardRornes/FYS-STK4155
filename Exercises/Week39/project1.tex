@@ -1,0 +1,130 @@
+% ****** Start of file apssamp.tex ******
+%
+%   This file is part of the APS files in the REVTeX 4.2 distribution.
+%   Version 4.2a of REVTeX, December 2014
+%
+%   Copyright (c) 2014 The American Physical Society.
+%
+%   See the REVTeX 4 README file for restrictions and more information.
+%
+% TeX'ing this file requires that you have AMS-LaTeX 2.0 installed
+% as well as the rest of the prerequisites for REVTeX 4.2
+%
+% See the REVTeX 4 README file
+% It also requires running BibTeX. The commands are as follows:
+%
+%  1)  latex apssamp.tex
+%  2)  bibtex apssamp
+%  3)  latex apssamp.tex
+%  4)  latex apssamp.tex
+%
+\documentclass[%
+reprint,
+%superscriptaddress,
+%groupedaddress,
+%unsortedaddress,
+%runinaddress,
+%frontmatterverbose, 
+%preprint,
+%preprintnumbers,
+%nofootinbib,
+%nobibnotes,
+%bibnotes,
+amsmath,amssymb,
+aps,
+pra,
+%prb,
+%rmp,
+%prstab,
+%prstper,
+%floatfix,
+]{revtex4-2}
+
+\usepackage{subfiles}
+\usepackage{graphicx}% Include figure files
+\usepackage{dcolumn}% Align table columns on decimal point
+\usepackage{bm}% bold math
+\usepackage{float}
+\usepackage{mathtools}
+\usepackage{xcolor}
+\usepackage{physics}
+\usepackage{dsfont}
+\usepackage{tcolorbox}
+\usepackage{float}
+\usepackage{tensor}
+\usepackage{hyperref}% add hypertext capabilities
+%\usepackage[mathlines]{lineno}% Enable numbering of text and display math
+%\linenumbers\relax % Commence numbering lines
+
+%\usepackage[showframe,%Uncomment any one of the following lines to test 
+%%scale=0.7, marginratio={1:1, 2:3}, ignoreall,% default settings
+%%text={7in,10in},centering,
+%%margin=1.5in,
+%%total={6.5in,8.75in}, top=1.2in, left=0.9in, includefoot,
+%%height=10in,a5paper,hmargin={3cm,0.8in},
+%]{geometry}
+\newcommand{\Hp}{\mathcal{H}}
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}
+\renewcommand{\figurename}{Fig.}
+\renewcommand{\tablename}{Table}
+\makeatletter
+\renewcommand{\subsubsection}{%
+	\@startsection
+	{subsubsection}%
+	{3}%
+	{\z@}%
+	{.8cm \@plus1ex \@minus .2ex}%
+	{.5cm}%
+	{\normalfont\small\centering}%
+}
+\makeatother
+\renewcommand{\L}{\mathcal{L}}
+\renewcommand{\O}{\mathcal{O}}
+\newcommand{\f}[2]{\frac{#1}{#2}}
+\newcommand{\p}{\partial}
+
+
+
+\begin{document}
+	
+\title{Project 1}
+\author{Isak O. Rukan}
+\email{Insert Email}
+\author{Edvard B. Rørnes}
+\email{e.b.rornes@fys.uio.no}
+\affiliation{Institute of Physics, University of Oslo,\\0371 Oslo,  Norway}
+\date{\today}
+
+\begin{abstract}
+	We investigate and compare three regression models\footnote{GitHub Repository: \url{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project1}}: Ordinary Least Squares, Ridge, and Least Absolute Shrinkage and Selection Operator. These were applied and analyzed on a two-dimensional Franke function and later tested on real terrain data from the US Geological Survey Earth Explorer \cite{USGS_EarthExplorer}. The models' performances are evaluated using metrics such as the Mean Squared Error and the coefficient of determination $R^2$. The bias-variance trade-off for OLS is studied in detail where it was found that ... (TBD). We used resampling techniques such as bootstrapping and cross-validation to probe the quality of the evaluations and determine the predictiveness and generalizability of the models. In our analysis the best performing method was ... (TBD). 
+	\color{red}I find it weird that we are supposed to be writing the abstract before actually concluding all the results. In general the abstract should be written last...\color{black}
+\end{abstract}
+
+\maketitle
+
+\section{Introduction}
+Regression models are essential tools in data analysis and prediction, particularly within the realm of physics. They are used to enable understanding of the relationships between different variables and improve our ability to create predictions. In this report we study and compare three common regression techniques: Ordinary Least Squares (OLS) regression, Ridge regression and Least Absolute Shrinkage and Selection Operator (LASSO) regression. Each come with their unique strengths and weaknesses that make them suitable for different data sets. 
+
+OLS is the simplest and most foundational method which estimates relationship by minimizing the difference between observed and predicted values. A large downside with OLS is when there are many related variables as this can lead to unstable coefficient estimates \cite{Bishop2006}. Ridge regression can partially fix this issue by adding a penalty to large coefficients, effectively shrinking them. This in turn creates a more stable model in the event of correlated variables. LASSO regression takes this a step further by once again shrinking coefficients, but also setting some of them to zero. This allows LASSO to effectively choose important variables, which may be helpful when pursuing a simpler model.
+
+To compare these regression model, we use a two-dimensional Franke function which allows us to test the performance of each under controlled conditions. Later we apply each model to real terrain data which is obtained from \cite{USGS_EarthExplorer}.
+
+The models are evaluated by considering their Mean Squared Error (MSE) and coefficient of determination $R^2$. Further to make our evaluation more reliable, resampling techniques such as bootstrapping and cross-validation are used. These methods provide a better understanding of how well each model performs on different data.
+
+\section{Theory}
+
+\section{Implementation}
+
+\section{Results}
+
+\section{Discussion}
+
+\section{Conclusion}
+
+% Bibliography
+\bibliographystyle{JHEP}
+\bibliography{project1}
+	
+\end{document}

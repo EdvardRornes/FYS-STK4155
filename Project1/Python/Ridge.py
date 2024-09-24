@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+
 from matplotlib.lines import Line2D
-from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from utils import *
 
