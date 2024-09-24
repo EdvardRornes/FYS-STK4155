@@ -33,21 +33,21 @@
 ### Part e:
 
 - [x] (Week 38) Show that $\mathbb{E}[(\boldsymbol y-\tilde{\boldsymbol y})^2]=\text{Bias}[\tilde y]+\text{Var}[\tilde y]+\sigma^2$ where $\text{Bias}[\tilde y]=\mathbb{E}\left[(\boldsymbol y-\mathbb E[\tilde{\boldsymbol y}])^2\right]$ and $\text{Var}[\tilde y]=\mathbb E\left[(\tilde{\boldsymbol y}-\mathbb E[\tilde{\boldsymbol y}])^2\right]=\frac 1n\sum_i (\tilde y_i-\mathbb E[\tilde{\boldsymbol y}])^2$ **Please check if you agree that their definition is wrong Isak**
-- [ ] Perform a bias-variance analysis of the Franke function by studying the MSE value as a function of the complexity of the model. **ER: Isn't this just what we did by checking the MSE/R2 for the various polynomial degrees?**
-- [ ] Discuss the bias and variance trade-off as a function of your model complexity (the degree of the polynomial), the number of data points, and possibly also the training and test data using the **bootstrap** resampling method. **ER: Implemented bootstrap in utils.py but haven't used/tested it.**
+- [x] Perform a bias-variance analysis of the Franke function by studying the MSE value as a function of the complexity of the model. **ER: Isn't this just what we did by checking the MSE/R2 for the various polynomial degrees?**
+- [x] Discuss the bias and variance trade-off as a function of your model complexity (the degree of the polynomial), the number of data points, and possibly also the training and test data using the **bootstrap** resampling method. **ER: Discussion missing, needs refining.**
 
 ### Part f:
 
-- [ ] Implement the $k$-fold cross-validation algorithm (using Scikit-Learn) and evaluate again the MSE function resulting from the test folds. **ER: Implemented k-fold cross-validation in utils.py but haven't used/tested it.**
+- [x] Implement the $k$-fold cross-validation algorithm (using Scikit-Learn) and evaluate again the MSE function resulting from the test folds.
 - [ ] Compare the MSE you get from your cross-validation code with the one you got from your bootstrap code. 
 - [ ] Comment on your results. Try 5-10 folds. Do this with OLS, Ridge and LASSO regression.
 
 ### Part g:
 
-- [x] Download data from https://earthexplorer.usgs.gov/. Register a user and decide where to fetch the data from. The format should be **SRTM Arc-Second Global** and download the data as a **GeoTIF** file. *tif* files can be imported into Python using **ER: Downloaded some data from some random interesting places**
+- [x] Download data from https://earthexplorer.usgs.gov/. Register a user and decide where to fetch the data from. The format should be **SRTM Arc-Second Global** and download the data as a **GeoTIF** file. *tif* files can be imported into Python using **ER: Should probably add a simpler place as well, can exclude either Everest or Grand Canyon. Everest is the least interesting imo**
 > scipy.misc.imread
-- [ ] Use OLS on the terrain data
-- [ ] Use Ridge on the terrain data
-- [ ] Use LASSO on the terrain data
+- [x] Use OLS on the terrain data
+- [x] Use Ridge on the terrain data
+- [x] Use LASSO on the terrain data **ER: All of the above still need refining**
 - [ ] Evaluate which model fits the data best
 - [ ] Present a critical evaluation of the results and discuss the applicability of these regression methods to the type of data presented here.
