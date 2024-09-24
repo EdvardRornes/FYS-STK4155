@@ -24,14 +24,14 @@ plt.rcParams.update({
 })
 
 # Generate data
-np.random.seed(2024)
+# np.random.seed(2024)
 N = 100  # Number of data points
 x = np.sort(np.random.rand(N))
 y = np.sort(np.random.rand(N))
 z = Franke(x, y)
 z = z + 0.1 * np.random.normal(N, 1, z.shape)  # Add some noise to the data
 
-deg_max = 100
+deg_max = 15
 degrees = np.arange(1, deg_max+1)
 MSE_train = np.zeros(len(degrees))
 MSE_test = np.zeros(len(degrees))
@@ -46,7 +46,7 @@ for deg in range(deg_max):
     
     # Split into training and testing and scale
     X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.25, random_state=42)
-    X_train, X_test, z_train, z_test = scale_data(X_train, X_test, z_train, z_test, scaler_type="MINMAX")
+    X_train, X_test, z_train, z_test = scale_data(X_train, X_test, z_train, z_test)# , scaler_type="MINMAX")
 
     beta_coefficients[deg], MSE_train[deg], MSE_test[deg], R2_train[deg], R2_test[deg] = OLS_fit(X_train, X_test, z_train, z_test)
 
@@ -80,7 +80,7 @@ for i in range(len(beta_coefficients)):
 # Colorbar:
 norm = mcolors.Normalize(vmin=0, vmax=len(beta_coefficients)-1) 
 sm = cm.ScalarMappable(cmap=colors, norm=norm)
-cbar = plt.colorbar(sm)
+cbar = plt.colorbar(sm, ax=ax)
 cbar.set_label('Poly degree')
 
 plt.title(r'$\beta$ coefficient dependence for various polynomial degrees $p$')
@@ -93,7 +93,6 @@ ax.set_ylabel(r"$\beta$")
 # ax.set_ylabel(r"$\log_{10}|\beta + 0.1|$")
 # plt.legend(loc="lower right")
 plt.savefig(f'Figures/OLS-beta-degree.pdf')
-plt.show()
 
 ############### Plot MSE ###############
 plt.figure(figsize=(10, 6))
@@ -106,7 +105,6 @@ plt.title(r"OLS MSE")
 plt.legend()
 plt.grid(True)
 plt.savefig(f'Figures/OLS-MSE-degree.pdf')
-plt.show()
 
 ############### Plot R² ###############
 plt.figure(figsize=(10, 6))

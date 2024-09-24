@@ -158,7 +158,7 @@ def Bootstrap_OLS(X, y, samples, test_percentage):
         X_train, X_test, y_train, y_test = train_test_split(X_i, y_i, test_size=test_percentage)
         X_train, X_test, y_train, y_test = scale_data(X_train, X_test, y_train, y_test)
 
-        MSE_train[i], MSE_test[i], R2_train, R2_test, beta = OLS_fit(X_train, X_test, y_train, y_test)
+        beta, MSE_train[i], MSE_test[i], R2_train, R2_test = OLS_fit(X_train, X_test, y_train, y_test)
 
     # Calculate mean and std of MSE for train and test sets
     MSE_train_mean = np.mean(MSE_train)

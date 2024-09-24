@@ -90,22 +90,22 @@ pra,
 \begin{document}
 	
 \title{Project 1}
-\author{Edvard B. Rørnes}
-\email{e.b.rornes@fys.uio.no}
 \author{Isak O. Rukan}
 \email{Insert Email}
+\author{Edvard B. Rørnes}
+\email{e.b.rornes@fys.uio.no}
 \affiliation{Institute of Physics, University of Oslo,\\0371 Oslo,  Norway}
 \date{\today}
 
 \begin{abstract}
-	Abstracting very cool
+	We investigate and compare three regression models\footnote{GitHub Repository: \url{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project1}}: Ordinary Least Squares (OLS), Ridge, and Least Absolute Shrinkage and Selection Operator (LASSO). These were applied to a two-dimensional Franke function and later tested on real terrain data from \cite{USGS_EarthExplorer}. The models' performances are evaluated using metric such as the Mean Squared Error (MSE) and the coefficient of determination $R^2$. We used resampling techniques such as bootstrapping and cross-validation to probe the quality of the evaluations. These methods help understand the predictive qualities of the models and give insights into their generalizability. The main results include: ... (TBD). 
 \end{abstract}
 
 \maketitle
 \tableofcontents
 
 \section{Introduction}
-The methods used in this project are Ordinary Least Squares (OLS), Ridge regression and Least Absolute Shrinkage and Selection Operator (LASSO) regression. 
+In this report we study and compare three different methods for performing linear regression on a data set. The methods used in this project are Ordinary Least Squares (OLS) regression, Ridge regression and Least Absolute Shrinkage and Selection Operator (LASSO) regression. The different methods are compared using a two-dimensional Franke function and evaluating their Mean Squared Error (MSE) and coefficient of determination $R^2$. 
 
 \section{Theory}
 The general structure of all our models is that we have some data set $\{x_i,y_i\}$ where $i\in\{0,1...,n-1\}$ where $x_i$ are independent variables whilst $y_i$ are dependent variables. The data is assumed to be described by
