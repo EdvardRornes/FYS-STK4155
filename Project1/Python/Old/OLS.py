@@ -42,7 +42,7 @@ beta_coefficients = [0]*deg_max
 start_time = time.time()
 for deg in range(deg_max):
     # Create polynomial features
-    X = Design_matrix2D(x, y, degrees[deg])
+    X = Design_Matrix2D(x, y, degrees[deg])
     
     # Split into training and testing and scale
     X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.25, random_state=42)

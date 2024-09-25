@@ -1,10 +1,7 @@
 from utils import * 
 import numpy as np
-import matplotlib.pyplot as plt
 
-import numpy as np
-
-def test_Design_matrix2D(design_matrix=Design_matrix2D):
+def test_Design_matrix2D(design_matrix=Design_Matrix2D):
     eps = 1e-14
 
     N = 4
@@ -37,5 +34,28 @@ if __name__ == "__main__":
     test_Design_matrix2D()
 
 # Can delete?
+
+# Sample data
+x = np.random.rand(10)  # 5 random x values
+y = np.random.rand(10)  # 5 random y values
+degree = 7  # Set the degree of the polynomial
+
+# Generate design matrices
+X_manual = Design_Matrix2D(x, y, degree)
+X_poly = Design_Matrix(x, y, degree)
+
+# Compare the two design matrices
+print("Design Matrix (Manual):")
+print(X_manual)
+
+print("\nDesign Matrix (PolynomialFeatures):")
+print(X_poly)
+
+# Check if they are approximately equal
+if np.allclose(X_manual, X_poly, rtol=1e-5, atol=1e-8):
+    print("\nThe matrices are equivalent!")
+else:
+    print("\nThe matrices are NOT equivalent.")
+
     
     

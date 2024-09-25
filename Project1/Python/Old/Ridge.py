@@ -50,7 +50,7 @@ R2_train_array, R2_test_array = np.zeros((len(lambdas), deg_max)), np.zeros((len
 for l, i in zip(lambdas, range(len(lambdas))):
     for deg in range(deg_max):
         # Create polynomial features
-        X = Design_Matrix(x, y, degrees[deg])
+        X = Design_Matrix2D(x, y, degrees[deg])
         # Split into training and testing and scale
         X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.25, random_state=42)
         X_train, X_test, z_train, z_test = scale_data(X_train, X_test, z_train, z_test)

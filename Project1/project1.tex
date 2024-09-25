@@ -85,8 +85,6 @@ pra,
 \newcommand{\f}[2]{\frac{#1}{#2}}
 \newcommand{\p}{\partial}
 
-
-
 \begin{document}
 	
 \title{Project 1}
@@ -106,14 +104,13 @@ pra,
 \section{Introduction}
 Regression models are essential tools in data analysis and prediction, particularly within the realm of physics. They are used to enable understanding of the relationships between different variables and improve our ability to create predictions. In this report we study and compare three common regression techniques: Ordinary Least Squares (OLS) regression, Ridge regression and Least Absolute Shrinkage and Selection Operator (LASSO) regression. Each come with their unique strengths and weaknesses that make them suitable for different data sets. 
 
-OLS is the simplest and most foundational method which estimates relationship by minimizing the difference between observed and predicted values. A large downside with OLS is when there are many related variables as this can lead to unstable coefficient estimates \cite{Bishop2006}. Ridge regression can partially fix this issue by adding a penalty to large coefficients, effectively shrinking them. This in turn creates a more stable model in the event of correlated variables. LASSO regression takes this a step further by once again shrinking coefficients, but also setting some of them to zero. This allows LASSO to effectively choose important variables, which may be helpful when pursuing a simpler model.
+OLS is the simplest and most foundational method which estimates relationship by minimizing the difference between observed and predicted values. A large downside with OLS is when there are many related variables as this can lead to unstable coefficient estimates \cite{Bishop2006}. Ridge regression can partially fix this issue by adding a penalty to large coefficients via a regulator $\lambda$, effectively allowing us to shrink the coefficients with a new input parameter. This in turn creates a more stable model in the event of correlated variables. LASSO regression takes this a step further by once again shrinking coefficients, but also setting some of them to zero. This allows LASSO to effectively choose important variables, which may be helpful when pursuing a simpler model.
 
 To compare these regression model, we use a two-dimensional Franke function which allows us to test the performance of each under controlled conditions. Later we apply each model to real terrain data which is obtained from \cite{USGS_EarthExplorer}.
 
-The models are evaluated by considering their Mean Squared Error (MSE) and coefficient of determination $R^2$. Further to make our evaluation more reliable, resampling techniques such as bootstrapping and cross-validation are used. These methods provide a better understanding of how well each model performs on different data.
-
+The models are evaluated by considering their Mean Squared Error (MSE) and coefficient of determination $R^2$. Further to make our evaluation more reliable, resampling techniques such as bootstrapping and cross-validation are used. These methods provide a quantatitive description of how well each model performs on different data sets.
 \section{Theory}
-All lengthy claims made in this section are derived in Appendix \ref{Appendix:Derivations}. The general structure of all our models is that we have some data set $\{x_i,y_i\}$ where $i\in\{0,1...,n-1\}$ where $x_i$ are independent variables whilst $y_i$ are dependent variables. The data is assumed to be described by
+All claims made in this section which require relatively lengthy derivations are derived in Appendix \ref{Appendix:Derivations}. The general structure of all our models is that we have some data set $\{x_i,y_i\}$ where $i\in\{0,1...,n-1\}$ where $x_i$ are independent variables whilst $y_i$ are dependent variables. The data is assumed to be described by
 \begin{align}
 	\bm y=f(\bm x)+\bm \varepsilon
 	\label{eq:data}
@@ -121,12 +118,20 @@ All lengthy claims made in this section are derived in Appendix \ref{Appendix:De
 where $f$ is some continuous function which takes $\bm x$ as input and $\bm\varepsilon$ is a normal distributed error $\bm\varepsilon\sim\mathcal{N}(0,\sigma^2)$. The function $f$ will then be approximated with a model $\tilde{\bm y}$ in which we will consider a polynomial expansion with coefficients $\beta_i$:
 \begin{align}
 	\tilde{y}_i=\sum_{j=0}^{p-1}\beta_j x_i^j
+	\label{eq:model}
 \end{align}
-defining the $n\times p$ design matrix $(\bm X)_{ij}=(x_i)^j$ we can rewrite this as
+defining the $n\times p$ design matrix $\bm X$ with elements $X_{ij}=(x_i)^j$ we can rewrite this as
 \begin{align}
 	\tilde{\bm y}=\bm X\bm\beta
 \end{align}
 Further, each model will be defined with a different cost function $C(\bm\beta)$ which we minimize to find the coefficients for each respective model.
+
+The metrics MSE and $R^2$ which we use to analyze each model are defined by
+\begin{align}
+	\text{MSE}(\bm y,\tilde{\bm{y}})&\equiv\frac{1}{n}\sum_{i=0}^{n-1}(y_i-\tilde y_i)^2,\\
+	R^2&\equiv1-\frac{\sum_{i=0}^{n-1}(y_i-\tilde y_i)^2}{\sum_{i=0}^{n-1}(y_i-\bar y)^2}
+\end{align}
+where $\bar y\equiv\frac{1}{n}\sum_{i=0}^{n-1}y_i$ is the mean value of $\bm y$. Here we can see that if $\tilde{\bm{y}}=\bm y$ then $R^2=1$ implies that we have perfect accuracy. Further if $\tilde{\bm{y}}$ is simply the mean then $R^2=0$ implying that our fit is equally bad as a single line and if $R^2<0$ it means that our approximation is worse than simply taking the mean.
 
 \subsection{OLS}
 OLS is a primitive method used in linear regression to estimate coefficients of a linear model. The cost function in OLS is simply defined as the residual sum of squares (RSS)
@@ -143,7 +148,7 @@ which yields the model
 \end{align}
 Assuming our data takes the form of (\ref{eq:data}) then the expectation value $\bm y$ is
 \begin{align*}
-	\mathbb{E}(y_i)=\mathbb{E}(f(x_i))=\bm X_{i,*}\bm\beta
+	\mathbb{E}(y_i)=\mathbb{E}(f(x_i))=X_{ij}\beta_j\equiv\bm X_{i,*}\bm\beta
 \end{align*}
 since $\mathbb{E}(\varepsilon_i)=0$ follows from its definition. The variance of $\bm y$ is given by
 \begin{align*}
@@ -162,27 +167,28 @@ with the variance
 Ridge regression is an extension of OLS where define the cost function as a modified version of the OLS cost function with an added penalty term which is proportional to the coefficients $\beta_i^2$:
 \begin{align}
 	C_\text{Ridge}(\bm\beta)=C_\text{OLS}(\bm\beta)+\lambda\bm\beta^2
-	\label{eq:ridgecost}
+	\label{eq:cost_ridge}
 \end{align}
-Here $\lambda\geq0$ is a regularization parameter which controls the strength of this additional penalty. This regulator essentially drives the magnitude of these coefficients allowing for more tweaking in the parameter space. This parametrization of course includes the constraint that $\bm{\beta}^2\leq t$ for some $t<\infty$ such that we can choose our arbitrary parameter $\lambda\geq0$ to be sufficiently small s.t. the cost function (\ref{eq:ridgecost}) does not diverge. The optimal parameters for Ridge regressions can again be found by the same process as for OLS:
+Here $\lambda\geq0$ is a regularization parameter, or commonly referred to as a hyperparameter, which controls the strength of this additional penalty. This regulator essentially drives the magnitude of these coefficients allowing for more tweaking in the parameter space. This parametrization of course includes the constraint that $\bm{\beta}^2\leq t$ for some $t<\infty$ such that we can choose our arbitrary parameter $\lambda\geq0$ to be sufficiently small s.t. the cost function (\ref{eq:cost_ridge}) does not diverge. The optimal parameters for Ridge regressions can again be found by the same process as for OLS:
 \begin{align*}
 	\bm{\beta}&=(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm{y}
 \end{align*}
-Here we can see that the effect of adding this penalty term is essentially taking $(\bm X^T\bm X)^{-1}\to(\bm X^T\bm X+\lambda\bm I)^{-1}$ when compared to the OLS case. In the past this was generally the starting point for Ridge regression in the cases where the matrix $\bm X^T\bm X$ was not invertible. A direct way of seeing the effect of the regulator is by considering the singular value decomposition of $\bm X$. Doing so one can show that 
-\begin{align*}
+Here we can see that the effect of adding this penalty term is essentially taking $(\bm X^T\bm X)^{-1}\to(\bm X^T\bm X+\lambda\bm I)^{-1}$ when compared to the OLS case. In the past this was generally the starting point for Ridge regression in the cases where the matrix $\bm X^T\bm X$ was not invertible. A direct way of seeing the effect of the regulator is by considering the singular value decomposition (SVD) of $\bm X$. Doing so one can show that 
+\begin{align}
 	\tilde{\bm{y}}_\text{Ridge}=\sum_{j=0}^{p-1}\bm{u}_j\bm{u}_j^T\frac{\sigma_j^2}{\sigma_j^2+\lambda}\bm{y}
-\end{align*}
-Since $\lambda\geq0$ then this added factor compared to OSL is $\leq1$. We can then see that Ridge regression effectively suppresses all the coefficients, thus $\lambda$ is often called the "shrinkage" factor. 
+	\label{eq:beta_ridge}
+\end{align}
+where $\bm u_i$ is the $i$-th row (column?) of the orthogonal matrix $\bm U$ stemming from the SVD: $\bm X=\bm U\bm \Sigma\bm V$. Since $\lambda\geq0$ then this added factor compared to OSL is $\leq1$. We can then see that Ridge regression effectively suppresses all the coefficients, thus $\lambda$ is often called the "shrinkage" factor. 
 
 \subsection{LASSO}
 Similarly to Ridge, LASSO also includes a penalty factor. The cost function in this case is instead defined to be
 \begin{align}
 	C_\text{LASSO}(\bm\beta)=C_\text{OLS}(\bm\beta)+\lambda||\bm\beta||_1
-	\label{eq:cost_ridge}
+	\label{eq:cost_lasso}
 \end{align}
 where
 \begin{align*}
-	||\bm\beta||_k\equiv\sum_{i=0}^{n-1}|\beta_i|^k
+	||\bm\beta||_k\equiv\left[\sum_{i=0}^{n-1}|\beta_i|^k\right]^{1/k}
 \end{align*}
 is the $L^k$ norm of $\bm\beta$. Taking the derivative of (\ref{eq:cost_ridge}) w.r.t. $\bm \beta$ and requiring that this becomes zero we have
 \begin{align}
@@ -190,7 +196,28 @@ is the $L^k$ norm of $\bm\beta$. Taking the derivative of (\ref{eq:cost_ridge}) 
 \end{align}
 This has the added benefit of being able to set certain parameters to be $0$ instead of suppressing them, at the cost of losing analytical expressions for $\hat{\bm\beta}$ in non-trivial cases.
 
-\subsection{Resampling}
+\subsection{Connection to Statistics}
+The three aforementioned regression techniques all have relatively simple connections to statistical probability distribution functions. Assuming that the likelihood of an event $y_i$ with the input variables $\bm X$ and parameters $\bm\beta$ is given by a Gaussian distribution:
+\begin{align}
+	p(y_i,\bm X|\bm\beta)=\prod_{i=0}^{n-1}\frac{1}{\sqrt{2\pi\sigma^2}}\exp\left[-\frac{(y_i-\bm X_{i,*}\bm\beta)^2}{2\sigma^2}\right]
+\end{align}
+Further assuming that all events are independent and identically distributed the total probability density function takes the form
+\begin{align}
+	p(\bm y,\bm X|\bm\beta)=\prod_{i=0}^{n-1}p(y_i,\bm X|\bm\beta)
+\end{align}
+then taking the negative logarithm of the above and defining that as our cost function we can arrive at the exact expression for the cost function that we defined earlier, i.e. just the RSS which corresponds to OLS. A similar analysis for Ridge can be done. Using Bayes' theorem we have that $p(\bm\beta|\bm X,\bm y)\propto p(\bm y,\bm X|\bm\beta)p(\bm\beta)$ we then feed in the prior:
+\begin{align}
+	p(\beta_i)=\exp\left[-\frac{\beta_i^2}{2\tau^2}\right]
+\end{align}
+one arrives at the probability of the coefficients $\bm\beta$ given the data $\bm y$
+\begin{align}
+	p(\bm\beta|\bm X,\bm y)\propto p(\bm y,\bm X|\bm\beta)\cdot\prod_{i=0}^{p-1}\exp\left[-\frac{\beta_i^2}{2\tau^2}\right]
+\end{align}
+Again, defining the cost function as the negative logarithm of this expression one arrives at the Ridge cost function with $\lambda=1/(2\tau^2)$. Finally for LASSO one assumes that the initial probability is given by the same as OLS but with the addition of the $\beta$ coefficients following a Laplace distribution
+\begin{align}
+	p(\beta_i)=\exp\left[-\frac{|\beta_i|}{\tau}\right]
+\end{align}
+one arrives at the LASSO cost function with $\lambda=1/\tau$. These statistical connections help us better understand the assumptions made with each technique. With OLS one assumes that each event $y_i$ are all independent and Gaussian. Thus when this is not the case one should not be surprised if OLS performs poorly. Ridge and LASSO however do account for the chance that there are correlated events, and assumes that the coefficients that we compute are themselves Gaussian or Laplace distributed. The hyperparameter $\lambda$ now has a clear interpretation, i.e. that we essentially insert a standard deviation of the $\beta$ coefficients. The performance of these latter two can then also be used to indicate which distribution more accurately describes the coefficients.
 
 \subsection{Bias-Variance}
 The so-called Bias-Variance Trade-Off can be summarized in a single equation:
@@ -206,24 +233,37 @@ The LHS of (\ref{eq:MSE-bias-var}) is the expected value of the MSE which tells 
 \end{itemize}
 The idea is to minimize the LHS of (\ref{eq:MSE-bias-var}), so clearly we want to minimize both the bias and the variance at the same time. However these are correlated to one another, so lowering the e.g. the bias will in general increase the variance. So Bias-Variance Tradeoff is essentially trying to optimize the complexity of the model such that we neither overfit nor underfit the model such that it can be generalized to other cases. These quantities can then be used as means to fine tune a model.
 
+\subsection{Resampling}
+Resampling techniques are critical in understanding the performance and robustness of a model. They tend to better show how well a model will do on data it has not seen before, and are thus useful for diagnosing problems like over- and underfitting. In this report focus on two resampling methods: bootstrapping and cross-validation.
+
+\subsubsection{Bootstrap} 
+Bootstrapping is a statistical method that involves taking random samples with replacement from the original dataset to create several new datasets. These datasets are the same size as the original dataset, but since our sampling was done with replacement, some observations are presented more than once whilst others are eliminated. Here we train and evaluate a model over each of these resampled datasets, allowing us to estimate how the performance varies across different datasets. This method is particularly important when the datasets are small as it heavily increases the amount information that can be extracted from a given data set. Averaging across all the performance metrics from these little bootstrap samples provides a much more robust description of how well our model performs. 
+
+\subsubsection{Cross-Validation} 
+$k$-fold cross-validation is the other resampling method which we considered in this project. In $k$-fold cross-validation, the dataset is divided into $k$ subsets (or folds). The model is trained on $k-1$ of these folds and tested on the remaining fold. This process is repeated $k$ times, with each fold serving as the test set exactly once. The performance metrics, MSE and $R^2$, are averaged over the $k$ iterations to provide a more reliable estimate of how the model performs on unseen data.
+
+Cross-validation is particularly advantageous for its ability to reduce the variance of performance estimates by using different portions of the data for both training and validation. In our analysis, we used 5-fold cross-validation to evaluate the stability and predictive power of each regression method. This method gave us a clearer picture of how each model generalizes, helping us tune the hyperparameters, such as the regularization parameter $\lambda$ for Ridge and LASSO.
+
+Both resampling techniques are used to gain valuable insights into model performance and ensure that the conclusions drawn from our analysis are not overly dependent on a particular division of the dataset.
+
 \section{Implementation}
-For this project the surface we will consider is given by the Franke function
+For this project the surface we will consider is given by the Franke function:
 \begin{align}
 	f(x,y)&=\frac{3}{4}\exp(-\frac{(9x-2)^2}{4}-\frac{(9y-2)^2}{4})\nonumber\\
 	&+\frac{3}{4}\exp(-\frac{(9x+1)^2}{49}-\frac{(9y+1)^2}{10})\nonumber\\
 	&+\frac{1}{2}\exp(-\frac{(9x-7)^2}{4}-\frac{(9y-3)^2}{4})\nonumber\\
 	&-\frac{1}{5}\exp(-(9x-4)^2-(9y-7)^2)
 \end{align}
-This function maps a surface defined on the interval $x,y\in[0,1]$. To perform an analysis on this function we consider a polynomial fit up to degree $n$ where
+This function maps a surface defined on the interval $x,y\in[0,1]$. To perform an analysis on this function we consider a polynomial fit up to degree $n$ analogous to (\ref{eq:model}) where:
 \begin{align}
-	\tilde{\bm{z}}&=\f1{n+1}\sum_{i=0}^{n}\bigg(\bm\beta_{00}\label{eq:bmz}\\
-	&+\bm\beta_{10}x_i+\bm\beta_{11}y_i\nonumber\\
-	&+\bm\beta_{20}x_i^2+\bm\beta_{21}x_iy_i+\bm\beta_{22}y_i^2\nonumber\\
+	\tilde{\bm{z}}&=\f1{n+1}\sum_{i=0}^{n}\bigg(\bm\beta_{0,0}\nonumber\\
+	&+\bm\beta_{1,0}x_i+\bm\beta_{1,1}y_i\nonumber\\
+	&+\bm\beta_{2,0}x_i^2+\bm\beta_{2,1}x_iy_i+\bm\beta_{2,2}y_i^2\nonumber\\
 	&+...\nonumber\\
-	&+\bm\beta_{n0}x_i^n+\bm\beta_{n1}x_i^{n-1}y+...+\bm\beta_{n(n-1)}x_iy_i^{n-1}+\bm\beta_{nn}y_i^n\bigg)\nonumber\\
-	&=\frac{1}{n+1}\sum_{i,j=0}^{n}\sum_{\substack{k=0}}^{i}\bm\beta_{jk} x^{j-k}_i y^{k}_i\equiv \bm X\bm\beta\nonumber
+	&+\bm\beta_{n,0}x_i^n+\bm\beta_{n,1}x_i^{n-1}y+...+\bm\beta_{n,n-1}x_iy_i^{n-1}+\bm\beta_{n,n}y_i^n\bigg)\nonumber\\
+	&=\frac{1}{n+1}\sum_{i,j=0}^{n}\sum_{\substack{k=0}}^{j}\bm\beta_{j,k} x^{j-k}_i y^{k}_i\equiv \bm X\bm\beta\label{eq:bmz}
 \end{align}
-where the components $x_i$ and $y_i$ are entries in the input vectors $\bm x^T=\begin{bmatrix} x_0&...&x_n \end{bmatrix}$ and $\bm y^T=\begin{bmatrix} y_0& ...&y_n \end{bmatrix}$ respectively which are our independent variables. Each $\bm\beta_{ij}$ is a $\frac{(n+1)(n+2)}{2}$ component vector with a single non-zero entry with magnitude $\beta_{ij}$ and the design matrix $\bm X$ is then an $(n+1)\times\frac{(n+1)(n+2)}{2}$ matrix of the form:
+Here the components $x_i$ and $y_i$ are entries in the input vectors $\bm x^T=\begin{bmatrix} x_0&...&x_n \end{bmatrix}$ and $\bm y^T=\begin{bmatrix} y_0& ...&y_n \end{bmatrix}$ respectively which are our independent variables. Each $\bm\beta_{i,j}$ is a $\frac{(n+1)(n+2)}{2}$ component vector with a single non-zero entry with magnitude $\beta_{i,j}$ and the design matrix $\bm X$ is then an $(n+1)\times\frac{(n+1)(n+2)}{2}$ matrix of the form:
 \begin{align*}
 	\bm X=\frac{1}{n+1}\begin{bmatrix}
 		1 & x_0 & y_0 & x^2_0 & x_0y_0 & y_0^2 & ... & x_0^n & ... & y_0^n\\
@@ -235,12 +275,16 @@ where the components $x_i$ and $y_i$ are entries in the input vectors $\bm x^T=\
 and the $\bm\beta$ vector contains the $\frac{(n+1)(n+2)}{2}$ components 
 \begin{align*}
 	\bm\beta^T=\begin{bmatrix}
-		\beta_{00}&\beta_{10}&\beta_{11}&\beta_{20}&\beta_{21}&\beta_{22}&...&\beta_{n(n-1)}&\beta_{nn}
+		\beta_{0,0}&\beta_{1,0}&\beta_{1,1}&\beta_{2,0}&\beta_{2,1}&\beta_{2,2}&...&\beta_{n(n-1)}&\beta_{n,n}
 	\end{bmatrix}
 \end{align*}
 It should now be clear which unit vectors correspond to each term in (\ref{eq:bmz}).
 
-We then generated data with the Franke function and used an $x$-$(x-1)$ train-test split. This was chosen because... Next we 
+We then generated data with the Franke function and used an $x$-$(1-x)$ train-test split. This was chosen because... For all the techniques we scaled our data because...
+
+The OLS and Ridge regression fitting was done use of (\ref{eq:beta_ridge}) where for the prior we simply set $\lambda=0$. Since LASSO is more complicated we opted into using \texttt{sklearn.linear\_model}. Note that this excludes intercept by default so ... (?). The MSE and $R^2$ for all regression techniques were calculated with the \texttt{sklearn}'s \texttt{mean\_squared\_error} and \texttt{r2\_score} respectively. 
+
+
 \section{Results}
 \begin{figure}[ht!]
 	\centering

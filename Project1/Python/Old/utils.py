@@ -31,16 +31,15 @@ def Design_Matrix(x: np.ndarray, y: np.ndarray, deg: int) -> np.ndarray:
 
     return X
 
-def Design_matrix2D(x:np.ndarray, y:np.ndarray, p:int):
-    
+def Design_Matrix2D(x:np.ndarray, y:np.ndarray, p:int):
     N = len(x)                          # Number of data points
     num_cols = (p + 1) * (p + 2) // 2   # Number of columns
     
     X = np.zeros((N, num_cols))         # Initialize the design matrix
     
     col_idx = 0
-    for degree in range(p+1):
-        for k in range(degree+1):
+    for degree in range(p + 1):
+        for k in range(degree + 1):
             X[:, col_idx] = (x ** (degree - k)) * (y ** k)
             col_idx += 1
     
