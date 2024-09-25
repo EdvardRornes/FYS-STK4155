@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 from utils import *
 
-save = False 
+save = True 
 latex_fonts()
 
 N = 100; eps = 0.1
@@ -32,6 +32,6 @@ plt.ylabel("MSE")
 plt.grid(True)
 plt.legend()
 if save:
-    plt.savefig("Figures/bootstrapOLS_errorbar.pdf")
+    plt.savefig("Figures/Bootstrap_OLS.pdf")
 
 plt.show()
