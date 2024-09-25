@@ -3,20 +3,7 @@ import matplotlib.pyplot as plt
 import imageio.v2 as imageio
 from utils import *
 
-# Configure Matplotlib for LaTeX and font settings
-plt.rcParams.update({
-    'text.usetex': True,
-    'axes.titlepad': 25,
-    'font.family': 'euclid',
-    'font.weight': 'bold',
-    'font.size': 20,
-    'axes.labelsize': 20,
-    'axes.titlesize': 25,
-    'xtick.labelsize': 25,
-    'ytick.labelsize': 25,
-    'legend.fontsize': 20,
-    'figure.titlesize': 30
-})
+latex_fonts()
 
 # File paths
 files = {

@@ -1,7 +1,7 @@
-from utils import * 
 import numpy as np
+from utils import *
 
-def test_Design_matrix2D(design_matrix=Design_Matrix2D):
+def test_Design_matrix2D(design_matrix=Design_matrix2D):
     eps = 1e-14
 
     N = 4
@@ -41,7 +41,7 @@ y = np.random.rand(10)  # 5 random y values
 degree = 7  # Set the degree of the polynomial
 
 # Generate design matrices
-X_manual = Design_Matrix2D(x, y, degree)
+X_manual = Design_matrix2D(x, y, degree)
 X_poly = Design_Matrix(x, y, degree)
 
 # Compare the two design matrices
@@ -59,3 +59,28 @@ else:
 
     
     
+import itertools
+import matplotlib.pyplot as plt
+m = 5
+n = 5
+x = np.zeros(shape=(m, n))
+plt.figure(figsize=(5.15, 5.15))
+plt.clf()
+plt.subplot(111)
+marker = itertools.cycle(('o', 'v', '^', '<', '>', 's', '8', 'p'))
+
+ax = plt.gca().set_prop_cycle(None) 
+for i in range(1, n):
+    x = np.dot(i, [1, 1.1, 1.2, 1.3])
+    y = x ** 2
+    #
+    #for matplotlib before 1.5, use
+    #color = next(ax._get_lines.color_cycle)
+    #instead of next line (thanks to Jon Loveday for the update)
+    #
+    color = next(ax._get_lines.prop_cycler)['color']
+    plt.plot(x, y, linestyle='', markeredgecolor='none', marker=marker.next(), color=color)
+    plt.plot(x, y, linestyle='-', color = color)
+plt.ylabel(r'$y$', labelpad=6)
+plt.xlabel(r'$x$', labelpad=6)
+plt.show()
