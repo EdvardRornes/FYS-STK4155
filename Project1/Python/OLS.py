@@ -6,15 +6,21 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from utils import *
 
-
+# Creating plot
 latex_fonts()
-save = False
+save = False; overwrite = False
+folder = "Figures/OLS"
+# additional_description = "no_scaling"
+# additional_description = "MINMAX"
+additional_description = "StandardScaling"
 
+# Setup
 deg_max = 25
-franke = Franke(100, 0.1)
+franke = Franke(100, 0.01)
 data = [franke.x, franke.y, franke.z]
 
-OLS = PolynomialRegression(OLS_fit, deg_max, data)
+# Regression
+OLS = PolynomialRegression(OLS_fit, deg_max, data, scaling=additional_description)
 MSE_train, MSE_test = OLS.MSE()
 R2_train, R2_test = OLS.R2()
 beta = OLS.beta
@@ -56,7 +62,7 @@ plt.xlim(0, N-1)
 ax.set_xlabel(r"$\beta_n$")
 ax.set_ylabel(r"$\beta$")
 if save:
-    plt.savefig(f'Figures/OLS_beta.pdf')
+    save_plt(f"{folder}/OLS_beta{additional_description}", overwrite=overwrite)
 
 ############### MSE-plot ###############
 plt.figure(figsize=(10, 6))
@@ -70,7 +76,7 @@ plt.title(r"OLS MSE")
 plt.legend()
 plt.grid(True)
 if save:
-    plt.savefig(f'Figures/OLS_MSE.pdf')
+    save_plt(f"{folder}/OLS_MSE{additional_description}", overwrite=overwrite)
 
 ############### R²-plot ###############
 plt.figure(figsize=(10, 6))
@@ -84,5 +90,5 @@ plt.title(r"OLS $R^2$")
 plt.legend()
 plt.grid(True)
 if save:
-    plt.savefig(f'Figures/OLS_R2.pdf')
+    save_plt(f"{folder}/OLS_R2{additional_description}", overwrite=overwrite)
 plt.show()

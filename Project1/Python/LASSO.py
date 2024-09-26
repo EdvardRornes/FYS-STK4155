@@ -8,9 +8,15 @@ from sklearn.model_selection import train_test_split
 from utils import *
 
 
-# Setup
+# Plot:
 latex_fonts()
-save = False 
+save = True; overwrite = False
+folder = "Figures/LASSO"
+additional_description = "no_scaling"
+# additional_description = "MINMAX"
+# additional_description = "StandardScaling"
+
+# Setup
 deg_max = 8
 lmbdas = [0, 1e-10, 1e-5, 1e-2, 1e-1]
 franke = Franke(100, 0.1)
@@ -42,7 +48,7 @@ plt.xlim(1, deg_max)
 plt.title(rf"LASSO MSE")
 plt.grid(True)
 if save:
-    plt.savefig(f'Figures/LASSO_MSE.pdf')
+    save_plt(f"{folder}/LASSO_MSE_{additional_description}", overwrite=overwrite)
 
 ################ R²-plot ################
 plt.figure(figsize=(10, 6))
@@ -57,7 +63,7 @@ plt.xlim(1, deg_max)
 plt.title(rf"LASSO $R^2$")
 plt.grid(True)
 if save:
-    plt.savefig(f'Figures/LASSO_R2.pdf')
+    save_plt(f"{folder}/LASSO_R2_{additional_description}", overwrite=overwrite)
 
 lambda_exp_start = -10
 lambda_exp_stop = -1
@@ -88,6 +94,7 @@ plt.ylabel("MSE")
 plt.xlim(lambda_exp_start, lambda_exp_stop)
 plt.legend()
 plt.grid(True)
+save_plt(f"{folder}/LASSO_logMSE_{additional_description}", overwrite=overwrite)
 
 plt.figure(figsize=(10, 6))
 plt.title(rf"$R^2$ with deg {deg_max}.")
@@ -98,5 +105,6 @@ plt.ylabel(r"$R^2$")
 plt.xlim(lambda_exp_start, lambda_exp_stop)
 plt.legend()
 plt.grid(True)
+save_plt(f"{folder}/LASSO_logR2_{additional_description}", overwrite=overwrite)
 
 plt.show()

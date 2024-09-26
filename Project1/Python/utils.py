@@ -13,6 +13,42 @@ from sklearn.model_selection import train_test_split
 from inspect import signature
 import time
 
+from pathlib import Path
+
+# Saving files
+def save_plt(filename_n_path, overwrite=False, type="pdf", stop=50, fig=None) -> None:
+    filename = f"{filename_n_path}.{type}"
+    my_file = Path(filename)
+    if overwrite:
+        if fig is None:
+            plt.savefig(filename)
+        else:
+            fig.savefig(filename)
+        return
+    
+    if my_file.is_file():
+        i = 1
+        while i <= stop: # May already be additional files created
+            filename = f"{filename_n_path}{i}.{type}"
+            my_file = Path(filename)
+            if not my_file.is_file():
+                # plt.savefig(f"{filename_n_path}{i}.{type}")
+                if fig is None:
+                    plt.savefig(f"{filename_n_path}{i}.{type}")
+                else:
+                    fig.savefig(f"{filename_n_path}{i}.{type}")
+                return  
+            i += 1
+    
+        print(f"You have {stop} additional files of this sort?")
+    else:
+        
+        if fig is None:
+            plt.savefig(filename)
+        else:
+            fig.savefig(filename)
+            
+
 # Latex fonts
 def latex_fonts():
     plt.rcParams['text.usetex'] = True
@@ -41,7 +77,7 @@ class Franke:
         self.N = N; self.eps = eps
         self.x = np.sort(np.random.rand(N))
         self.y = np.sort(np.random.rand(N))
-
+        print(np.max(self.x), np.min(self.x))
         self.z_without_noise = self.franke(self.x, self.y)
         self.z = self.z_without_noise + self.eps * np.random.normal(N, 1, self.z_without_noise.shape)
 
@@ -54,6 +90,7 @@ class Franke:
         Returns
             - franke function evaluated at (x,y) 
         """
+    
         term1 = 0.75*np.exp(-(0.25*(9*x - 2)**2) - 0.25*((9*y - 2)**2))
         term2 = 0.75*np.exp(-((9*x + 1)**2)/49.0 - 0.1*(9*y + 1))
         term3 = 0.5*np.exp(-(9*x - 7)**2/4.0 - 0.25*((9*y - 3)**2))
@@ -62,14 +99,15 @@ class Franke:
         
 class PolynomialRegression:
 
-    def __init__(self, regr_model, deg_max:int, data:list, lmbdas=None, regr_model_name=None):
+    def __init__(self, regr_model, deg_max:int, data:list, lmbdas=None, regr_model_name=None, scaling=None):
         """
         Parameters
             * regr_model:               regression model of choice (OLS, LASSO or RIDGE)
             * deg_max:                  maximum polynomial degree
             * data:                     list on the form [x,y,z] 
             * lmbdas (None):            lambda values, in case of LASS or RIDGE   
-            * regr_model_name(none):    name of regression model, used when printing in self._train()
+            * regr_model_name (None):   name of regression model, used when printing in self._train()
+            * scaling (None):           scaling type, by default no scaling, possible values: ['MINMAX', 'StandardScaling']     
         """
         self.deg_max = deg_max; self.lmbdas = lmbdas
 
@@ -97,6 +135,15 @@ class PolynomialRegression:
         else:   # Assumes str
             self._regr_model_name = regr_model_name
 
+        if scaling is None or scaling == "no_scaling":
+            def scaling_func(X_train, X_test, z_train, z_test):
+                return X_train, X_test, z_train, z_test
+        else:
+            scale_data(np.zeros((1,1)), np.zeros((1,1)), np.zeros(1), np.zeros(1), scaling) # Testing function call 
+            def scaling_func(X_train, X_test, z_train, z_test):
+                return scale_data(X_train, X_test, z_train, z_test, scaling)
+        
+        self.scaling = scaling_func 
         self._train()
     
     
@@ -127,16 +174,20 @@ class PolynomialRegression:
             self.R2_train = np.zeros(len(self.degrees))
             self.R2_test = np.zeros(len(self.degrees))
             self.beta = [0]*self.deg_max
+            self.X = []
+            self.X_train = []
 
             for deg in range(self.deg_max):
                 # Create polynomial features
                 X = Design_matrix2D(self.x, self.y, self.degrees[deg])
+                self.X.append(X)
                 
                 # Split into training and testing and scale
                 X_train, X_test, z_train, z_test = train_test_split(X, self.z, test_size=0.25, random_state=42)
-                X_train, X_test, z_train, z_test = scale_data(X_train, X_test, z_train, z_test)#, scaler_type="MINMAX")
+                X_train, X_test, z_train, z_test = self.scaling(X_train, X_test, z_train, z_test)
 
                 self.beta[deg], self.MSE_train[deg], self.MSE_test[deg], self.R2_train[deg], self.R2_test[deg] = self.regr_model(X_train, X_test, z_train, z_test, None)
+                self.X_train.append(X_train)
 
                 print(f"{self._regr_model_name}: p={deg}/{self.deg_max}, duration: {(time.time()-start_time):.2f}s", end="\r")
 
@@ -150,6 +201,8 @@ class PolynomialRegression:
             self.R2_train = np.zeros((len(self.degrees), len(self.lmbdas)))
             self.R2_test = np.zeros((len(self.degrees), len(self.lmbdas)))
             self.beta = []
+            self.X = []
+            self.X_train = []
 
             for l, i in zip(self.lmbdas, range(len(self.lmbdas))):
 
@@ -157,12 +210,13 @@ class PolynomialRegression:
                 for deg in range(self.deg_max):
                     # Create polynomial features
                     X = Design_Matrix(self.x, self.y, self.degrees[deg])
-
+                    self.X.append(X)
                     # Split into training and testing and scale
                     X_train, X_test, z_train, z_test = train_test_split(X, self.z, test_size=0.25, random_state=42)
-                    X_train, X_test, z_train, z_test = scale_data(X_train, X_test, z_train, z_test)
+                    X_train, X_test, z_train, z_test = self.scaling(X_train, X_test, z_train, z_test)
 
                     beta, self.MSE_train[deg, i], self.MSE_test[deg, i], self.R2_train[deg, i], self.R2_test[deg, i] = self.regr_model(X_train, X_test, z_train, z_test, l)
+                    self.X_train.append(X_train)
                     self.beta[-1].append(beta)
 
                     print(f"{self._regr_model_name}: p={deg}/{self.deg_max}, duration: {(time.time()-start_time):.2f}s", end="\r")
@@ -245,7 +299,7 @@ def Ridge_fit(X_train:np.ndarray, X_test:np.ndarray, y_train:np.ndarray, y_test:
     beta = Ridge_Reg(X_train, y_train, lmbda)
 
     y_tilde = X_train @ beta
-    y_pred = X_test @ beta
+    y_pred = X_test @ beta  
 
     MSE_train = MSE(y_train, y_tilde)
     MSE_test = MSE(y_test, y_pred)
@@ -306,14 +360,16 @@ def scale_data(X_train, X_test, y_train, y_test, scaler_type="StandardScalar", b
     """
     Scales data using sklearn.preprocessing. Currently only supports standard scaling and min-max scaling.
     """
-    if scaler_type.upper() == "STANDARDSCALAR":
+    if scaler_type.upper() == "STANDARDSCALAR" or scaler_type.upper() == "STANDARDSCALING":
         scaler_X = StandardScaler()
         scaler_y = StandardScaler()
     
-    if scaler_type.upper() in ["MINMAX", "MIN_MAX"]:
+    elif scaler_type.upper() in ["MINMAX", "MIN_MAX"]:
         scaler_X = MinMaxScaler()
         scaler_y = MinMaxScaler()
-
+    
+    else:
+        raise ValueError(f"Did not recognize: {scaler_type}")
     # Fit on training data and transform both training and testing sets
     X_train_scaled = scaler_X.fit_transform(X_train)
     X_test_scaled = scaler_X.transform(X_test)

@@ -8,16 +8,22 @@ from sklearn.model_selection import train_test_split
 from utils import *
 
 
-# Setup
+# Plot
 latex_fonts()
-save = False 
+save = True; overwrite = False
+folder = "Figures/Ridge"
+additional_description = "no_scaling"
+# additional_description = "MINMAX"
+# additional_description = "StandardScaling"
+
+# Setup
 deg_max = 8
 lmbdas = [1e-10, 1e-5, 1e-2, 1e-1, 1, 10]
 franke = Franke(100, 0.1)
 data = [franke.x, franke.y, franke.z]
 
 # Training
-RIDGE = PolynomialRegression(Ridge_fit, deg_max, data, lmbdas=lmbdas)
+RIDGE = PolynomialRegression(Ridge_fit, deg_max, data, lmbdas=lmbdas, scaling=additional_description)
 MSE_train, MSE_test = RIDGE.MSE()
 R2_train, R2_test = RIDGE.R2()
 beta = RIDGE.beta
@@ -42,7 +48,7 @@ plt.xlim(1, deg_max)
 plt.title(rf"RIDGE MSE")
 plt.grid(True)
 if save:
-    plt.savefig(f'Figures/RIDGE_MSE.pdf')
+    save_plt(f"{folder}/RIDGE_MSE_{additional_description}", overwrite=overwrite)
 
 ################ R²-plot ################
 plt.figure(figsize=(10, 6))
@@ -57,7 +63,7 @@ plt.xlim(1, deg_max)
 plt.title(rf"RIDGE $R^2$")
 plt.grid(True)
 if save:
-    plt.savefig(f'Figures/RIDGE_R2.pdf')
+    save_plt(f"{folder}/RIDGE_R2_{additional_description}", overwrite=overwrite)
 
 lambda_exp_start = -10
 lambda_exp_stop = -1
@@ -88,6 +94,7 @@ plt.ylabel("MSE")
 plt.xlim(lambda_exp_start, lambda_exp_stop)
 plt.legend()
 plt.grid(True)
+save_plt(f"{folder}/RIDGE_logMSE_{additional_description}", overwrite=overwrite)
 
 plt.figure(figsize=(10, 6))
 plt.title(rf"$R^2$ with deg {deg_max}.")
@@ -98,5 +105,6 @@ plt.ylabel(r"$R^2$")
 plt.xlim(lambda_exp_start, lambda_exp_stop)
 plt.legend()
 plt.grid(True)
+save_plt(f"{folder}/RIDGE_logR2_{additional_description}", overwrite=overwrite)
 
 plt.show()
