@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import imageio.v2 as imageio
 from utils import *
+import matplotlib.lines as mlines
+
 
 # Define terrain files
 files = {
@@ -49,13 +51,13 @@ for name, file in files.items():
     MSE_LASSO_CV = np.zeros((deg_max, len(lmbdas))); MSE_LASSO_CV_STD = np.zeros((deg_max, len(lmbdas)))
     
     plt.figure(1, figsize=(10, 6))
-    line = plt.plot(degrees, MSE_OLS, label=f"{name} - OLS", lw=2.5)
+    line = plt.plot(degrees, MSE_OLS, "--", label=f"{name} - OLS", lw=2.5)
     color = line[0].get_color()
     plt.errorbar(degrees, MSE_OLS_CV, MSE_OLS_CV_STD, fmt="none", color=color, capsize=5, lw=2.5)
     
     # Calculate OLS
     for i in range(deg_max):
-        X = Design_matrix2D(x, y, degrees[i])
+        X = Design_Matrix(x, y, degrees[i])
 
         # CV:
         _, _, MSE_test_mean, MSE_test_STD = Cross_Validation(X, z, k)
@@ -70,23 +72,31 @@ for name, file in files.items():
             MSE_LASSO_CV[i,j] = MSE_test_mean; MSE_LASSO_CV_STD[i,j] = MSE_test_STD
 
     """
-    -- style: LASSO, * style: RIDGE, errorbars means CV.
+    - style: LASSO, -. style: RIDGE, errorbars means CV.
     """
     for j in range(len(lmbdas)):
         # LASSO:
-        line = plt.plot(degrees, MSE_LASSO[:,j], "--", label=rf"$\lambda$={lmbdas[j]}", lw=2.5)
+        line = plt.plot(degrees, MSE_LASSO[:,j], label=rf"$\lambda$={lmbdas[j]}", lw=2.5)
         color = line[0].get_color()
         plt.errorbar(degrees, MSE_LASSO_CV[:,j], MSE_LASSO_CV_STD[:,j], fmt="none", color=color, capsize=5, lw=2.5)
 
         # RIDGE: 
-        plt.plot(degrees, MSE_RIDGE[:,j], "*", color=color, lw=2.5, zorder=25)
+        plt.plot(degrees, MSE_RIDGE[:,j], "-.", color=color, lw=2.5, zorder=25)
         plt.errorbar(degrees, MSE_RIDGE_CV[:,j], MSE_RIDGE_CV_STD[:,j], fmt="none", color=color, capsize=5, lw=2.5)
     
+    lasso_line = mlines.Line2D([], [], color='black', label='LASSO')
+    ridge_line = mlines.Line2D([], [], linestyle='-.', color='black', label='Ridge')
+    handles, labels = plt.gca().get_legend_handles_labels()
+    handles.append(lasso_line)
+    handles.append(ridge_line)
+    labels.append("LASSO")
+    labels.append("Ridge")
+
     plt.title(f"MSE of OLS, Ridge, and LASSO with and without CV ({name})")
     plt.xlabel("Degree")
     plt.ylabel("MSE")
     plt.grid(True)
-    plt.legend()
+    plt.legend(handles=handles, labels=labels)
     if save:
         plt.savefig(f"Figures/Terrain_CV_Regression_{name}.pdf")
     plt.show()

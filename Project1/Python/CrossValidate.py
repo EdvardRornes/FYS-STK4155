@@ -79,7 +79,7 @@ for lmbda in lmbdadas:
         plt.savefig(f"Figures/CV_OLS.pdf")
 
     plt.figure(figsize=(10, 6))
-    plt.title(fr"MSE of Ridge regression with and without CV and $\lmbdada=${lmbda}")
+    plt.title(fr"MSE of Ridge regression with and without CV and $\lambda=${lmbda}")
     plt.plot(degrees, MSE_Ridge, label="Without CV")
     plt.errorbar(degrees, MSE_Ridge_CV, MSE_Ridge_CV_STD, label="With CV", capsize=5)
     plt.xlabel("Degree")
@@ -87,10 +87,10 @@ for lmbda in lmbdadas:
     plt.grid(True)
     plt.legend()
     if save:
-        plt.savefig(f"Figures/CV_Ridge_lmbdada={lmbda}.pdf")
+        plt.savefig(f"Figures/CV_Ridge_lambda={lmbda}.pdf")
 
     plt.figure(figsize=(10, 6))
-    plt.title(fr"MSE of LASSO regression with and without CV and $\lmbdada=${lmbda}")
+    plt.title(fr"MSE of LASSO regression with and without CV and $\lambda=${lmbda}")
     plt.plot(degrees, MSE_LASSO, label="Without CV")
     plt.errorbar(degrees, MSE_LASSO_CV, MSE_LASSO_CV_STD, label="With CV", capsize=5)
     plt.xlabel("Degree")
@@ -98,6 +98,6 @@ for lmbda in lmbdadas:
     plt.grid(True)
     plt.legend()
     if save:
-        plt.savefig(f"Figures/CV_LASSO_lmbdada={lmbda}.pdf")
+        plt.savefig(f"Figures/CV_LASSO_lambda={lmbda}.pdf")
 
 plt.show()

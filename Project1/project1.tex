@@ -269,25 +269,24 @@ To perform an analysis on this function we consider a polynomial fit up to degre
 	&+\bm\beta_{n,0}x_i^n+\bm\beta_{n,1}x_i^{n-1}y+...+\bm\beta_{n,n-1}x_iy_i^{n-1}+\bm\beta_{n,n}y_i^n\bigg)\nonumber\\
 	&=\frac{1}{n+1}\sum_{i,j=0}^{n}\sum_{\substack{k=0}}^{j}\bm\beta_{j,k} x^{j-k}_i y^{k}_i\equiv \bm X\bm\beta\label{eq:bmz}
 \end{align}
-Here the components $x_i$ and $y_i$ are entries in the input vectors $\bm x^T=\begin{bmatrix} x_0&...&x_n \end{bmatrix}$ and $\bm y^T=\begin{bmatrix} y_0& ...&y_n \end{bmatrix}$ respectively which are our independent variables. Each $\bm\beta_{i,j}$ is a $\frac{(n+1)(n+2)}{2}$ component vector with a single non-zero entry with magnitude $\beta_{i,j}$ and the design matrix $\bm X$ is then an $(n+1)\times\frac{(n+1)(n+2)}{2}$ matrix of the form:
+Here the components $x_i$ and $y_i$ are entries in the input vectors $\bm x^T=\begin{bmatrix} x_0&...&x_n \end{bmatrix}$ and $\bm y^T=\begin{bmatrix} y_0& ...&y_n \end{bmatrix}$ respectively which are our independent variables. Each $\bm\beta_{i,j}$ is a $\frac{(n+1)(n+2)}{2}$ component vector with a single non-zero entry with magnitude $|\beta_{i,j}|$ and the design matrix $\bm X$ is then an $(n+1)\times\frac{(n+1)(n+2)}{2}$ matrix of the form:
 \begin{align}
-	\scriptstyle
 	\bm X=\frac{1}{n+1}\begin{bmatrix}
-		1 & x_0 & y_0 & x^2_0 & x_0y_0 & y_0^2 & ... & x_0^n & ... & y_0^n\\
-		1 & x_1 & y_1 & x_1^2 & x_1y_1 & y_1^2 & ... & x_1^n & ... & y_1^n\\
-		\vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \ddots & \vdots & \ddots & \vdots\\
-		1 & x_n & y_n & x_n^2 & x_ny_n & y_n^2 & ... & x_n^n & ... & y_n^n
+		1 & x_0 & y_0 & x^2_0 & x_0y_0 & ... & x_0^n & ... & y_0^n\\
+		1 & x_1 & y_1 & x_1^2 & x_1y_1 & ... & x_1^n & ... & y_1^n\\
+		\vdots & \vdots & \vdots & \vdots & \vdots & \ddots & \vdots & \ddots & \vdots\\
+		1 & x_n & y_n & x_n^2 & x_ny_n & ... & x_n^n & ... & y_n^n
 	\end{bmatrix}
 \end{align}
 and the $\bm\beta$ vector contains the $\frac{(n+1)(n+2)}{2}$ components 
 \begin{align*}
-	\bm\beta^T=\begin{bmatrix}
-		\beta_{0,0}&\beta_{1,0}&\beta_{1,1}&\beta_{2,0}&\beta_{2,1}&\beta_{2,2}&...&\beta_{n(n-1)}&\beta_{n,n}
+	\bm\beta^T&=\sum_{i=0}^n\sum_{j=0}^i\bm\beta_{i,j}^T=\begin{bmatrix}
+		\beta_{0,0}&\beta_{1,0}&\beta_{1,1}&...&\beta_{n(n-1)}&\beta_{n,n}
 	\end{bmatrix}
 \end{align*}
 It should now be clear which unit vectors correspond to each term in (\ref{eq:bmz}).
 
-The design matrix \(X\) is then divided into a training set and a testing set, with the testing set comprising \(1/4\) of the data throughout our analysis. The training and testing may then be scaled (or not), before the \(\beta\)-coefficient is calculated. For Ridge, \(\beta_{\text{Ridge}}\) is found by numpy's \href{https://numpy.org/doc/2.0/reference/generated/numpy.linalg.pinv.html}{\texttt{np.linalg.pinv}} which gives the pseudoinverse (on the R.H. side of \eqref{eq:beta_ridge}) using the SVD. Obtaining \(\beta_{\text{OLS}}\) is then the special case of \(\beta_{\text{Ridge}}\) with \(\lambda=0\). The \(\beta\)-coefficient for LASSO on the other hand, is computed using \href{https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Lasso.html}{\texttt{sklearn.Lasso}}. 
+The inputs $\bm x$ and $\bm y$ are then split randomly into a training and test set with the latter comprising \(1/4\) of the data throughout our analysis. These are then used to calculate both the train and test variations of $\bm z$ and $\bm X$ using the function \href{https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html}{\texttt{train\_test\_split}} from \texttt{sklearn.model\_selection}. The training and testing may then be scaled (or not), before the \(\beta\)-coefficient is calculated. For Ridge, \(\beta_{\text{Ridge}}\) is found by numpy's \href{https://numpy.org/doc/2.0/reference/generated/numpy.linalg.pinv.html}{\texttt{np.linalg.pinv}} which gives the pseudoinverse (on the R.H. side of \eqref{eq:beta_ridge}) using the SVD. Obtaining \(\beta_{\text{OLS}}\) is then the special case of \(\beta_{\text{Ridge}}\) with \(\lambda=0\). The \(\beta\)-coefficient for LASSO on the other hand, is computed using \href{https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Lasso.html}{\texttt{sklearn.Lasso}}. 
 Sklearn's LASSO is dependent on the chosen maximum number of iterations and a tolerance parameter. Throughout this project these parameters are set to \(10^5\) and \(10^{-1}\), respectively. Lastly, the mean squared error and the R2 score is then calculated using Sklearn's \href{https://scikit-learn.org/stable/modules/model_evaluation.html}{\texttt{metrics}} library 
 
 % The OLS and Ridge regression fitting was done use of (\ref{eq:beta_ridge}) where for the prior we simply set $\lambda=0$. Since LASSO is more complicated we opted into using \texttt{sklearn.linear\_model}. Note that this excludes intercept by default so ... (?). The MSE and $R^2$ for all regression techniques were calculated with the \texttt{sklearn}'s \texttt{mean\_squared\_error} and \texttt{r2\_score} respectively. 

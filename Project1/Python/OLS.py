@@ -10,13 +10,13 @@ from utils import *
 latex_fonts()
 save = False; overwrite = False
 folder = "Figures/OLS"
-# additional_description = "no_scaling"
+additional_description = "no_scaling"
 # additional_description = "MINMAX"
-additional_description = "StandardScaling"
+# additional_description = "StandardScaling"
 
 # Setup
 deg_max = 25
-franke = Franke(100, 0.01)
+franke = Franke(100, 0.1)
 data = [franke.x, franke.y, franke.z]
 
 # Regression

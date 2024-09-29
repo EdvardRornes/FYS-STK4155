@@ -1,11 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 import rasterio
 
-from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
-from sklearn.linear_model import Lasso
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
@@ -32,7 +29,6 @@ def save_plt(filename_n_path, overwrite=False, type="pdf", stop=50, fig=None) ->
             filename = f"{filename_n_path}{i}.{type}"
             my_file = Path(filename)
             if not my_file.is_file():
-                # plt.savefig(f"{filename_n_path}{i}.{type}")
                 if fig is None:
                     plt.savefig(f"{filename_n_path}{i}.{type}")
                 else:
@@ -77,13 +73,12 @@ class Franke:
         self.N = N; self.eps = eps
         self.x = np.sort(np.random.rand(N))
         self.y = np.sort(np.random.rand(N))
-        print(np.max(self.x), np.min(self.x))
         self.z_without_noise = self.franke(self.x, self.y)
-        self.z = self.z_without_noise + self.eps * np.random.normal(N, 1, self.z_without_noise.shape)
+        self.z = self.z_without_noise + self.eps * np.random.normal(0, 1, self.z_without_noise.shape)
 
-    def franke(self, x:np.ndarray,y:np.ndarray) -> np.ndarray:
+    def franke(self, x:np.ndarray, y:np.ndarray) -> np.ndarray:
         """
-        Prameters
+        Parameters
             * x:    x-values
             * y:    y-values
 
@@ -117,13 +112,13 @@ class PolynomialRegression:
 
         sig = signature(regr_model)
         params = sig.parameters
-        if len(params) == 5: # I.e. LASSO or RIDGE
+        if len(params) == 5: # i.e. LASSO or RIDGE
             self.regr_model = regr_model
             
             if lmbdas is None:
                 raise ValueError(f"Regression model {type(regr_model)} needs lambdas!")    
         
-        elif len(params) == 4: # I.e. OLS
+        elif len(params) == 4: # i.e. OLS
             def correct_regr_model(X_train, X_test, z_train, z_test, lmbda):
                 return regr_model(X_train, X_test, z_train, z_test)
             self.regr_model = correct_regr_model
@@ -179,7 +174,7 @@ class PolynomialRegression:
 
             for deg in range(self.deg_max):
                 # Create polynomial features
-                X = Design_matrix2D(self.x, self.y, self.degrees[deg])
+                X = Design_Matrix(self.x, self.y, self.degrees[deg])
                 self.X.append(X)
                 
                 # Split into training and testing and scale
@@ -225,23 +220,7 @@ class PolynomialRegression:
 
 ############# Design Matrix #############
 
-def Design_Matrix(x: np.ndarray, y: np.ndarray, deg: int) -> np.ndarray:      
-    """
-    Creates a polynomial design matrix up to degree 'deg' for 1D-data
-    """      
-    ## Create feature matrix
-    xy_dic = {
-        "x": x,
-        "y": y
-    }
-    xy = pd.DataFrame(xy_dic)
-
-    poly = PolynomialFeatures(degree=deg)
-    X = poly.fit_transform(xy)
-
-    return X
-
-def Design_matrix2D(x:np.ndarray, y:np.ndarray, p:int) -> np.ndarray:
+def Design_Matrix(x:np.ndarray, y:np.ndarray, p:int) -> np.ndarray:
     """
     Creates a polynomial design matrix up to degree 'deg' for 2D-data
     """
@@ -258,7 +237,6 @@ def Design_matrix2D(x:np.ndarray, y:np.ndarray, p:int) -> np.ndarray:
     
     return X
 
-
 ############# Error-measure functions #############
 def MSE(x, y):
     """
@@ -273,10 +251,9 @@ def R2(x, y):
     return r2_score(x, y)
 
 ############# Fitting #############
-
 def Ridge_Reg(X, y, lambd):
     """
-    Calculates and returns (X^TX + lambda I )^{-1}X^ty
+    Calculates and returns (X^T X + lambda I)^{-1}X^T y
     """
     XTX = X.T @ X
     y = y.reshape(-1, 1)
@@ -356,17 +333,17 @@ class LASSO_fit:
 LASSO_default = LASSO_fit() # Usually used
 
 ############# Scaling #############
-def scale_data(X_train, X_test, y_train, y_test, scaler_type="StandardScalar", b=1, a=0):
+def scale_data(X_train, X_test, y_train, y_test, scaler_type="StandardScaler", b=1, a=0):
     """
     Scales data using sklearn.preprocessing. Currently only supports standard scaling and min-max scaling.
     """
-    if scaler_type.upper() == "STANDARDSCALAR" or scaler_type.upper() == "STANDARDSCALING":
+    if scaler_type.upper() == "STANDARDSCALER" or scaler_type.upper() == "STANDARDSCALING":
         scaler_X = StandardScaler()
         scaler_y = StandardScaler()
     
     elif scaler_type.upper() in ["MINMAX", "MIN_MAX"]:
-        scaler_X = MinMaxScaler()
-        scaler_y = MinMaxScaler()
+        scaler_X = MinMaxScaler(feature_range=(a, b))
+        scaler_y = MinMaxScaler(feature_range=(a, b))
     
     else:
         raise ValueError(f"Did not recognize: {scaler_type}")
@@ -385,17 +362,22 @@ def Bootstrap(X:np.ndarray, y:np.ndarray, samples:int, reg_method="OLS", scaling
     if reg_method.upper() == "OLS":
         def fit(X_train, X_test, y_train, y_test, lmbda):
             return OLS_fit(X_train, X_test, y_train, y_test)
+        
     elif reg_method.upper() == "LASSO":
         def fit(X_train, X_test, y_train, y_test, lmbda):
             LASS = LASSO_fit(max_iter=max_iter, tol=tol)
             return LASS(X_train, X_test, y_train, y_test, lmbda)
+        
         if lmbda is None:
             raise ValueError(f"Argument 'lmbda' needs to be a float for LASSO-method")
+        
     elif reg_method.upper() == "RIDGE":
         def fit(X_train, X_test, y_train, y_test, lmbda):
             return Ridge_fit(X_train, X_test, y_train, y_test, lmbda)
+        
         if lmbda is None:
             raise ValueError(f"Argument 'lmbda' needs to be a float for RIDGE-method")
+        
     else:
         raise ValueError(f"Does not recognize reg-method: {reg_method}")
         
@@ -429,17 +411,22 @@ def Cross_Validation(X:np.ndarray, y:np.ndarray, k:int, reg_method="OLS", lmbda=
     if reg_method.upper() == "OLS":
         def fit(X_train, X_test, y_train, y_test, lmbda):
             return OLS_fit(X_train, X_test, y_train, y_test)
+        
     elif reg_method.upper() == "LASSO":
         def fit(X_train, X_test, y_train, y_test, lmbda):
             LASS = LASSO_fit(max_iter=max_iter, tol=tol)
             return LASS(X_train, X_test, y_train, y_test, lmbda)
+        
         if lmbda is None:
             raise ValueError(f"Argument 'lmbda' needs to be a float for LASSO-method")
+        
     elif reg_method.upper() == "RIDGE":
         def fit(X_train, X_test, y_train, y_test, lmbda):
             return Ridge_fit(X_train, X_test, y_train, y_test, lmbda)
+        
         if lmbda is None:
             raise ValueError(f"Argument 'lmbda' needs to be a float for RIDGE-method")
+        
     else:
         raise ValueError(f"Does not recognize reg-method: {reg_method}")
     
@@ -479,14 +466,10 @@ def Cross_Validation(X:np.ndarray, y:np.ndarray, k:int, reg_method="OLS", lmbda=
 def get_latitude_and_conversion(filename):
     with rasterio.open(filename) as dataset:
         meta = dataset.meta
-
-        # Extract the transform (Affine object)
         transform = meta['transform']
         # The latitude is the y-coordinate of the top left corner
         latitude = transform[5]
         # Calculate the latitude conversion factor in meters per degree
         lat_conversion = 111412.84 * np.cos(np.radians(latitude))
-        # Calculate the distance per degree of longitude at this latitude
-        lon_conversion = 111412.84 * np.cos(np.radians(latitude))
 
-        return latitude, lat_conversion, lon_conversion
+        return latitude, lat_conversion

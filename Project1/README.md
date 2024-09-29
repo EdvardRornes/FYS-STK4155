@@ -81,7 +81,7 @@
 
 - [ ] Subsection "Connection to Statistics" has mistakes, look through it and fix things.
 - [ ] Subsection "Bias-Variance" is currently written on the form of an exercise instead of a report. Fix language and the way things are presented.
-- [ ] Section "Implementation" needs a lot of work. I have pretty much just written down the basics. We need to choose (and reason) the train-test split and keep it throughout
+- [ ] Section "Implementation" needs a lot of work. I have pretty much just written down the basics. We need to choose (and reason) the train-test split and keep it throughout. We also need to comment on the intercept part regarding LASSO.
 - [ ] All figures need titles which describe them in more detail. Captions are also necessary.
 - [ ] Bias-Variance proof in Appendix A is very scuffed. I completely ignored vector/index notation and just brute forced everything as if they were commuting scalars. Do this proof properly.
 - [ ] Write results.
