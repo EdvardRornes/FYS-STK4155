@@ -1,25 +1,23 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-import matplotlib.colors as mcolors
 import matplotlib.lines as mlines
-from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from utils import *
+np.random.seed(1)
 
 
 # Plot
 latex_fonts()
 save = True; overwrite = True
 folder = "Figures/Ridge"
-# additional_description = "no_scaling"
-additional_description = "MINMAX"
+additional_description = "no_scaling"
+# additional_description = "MINMAX"
 # additional_description = "StandardScaling"
 
 # Setup
-deg_max = 15
-lmbdas = [1e-10, 1e-5, 1e-2, 1e-1, 1, 10]
-franke = Franke(10, 0.1)
+deg_max = 10
+lmbdas = [1e-15, 1e-7, 1e-4, 1e-1]
+franke = Franke(50, 0.1)
 data = [franke.x, franke.y, franke.z]
 
 # Training
@@ -74,7 +72,7 @@ if save:
 lambda_exp_start = -10
 lambda_exp_stop = -1
 lambda_num = 100
-deg = 3
+deg = 4
 
 lmbdas = np.logspace(lambda_exp_start, lambda_exp_stop, num=lambda_num)
 
@@ -86,7 +84,7 @@ beta_list = [0]*lambda_num
 
 X = Design_Matrix(franke.x, franke.y, deg)
 # Split into training and testing and scale
-X_train, X_test, z_train, z_test = train_test_split(X, franke.z, test_size=0.25, random_state=42)
+X_train, X_test, z_train, z_test = train_test_split(X, franke.z, test_size=0.25, random_state=4)
 X_train, X_test, z_train, z_test = scale_data(X_train, X_test, z_train, z_test)
 
 for i in range(lambda_num):

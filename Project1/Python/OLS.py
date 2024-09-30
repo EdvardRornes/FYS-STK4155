@@ -5,18 +5,19 @@ import matplotlib.colors as mcolors
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from utils import *
+np.random.seed(1)
 
 # Creating plot
 latex_fonts()
-save = False; overwrite = False
+save = True; overwrite = True
 folder = "Figures/OLS"
 additional_description = "no_scaling"
 # additional_description = "MINMAX"
 # additional_description = "StandardScaling"
 
 # Setup
-deg_max = 50
-franke = Franke(100, 0.1)
+deg_max = 10
+franke = Franke(50, 0.1)
 data = [franke.x, franke.y, franke.z]
 
 # Regression

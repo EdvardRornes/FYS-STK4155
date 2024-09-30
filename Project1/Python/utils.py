@@ -1,15 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import rasterio
+import time
 
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
-
 from inspect import signature
-import time
-
 from pathlib import Path
 
 # Saving files
@@ -178,7 +176,7 @@ class PolynomialRegression:
                 self.X.append(X)
                 
                 # Split into training and testing and scale
-                X_train, X_test, z_train, z_test = train_test_split(X, self.z, test_size=0.25, random_state=42)
+                X_train, X_test, z_train, z_test = train_test_split(X, self.z, test_size=0.25, random_state=4)
                 X_train, X_test, z_train, z_test = self.scaling(X_train, X_test, z_train, z_test)
 
                 self.beta[deg], self.MSE_train[deg], self.MSE_test[deg], self.R2_train[deg], self.R2_test[deg] = self.regr_model(X_train, X_test, z_train, z_test, None)
@@ -207,7 +205,7 @@ class PolynomialRegression:
                     X = Design_Matrix(self.x, self.y, self.degrees[deg])
                     self.X.append(X)
                     # Split into training and testing and scale
-                    X_train, X_test, z_train, z_test = train_test_split(X, self.z, test_size=0.25, random_state=42)
+                    X_train, X_test, z_train, z_test = train_test_split(X, self.z, test_size=0.25, random_state=4)
                     X_train, X_test, z_train, z_test = self.scaling(X_train, X_test, z_train, z_test)
 
                     beta, self.MSE_train[deg, i], self.MSE_test[deg, i], self.R2_train[deg, i], self.R2_test[deg, i] = self.regr_model(X_train, X_test, z_train, z_test, l)
@@ -344,6 +342,9 @@ def scale_data(X_train, X_test, y_train, y_test, scaler_type="StandardScaler", b
     elif scaler_type.upper() in ["MINMAX", "MIN_MAX"]:
         scaler_X = MinMaxScaler(feature_range=(a, b))
         scaler_y = MinMaxScaler(feature_range=(a, b))
+        
+    elif scaler_type.upper() == "NO_SCALING":
+        return X_train, X_test, y_train, y_test
     
     else:
         raise ValueError(f"Did not recognize: {scaler_type}")
@@ -357,7 +358,7 @@ def scale_data(X_train, X_test, y_train, y_test, scaler_type="StandardScaler", b
     
     return X_train_scaled, X_test_scaled, y_train_scaled, y_test_scaled
 
-def Bootstrap(X:np.ndarray, y:np.ndarray, samples:int, reg_method="OLS", scaling_type="StandardScalar", 
+def Bootstrap(X:np.ndarray, y:np.ndarray, samples:int, reg_method="OLS", scaling_type="no_scaling", 
               lmbda=None, test_percentage=0.25,  max_iter=int(1e5), tol=1e-1):
     if reg_method.upper() == "OLS":
         def fit(X_train, X_test, y_train, y_test, lmbda):
@@ -391,7 +392,7 @@ def Bootstrap(X:np.ndarray, y:np.ndarray, samples:int, reg_method="OLS", scaling
         idx = np.random.randint(0, N, N)  # Random resampling with replacement
         X_i = X[idx, :]
         y_i = y[idx]
-        X_train, X_test, y_train, y_test = train_test_split(X_i, y_i, test_size=test_percentage)
+        X_train, X_test, y_train, y_test = train_test_split(X_i, y_i, test_size=test_percentage, random_state=4)
         X_train, X_test, y_train, y_test = scale_data(X_train, X_test, y_train, y_test, scaler_type=scaling_type)
 
         _, MSE_train[i], MSE_test[i], _, _ = fit(X_train, X_test, y_train, y_test, lmbda)
