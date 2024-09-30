@@ -15,7 +15,7 @@ additional_description = "no_scaling"
 # additional_description = "StandardScaling"
 
 # Setup
-deg_max = 25
+deg_max = 50
 franke = Franke(100, 0.1)
 data = [franke.x, franke.y, franke.z]
 
@@ -27,9 +27,9 @@ beta = OLS.beta
 
 degrees = OLS.degrees
 
-MSE_train, MSE_test = MSE_train, MSE_test
-R2_train, R2_test = R2_train, R2_test
-beta = beta
+# MSE_train, MSE_test = MSE_train, MSE_test
+# R2_train, R2_test = R2_train, R2_test
+# beta = beta
 
 ################ PLOT ################
 minor_ticks = np.arange(0, len(beta[-1]), 1)
