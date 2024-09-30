@@ -340,7 +340,8 @@ def scale_data(X_train, X_test, y_train, y_test, scaler_type="StandardScaler", b
     if scaler_type.upper() == "STANDARDSCALER" or scaler_type.upper() == "STANDARDSCALING":
         scaler_X = StandardScaler()
         scaler_y = StandardScaler()
-    
+    elif scaler_type.upper() == "NO_SCALING":
+        return X_train, X_test, y_train, y_test
     elif scaler_type.upper() in ["MINMAX", "MIN_MAX"]:
         scaler_X = MinMaxScaler(feature_range=(a, b))
         scaler_y = MinMaxScaler(feature_range=(a, b))

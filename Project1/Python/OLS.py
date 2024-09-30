@@ -8,15 +8,16 @@ from utils import *
 
 # Creating plot
 latex_fonts()
-save = False; overwrite = False
+save = True; overwrite = True
 folder = "Figures/OLS"
 additional_description = "no_scaling"
 # additional_description = "MINMAX"
 # additional_description = "StandardScaling"
 
 # Setup
-deg_max = 50
-franke = Franke(100, 0.1)
+np.random.seed(0)
+deg_max = 25; N = 25; eps = 0.1
+franke = Franke(N, eps)
 data = [franke.x, franke.y, franke.z]
 
 # Regression
@@ -26,10 +27,6 @@ R2_train, R2_test = OLS.R2()
 beta = OLS.beta
 
 degrees = OLS.degrees
-
-# MSE_train, MSE_test = MSE_train, MSE_test
-# R2_train, R2_test = R2_train, R2_test
-# beta = beta
 
 ################ PLOT ################
 minor_ticks = np.arange(0, len(beta[-1]), 1)
@@ -58,7 +55,7 @@ plt.title(r'$\beta$ coefficient dependence for various polynomial degrees $p$')
 y0 = ax.get_ylim()
 plt.vlines(major_ticks, y0[0], y0[1], colors="black", alpha=0.3)
 plt.ylim(y0[0], y0[1])
-plt.xlim(0, N-1)
+plt.xlim(0, deg_max*2)
 ax.set_xlabel(r"$\beta_n$")
 ax.set_ylabel(r"$\beta$")
 if save:
