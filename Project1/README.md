@@ -11,17 +11,14 @@
 ### Part b:
 
 - [x] Write own code for Ridge regression.
-- [ ] Perform the same analysis as above but now for different values of $\lambda$. **ER: I really think there is something wrong with this point. I can't imagine doing this with more than 2-3 $\lambda$'s**
+- [x] Perform the same analysis as above but now for different values of $\lambda$.
 - [x] Study the dependence on $\lambda$.
 
 ### Part c:
 
 - [x] Write own code for LASSO regression. Use Scikit-learn. Scikit-learn excludes the intercept by default. **Not really sure what including/excluding intercept really means...**
-- [ ] Perform the same analysis as above but now for different values of $\lambda$. **ER: Same as for Ridge**
+- [x] Perform the same analysis as above but now for different values of $\lambda$.
 - [x] Study the dependence on $\lambda$.
-
-### Random:
-- [ ] Find a cmap which doesn't look terrible...
 
 ### Part d:
 
@@ -30,11 +27,12 @@
 ### Part e:
 
 - [x] (Week 38) Show that $\mathbb{E}[(\boldsymbol y-\tilde{\boldsymbol y})^2]=\text{Bias}[\tilde y]+\text{Var}[\tilde y]+\sigma^2$ where $\text{Bias}[\tilde y]=\mathbb{E}\left[(\boldsymbol y-\mathbb E[\tilde{\boldsymbol y}])^2\right]$ and $\text{Var}[\tilde y]=\mathbb E\left[(\tilde{\boldsymbol y}-\mathbb E[\tilde{\boldsymbol y}])^2\right]=\frac 1n\sum_i (\tilde y_i-\mathbb E[\tilde{\boldsymbol y}])^2$
-- [x] Perform a bias-variance analysis of the Franke function by studying the MSE value as a function of the complexity of the model. **ER: Isn't this just what we did by checking the MSE/R2 for the various polynomial degrees?**
+- [ ] Perform a bias-variance analysis of the Franke function by studying the MSE value as a function of the complexity of the model. Here we need to calculate the Bias and the Variance and plot these to perform an analysis.
 
 ### Part f:
 
-- [x] Implement the $k$-fold cross-validation algorithm (using Scikit-Learn) and evaluate again the MSE function resulting from the test folds.
+- [x] Implement the $k$-fold cross-validation algorithm (using Scikit-Learn) and evaluate again the MSE function resulting from the test folds. 
+- [ ] Make it so that we dont have a billion files for the above. Probably just pick the particular values of $\lambda$ which are reasonable from the above discussions.
 
 ### Part g:
 

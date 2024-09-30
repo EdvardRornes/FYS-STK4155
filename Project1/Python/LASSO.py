@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from sklearn.model_selection import train_test_split
 from utils import *
-# np.random.seed(0)
+np.random.seed(0)
 
 # Plot:
 latex_fonts()
@@ -16,7 +16,8 @@ additional_description = "no_scaling"
 # Setup
 deg_max = 10
 lmbdas = [1e-10, 1e-2, 1e-1]
-franke = Franke(100, 0.1)
+N = 50; eps = 0.1
+franke = Franke(N, eps)
 data = [franke.x, franke.y, franke.z]
 
 # Training
@@ -70,7 +71,7 @@ if save:
     save_plt(f"{folder}/LASSO_R2_{additional_description}", overwrite=overwrite)
 
 lambda_exp_start = -10
-lambda_exp_stop = -1
+lambda_exp_stop = -2
 lambda_num = 100
 deg = 4
 
@@ -84,11 +85,10 @@ beta_list = [0]*lambda_num
 
 X = Design_Matrix(franke.x, franke.y, deg)
 # Split into training and testing and scale
-X_train, X_test, z_train, z_test = train_test_split(X, franke.z, test_size=0.25, random_state=42)
-X_train, X_test, z_train, z_test = scale_data(X_train, X_test, z_train, z_test)
+X_train, X_test, z_train, z_test = train_test_split(X, franke.z, test_size=0.25, random_state=4)
 
 for i in range(lambda_num):
-    beta_list[i], MSE_train_array[i], MSE_test_array[i], R2_train_array[i], R2_test_array[i] = LASSO_default(X_train, X_test, z_train, z_test, lmbdas[i])
+    _, MSE_train_array[i], MSE_test_array[i], R2_train_array[i], R2_test_array[i] = LASSO_default(X_train, X_test, z_train, z_test, lmbdas[i])
 
 plt.figure(figsize=(10, 6))
 plt.title(rf"MSE deg {deg}.")

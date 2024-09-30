@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from utils import *
+from sklearn.utils import resample
 
 np.random.seed(1)
 
