@@ -28,10 +28,6 @@ beta = OLS.beta
 
 degrees = OLS.degrees
 
-# MSE_train, MSE_test = MSE_train, MSE_test
-# R2_train, R2_test = R2_train, R2_test
-# beta = beta
-
 ################ PLOT ################
 minor_ticks = np.arange(0, len(beta[-1]), 1)
 major_ticks = [n*(n+1)/2 for n in range(deg_max)]
@@ -59,7 +55,7 @@ plt.title(r'$\beta$ coefficient dependence for various polynomial degrees $p$')
 y0 = ax.get_ylim()
 plt.vlines(major_ticks, y0[0], y0[1], colors="black", alpha=0.3)
 plt.ylim(y0[0], y0[1])
-plt.xlim(0, N-1)
+plt.xlim(0, deg_max*2)
 ax.set_xlabel(r"$\beta_n$")
 ax.set_ylabel(r"$\beta$")
 if save:

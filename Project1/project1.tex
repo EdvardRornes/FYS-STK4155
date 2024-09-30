@@ -286,31 +286,21 @@ and the $\bm\beta$ vector contains the $\frac{(n+1)(n+2)}{2}$ components
 \end{align*}
 It should now be clear which unit vectors correspond to each term in (\ref{eq:bmz}).
 
-The inputs $\bm x$ and $\bm y$ are then split randomly into a training and test set with the latter comprising \(1/4\) of the data throughout our analysis. These are then used to calculate both the train and test variations of $\bm z$ and $\bm X$ using the function \href{https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html}{\texttt{train\_test\_split}} from \texttt{sklearn.model\_selection}. The training and testing may then be scaled (or not), before the \(\beta\)-coefficient is calculated. For Ridge, \(\beta_{\text{Ridge}}\) is found by numpy's \href{https://numpy.org/doc/2.0/reference/generated/numpy.linalg.pinv.html}{\texttt{np.linalg.pinv}} which gives the pseudoinverse (on the R.H. side of \eqref{eq:beta_ridge}) using the SVD. Obtaining \(\beta_{\text{OLS}}\) is then the special case of \(\beta_{\text{Ridge}}\) with \(\lambda=0\). The \(\beta\)-coefficient for LASSO on the other hand, is computed using \href{https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Lasso.html}{\texttt{sklearn.Lasso}}. 
-Sklearn's LASSO is dependent on the chosen maximum number of iterations and a tolerance parameter. Throughout this project these parameters are set to \(10^5\) and \(10^{-1}\), respectively. Lastly, the mean squared error and the R2 score is then calculated using Sklearn's \href{https://scikit-learn.org/stable/modules/model_evaluation.html}{\texttt{metrics}} library 
+The inputs $\bm x$ and $\bm y$ are then split randomly into a training and test set with the latter comprising \(1/4\) of the data throughout our analysis. These are then used to calculate both the train and test variations of $\bm z$ and $\bm X$ using the function \href{https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html}{\texttt{train\_test\_split}} from \texttt{sklearn.model\_selection}. The training and testing set may then be scaled (or not), before the \(\beta\)-coefficient is calculated. For Ridge, \(\beta_{\text{Ridge}}\) is found by numpy's \href{https://numpy.org/doc/2.0/reference/generated/numpy.linalg.pinv.html}{\texttt{np.linalg.pinv}} which gives the pseudoinverse (on the R.H. side of \eqref{eq:beta_ridge}) using the SVD. Obtaining \(\beta_{\text{OLS}}\) is then the special case of \(\beta_{\text{Ridge}}\) with \(\lambda=0\). The \(\beta\)-coefficient for LASSO on the other hand, is computed using \href{https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Lasso.html}{\texttt{sklearn.Lasso}}. 
+Sklearn's LASSO is dependent on the chosen maximum number of iterations and a tolerance parameter. Throughout this project these parameters are set to \(10^5\) and \(10^{-1}\), respectively. Lastly, the mean squared error and the R2 score is then calculated using Sklearn's \href{https://scikit-learn.org/stable/modules/model_evaluation.html}{\texttt{metrics}} library. 
 
 % The OLS and Ridge regression fitting was done use of (\ref{eq:beta_ridge}) where for the prior we simply set $\lambda=0$. Since LASSO is more complicated we opted into using \texttt{sklearn.linear\_model}. Note that this excludes intercept by default so ... (?). The MSE and $R^2$ for all regression techniques were calculated with the \texttt{sklearn}'s \texttt{mean\_squared\_error} and \texttt{r2\_score} respectively. 
 
 
 \section{Results}
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_MSEno_scaling.pdf}
-	\caption{Caption}
-	\label{fig:OLS_mse_degree}
-\end{figure}
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_R2no_scaling.pdf}
-	\caption{Caption}
-	\label{fig:OLS_r2_degree}
-\end{figure}
-\begin{figure}[ht!]
-\centering
-\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_betano_scaling.pdf}
-\caption{Caption}
-\label{fig:OLS_beta_degree}
-\end{figure}
+As an general observation, we found that the LASSO-method performed the worst out of the three methods, while OLS and Ridge performing similarly, however dependent on the choice of \(\lambda\). With an increasing (maximum) polynomial degree the MSE of OLS and Ridge blew up, while LASSO settled horizontally.
+All three models had the largest \(\beta\)-coefficients corresponding to an polynomial degree of approximately \(2-3\).
+
+Between the choice of min-max scaling, standard scaling and no scaling, it was found that no scaling gave the best result. Min-max scaling showed little to no impact on both the MSE and the \(R^2\)-score, while standard scaling, in contrast, led to a deterioration in both metrics.
+
+We found that all the three models are quite dependent on the size \(N\) of the sample-data set and on \(p\). Keeping \(p\) fixed and increasing \(N\), we found that the MSE of both the test and the training-data decreased. To better analyzie the performance of the three models we found that with \(N=25\) and \(p=25\).
+
+
 \begin{figure}[ht!]
 	\centering
 	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf}
@@ -361,14 +351,36 @@ Sklearn's LASSO is dependent on the chosen maximum number of iterations and a to
 \end{figure}
 
 \subsection{OLS}
+The OLS-method showed a divergence in its MSE and \(R^2\)-score for higher polynomial degrees. Its \(\beta\)-coefficients seemed more dominant for the \(\beta\)-coefficients corresponding to polynomials of order 2 to 3; \(x^2, x^2y, y^3, \)etc. 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_MSEno_scaling.pdf}
+	\caption{The MSE for the OLS-method with \(N=25\), \(p_{\text{max}}=25\) and \(\epsilon=0.1\).}
+	\label{fig:OLS_mse_degree}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_R2no_scaling.pdf}
+	\caption{The \(R^2\)-score for the OLS-method with \(N=25\), \(p_{\text{max}}=25\) and \(\epsilon=0.1\).}
+	\label{fig:OLS_r2_degree}
+\end{figure}
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_betano_scaling.pdf}
+\caption{The \(\beta\)-coefficients for the OLS-fit with \(N=25\), \(p_{\text{max}}=25\) and \(\epsilon=0.1\). The plots shows the polynomial degree from 0 (green) to 25 (red).}
+\label{fig:OLS_beta_degree}
+\end{figure}
+
 
 \subsection{Ridge}
 
 \subsection{LASSO}
 
-\section{Results}
-
 \section{Discussion}
+For the Franke function, the fact that the most dominating \(\beta\)-coefficients where those corresponding to an polynomial degree of approximately \(2-4\), is likely tied to the fact the the Franke function is a sum of Gaussian functions. A Gaussian function is Taylor expanded as \(e^{-a(x-b)^2} = 1 - -a(x-b)^2 + a^2/2(x-b)^4 + ...\), which clearly highlights the importance of terms involving polynomial degrees around \(2-4\). 
+
+The terrain-data, on the other hand, is very sensitive to the specific location it is extracted from. For example, mountain regions would likely be better modelled as a gaussian, as most mountains are (at least) somewhat continuous and just visually in the form of a Guassia. This is of course the case for Mount Everest. However, for the grand canyon, one would assume some (more) discontinuities, or cliffs with jagged edges, better modelled by say a very high degree of polynomial. 
+
 
 \section{Conclusion}
 
