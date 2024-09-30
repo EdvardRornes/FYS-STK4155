@@ -94,7 +94,7 @@ class Franke:
         
 class PolynomialRegression:
 
-    def __init__(self, regr_model, deg_max:int, data:list, lmbdas=None, regr_model_name=None, scaling=None):
+    def __init__(self, regr_model:callable, deg_max:int, data:list, lmbdas=None, regr_model_name=None, scaling=None):
         """
         Parameters
             * regr_model:               regression model of choice (OLS, LASSO or RIDGE)
@@ -253,7 +253,7 @@ def R2(x, y):
 ############# Fitting #############
 def Ridge_Reg(X, y, lambd):
     """
-    Calculates and returns (X^T X + lambda I)^{-1}X^T y
+    Calculates and returns (X^TX + lambda I)^{-1}X^T y
     """
     XTX = X.T @ X
     y = y.reshape(-1, 1)
@@ -327,7 +327,7 @@ class LASSO_fit:
         MSE_test = MSE(y_test, y_pred)
         R2_train = R2(y_train, y_tilde)
         R2_test = R2(y_test, y_pred)
-
+        
         return beta, MSE_train, MSE_test, R2_train, R2_test
     
 LASSO_default = LASSO_fit() # Usually used

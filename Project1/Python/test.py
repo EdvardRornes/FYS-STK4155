@@ -1,7 +1,7 @@
 import numpy as np
 from utils import *
 
-def test_Design_matrix2D(design_matrix=Design_matrix2D):
+def test_Design_matrix2D(design_matrix=Design_Matrix):
     eps = 1e-14
 
     N = 4
