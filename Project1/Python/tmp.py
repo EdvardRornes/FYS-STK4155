@@ -103,13 +103,15 @@ def OLS_fit(X_train:np.ndarray, X_test:np.ndarray, y_train:np.ndarray, y_test:np
  
 
 ################ Brute force ################
-N = 100
+N = 75
 x = np.sort(np.random.rand(N))
 y = np.sort(np.random.rand(N))
+x = np.sort(np.random.uniform(0, 1, N))
+y = np.sort(np.random.uniform(0, 1, N))
 z = franke(x,y)
 z = z + 0.1*np.random.normal(0, 1, z.shape)
  
-deg_max = 25
+deg_max = 75
 degs = np.linspace(1, deg_max, deg_max, dtype=int)
  
 MSE_train_brute_force = np.zeros(deg_max)
@@ -170,6 +172,7 @@ plt.ylabel("MSE")
 plt.yticks()
 plt.xticks()
 plt.xlim(1, deg_max)
+# plt.ylim(0,1)
 plt.legend()
 plt.grid(True)
  

@@ -14,12 +14,12 @@ files = {
 save = False
 # latex_fonts()
 # Initialize storage for results
-deg_max = 15
+deg_max = 25
 degrees = np.arange(1, deg_max + 1)
 lmbdas = [1e-10, 1e-5, 1e-2, 1e-1]
 k = 5
 
-N = 100
+N = 25
 
 
 # Iterate through terrain files

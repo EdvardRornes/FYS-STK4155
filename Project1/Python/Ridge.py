@@ -17,9 +17,11 @@ additional_description = "MINMAX"
 # additional_description = "StandardScaling"
 
 # Setup
-deg_max = 15
+deg_max = 25
 lmbdas = [1e-10, 1e-5, 1e-2, 1e-1, 1, 10]
-franke = Franke(10, 0.1)
+N = 25; eps = 0.1
+np.random.seed(0)
+franke = Franke(N, eps)
 data = [franke.x, franke.y, franke.z]
 
 # Training
