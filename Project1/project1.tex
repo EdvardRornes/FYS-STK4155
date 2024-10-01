@@ -225,26 +225,26 @@ The so-called Bias-Variance Trade-Off can be summarized in a single equation:
 	\mathbb{E}[(\bm y-\tilde{\bm y})^2]=\text{Bias}[\tilde{\bm y}]+\text{Var}[\tilde{\bm y}]+\sigma^2
 	\label{eq:MSE-bias-var}
 \end{align}
-The LHS of (\ref{eq:MSE-bias-var}) is the expected value of the MSE which tells us how well the model's predictions match the true data on average. The equation shows that we can decompose this expected MSE into 3 different components.
+where the bias is defined as $\mathbb E[(f(\bm x)-\mathbb E[\tilde{\bm y}])^2]$. The LHS of (\ref{eq:MSE-bias-var}) is the expected value of the MSE which tells us how well the model's predictions match the true data on average. The equation shows that we can decompose this expected MSE into 3 different components.
 \begin{itemize}
-	\item Bias: This quantity measures how much the model's average prediction differs from its true value. A high bias implies that the model is underfitting the data of is simply too simplistic.
+	\item Bias: This quantity measures how much the model's average prediction differs from its true value. A high bias implies that the assumptions and simplifications which the model is built on are not valid, i.e. that we are underfitting the data.
 	\item Var: The variance measures how much the model's predictions vary when trained on different datasets. It captures the sensitivity of the model to small changes in the training data. A high variance suggests overfitting, meaning it performs well on the training data but may be capturing noise or false patterns.
 	\item $\sigma^2$: This is the irreducible error or noise in the data itself which cannot be explained by the model.
 \end{itemize}
-The idea is to minimize the LHS of (\ref{eq:MSE-bias-var}), so clearly we want to minimize both the bias and the variance at the same time. However these are correlated to one another, so lowering the e.g. the bias will in general increase the variance. So Bias-Variance Tradeoff is essentially trying to optimize the complexity of the model such that we neither overfit nor underfit the model such that it can be generalized to other cases. These quantities can then be used as means to fine tune a model.
+The idea is to minimize the LHS of (\ref{eq:MSE-bias-var}), so clearly we want to minimize both the bias and the variance at the same time. However these are correlated to one another, so lowering the e.g. the bias can in general increase the variance and vice-versa. So Bias-Variance Tradeoff is essentially trying to optimize the complexity of the model such that we neither overfit nor underfit the model such that it can be generalized to other cases whilst not being too simplistic. These quantities can then be used as means to fine tune a model.
 
 \subsection{Resampling}
 Resampling techniques are critical in understanding the performance and robustness of a model. They tend to better show how well a model will do on data it has not seen before, and are thus useful for diagnosing problems like over- and underfitting. In this report focus on two resampling methods: bootstrapping and cross-validation.
 
 \subsubsection{Bootstrap} 
-Bootstrapping is a statistical method that involves taking random samples with replacement from the original dataset to create several new datasets. These datasets are the same size as the original dataset, but since our sampling was done with replacement, some observations are presented more than once whilst others are eliminated. Here we train and evaluate a model over each of these resampled datasets, allowing us to estimate how the performance varies across different datasets. This method is particularly important when the datasets are small as it heavily increases the amount information that can be extracted from a given data set. Averaging across all the performance metrics from these little bootstrap samples provides a much more robust description of how well our model performs. 
+Bootstrapping is a statistical method that involves taking random samples with replacement from the original dataset to create several new datasets. These datasets are the same size as the original dataset, but since our sampling was done with replacement, some observations are presented more than once whilst others are eliminated. Here we train and evaluate a model over each of these resampled datasets allowing us to estimate how the performance varies across different datasets. This method is particularly important when the datasets are small as it heavily increases the amount information that can be extracted from a given data set. Averaging across all the performance metrics from the bootstrap samples can provide a clearer description of how well our model performs. 
 
 \subsubsection{Cross-Validation} 
-$k$-fold cross-validation is the other resampling method which we considered in this project. In $k$-fold cross-validation, the dataset is divided into $k$ subsets (or folds). The model is trained on $k-1$ of these folds and tested on the remaining fold. This process is repeated $k$ times, with each fold serving as the test set exactly once. The performance metrics, MSE and $R^2$, are averaged over the $k$ iterations to provide a more reliable estimate of how the model performs on unseen data.
+$k$-fold cross-validation is the other resampling method which we considered in this project. In $k$-fold cross-validation, the dataset is divided into $k$ subsets (or folds). The model is trained on $k-1$ of these folds and tested on the remaining fold. This process is repeated $k$ times, with each fold being used as the test set exactly once. The performance metrics, MSE and $R^2$, are averaged over the $k$ iterations to provide a more reliable estimate of how the model performs on unseen data.
 
 Cross-validation is particularly advantageous for its ability to reduce the variance of performance estimates by using different portions of the data for both training and validation. In our analysis, we used 5-fold cross-validation to evaluate the stability and predictive power of each regression method. This method gave us a clearer picture of how each model generalizes, helping us tune the hyperparameters, such as the regularization parameter $\lambda$ for Ridge and LASSO.
 
-Both resampling techniques are used to gain valuable insights into model performance and ensure that the conclusions drawn from our analysis are not overly dependent on a particular division of the dataset.
+Both resampling techniques are used to gain insight into the models performance and helps us ensure that the conclusions drawn from our analysis are not overly dependent on a particular division of the dataset.
 
 \section{Implementation}
 % XTX = X.T @ X
@@ -293,12 +293,15 @@ Sklearn's LASSO is dependent on the chosen maximum number of iterations and a to
 
 
 \section{Results}
-As an general observation, we found that the LASSO-method performed the worst out of the three methods, while OLS and Ridge performing similarly, however dependent on the choice of \(\lambda\). With an increasing (maximum) polynomial degree the MSE of OLS and Ridge blew up, while LASSO settled horizontally.
-All three models had the largest \(\beta\)-coefficients corresponding to an polynomial degree of approximately \(2-3\).
+\color{red}Feels like this is more set up as a conclusion than results. Think it's better to talk about it chronologically, i.e. talk about OLS, then Ridge and finally LASSO, and then start to compare them ones the plots have already been established. Then we can conclude that LASSO performs the worst out of the 3 and now the $\lambda$ should have been established to make it easier to write these claims.\color{black}
 
-Between the choice of min-max scaling, standard scaling and no scaling, it was found that no scaling gave the best result. Min-max scaling showed little to no impact on both the MSE and the \(R^2\)-score, while standard scaling, in contrast, led to a deterioration in both metrics.
 
-We found that all the three models are quite dependent on the size \(N\) of the sample-data set and on \(p\). Keeping \(p\) fixed and increasing \(N\), we found that the MSE of both the test and the training-data decreased. To better analyzie the performance of the three models we found that with \(N=25\) and \(p=25\).
+As a general observation, we found that the LASSO-method performed the worst out of the three methods, whilst OLS and Ridge performed similarly for the optimal choice of \(\lambda\). With an increasing (maximum) polynomial degree the MSE of OLS and Ridge blew up, while LASSO settled horizontally.
+All three models had the largest \(\beta\)-coefficients corresponding to an polynomial degree of approximately \(2-3\). \color{red} Have we even checked the betas for ridge and lasso?\color{black}
+
+Between the choice of min-max scaling, standard scaling and no scaling, it was found that no scaling gave the best result. Min-max scaling showed little to no impact on both the MSE and the \(R^2\)-score, while standard scaling, in contrast, led to a deterioration in both metrics. \color{red} As far as I understand we cannot look at the values for MSE for this one as it is scale dependent. $R^2$ however should be reasonable to look at though.\color{black}
+
+We found that all the three models are quite dependent on the size \(N\) of the sample-data set and on \(p\). Keeping \(p\) fixed and increasing \(N\), we found that the MSE of both the test and the training-data decreased. To better analyzie the performance of the three models we found that with \(N=25\) and \(p=25\). \color{red}Think going past deg 10 is kind of redundant as we already see things go crazy past like deg 7. Looking at previous reports people generally tend to choose 5-8 as their maximum.\color{black}
 
 
 \begin{figure}[ht!]
@@ -377,9 +380,9 @@ The OLS-method showed a divergence in its MSE and \(R^2\)-score for higher polyn
 \subsection{LASSO}
 
 \section{Discussion}
-For the Franke function, the fact that the most dominating \(\beta\)-coefficients where those corresponding to an polynomial degree of approximately \(2-4\), is likely tied to the fact the the Franke function is a sum of Gaussian functions. A Gaussian function is Taylor expanded as \(e^{-a(x-b)^2} = 1 - -a(x-b)^2 + a^2/2(x-b)^4 + ...\), which clearly highlights the importance of terms involving polynomial degrees around \(2-4\). 
+For the Franke function, the fact that the most dominating \(\beta\)-coefficients where those corresponding to an polynomial degree of approximately \(2-4\), is likely tied to the fact the the Franke function is a sum of Gaussian functions. A Gaussian function is Taylor expanded as \(e^{-a(x-b)^2} = 1 -a(x-b)^2 + a^2(x-b)^4/2 + ...\), which clearly highlights the importance of terms involving polynomial degrees around \(2-4\). \color{red} I don't really understand the argument here. Is the argument that since factorials scale very fast and powers of $x,y\in[0,1]$ become small that higher order terms become negligible? If so then I would expect the model to be very insensitive to changes in the $\beta$ coefficients corresponding to large powers and thus allowing them to become incredibly large without a large effect so it kind of seems like it's the opposite way around? This is of course only true for OLS since Ridge and LASSO have an explicit penalty term for large coefficients so they all get driven down by that.\color{black}
 
-The terrain-data, on the other hand, is very sensitive to the specific location it is extracted from. For example, mountain regions would likely be better modelled as a gaussian, as most mountains are (at least) somewhat continuous and just visually in the form of a Guassia. This is of course the case for Mount Everest. However, for the grand canyon, one would assume some (more) discontinuities, or cliffs with jagged edges, better modelled by say a very high degree of polynomial. 
+The terrain-data, on the other hand, is very sensitive to the specific location it is extracted from. For example, mountain regions would likely be better modelled as a Gaussian, as most mountains are (at least) somewhat continuous and just visually in the form of a Gaussian. This is of course the case for Mount Everest. However, for the grand canyon, one would assume some (more) discontinuities, or cliffs with jagged edges, better modelled by say a very high degree of polynomial. 
 
 
 \section{Conclusion}

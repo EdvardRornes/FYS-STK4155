@@ -465,6 +465,17 @@ def Cross_Validation(X:np.ndarray, y:np.ndarray, k:int, reg_method="OLS", lmbda=
 
     return MSE_train_mean, MSE_train_std, MSE_test_mean, MSE_test_std
 
+# def bias_variance(X_train:np.ndarray, X_test:np.ndarray, y_train:np.ndarray, y_test:np.ndarray, lmbda:float) -> list:
+#     beta = Ridge_Reg(X_train, y_train, lmbda)
+
+#     y_tilde = X_train @ beta
+#     y_pred = X_test @ beta 
+
+#     bias = np.mean((y_tilde-y_test)**2)
+#     variance = np.mean(np.var(y_pred, axis=0))
+
+#     return bias, variance
+
 def get_latitude_and_conversion(filename):
     with rasterio.open(filename) as dataset:
         meta = dataset.meta
