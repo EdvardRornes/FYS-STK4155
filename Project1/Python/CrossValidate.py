@@ -3,105 +3,72 @@ import matplotlib.pyplot as plt
 
 from utils import *
 
-save = False 
-latex_fonts()
+save = True
+# latex_fonts()
 
-N = 100; eps = 0.1
+N = 75; eps = 0.1
 franke = Franke(N, eps)
 x,y,z = franke.x, franke.y, franke.z
 data = [x,y,z]
+lmbdas = [1e-10, 1e-7, 1e-4, 1e-1]
 
+k = 10
 
-k = 5
-
-deg_max = 10
+deg_max = 6
 degrees = np.arange(1, deg_max+1)
 MSE_OLS_CV       = np.zeros(len(degrees))
 MSE_OLS_CV_STD   = np.zeros(len(degrees))
-MSE_OLS          = np.zeros(len(degrees))
-MSE_Ridge_CV     = np.zeros(len(degrees))
-MSE_Ridge_CV_STD = np.zeros(len(degrees))
-MSE_Ridge        = np.zeros(len(degrees))
-MSE_LASSO_CV     = np.zeros(len(degrees))
-MSE_LASSO_CV_STD = np.zeros(len(degrees))
-MSE_LASSO        = np.zeros(len(degrees))
+MSE_Ridge_CV     = np.zeros((len(degrees), len(lmbdas)))
+MSE_Ridge_CV_STD = np.zeros((len(degrees), len(lmbdas)))
+MSE_LASSO_CV     = np.zeros((len(degrees), len(lmbdas)))
+MSE_LASSO_CV_STD = np.zeros((len(degrees), len(lmbdas)))
 
-lmbdadas = [1e-10, 1e-5, 1e-2, 1e-1, 1, 10]
 
 
 OLS = PolynomialRegression("OLS", deg_max, data, start_training=False)
 Ridge = PolynomialRegression("OLS", deg_max, data, start_training=False)
 LASSO = PolynomialRegression("OLS", deg_max, data, start_training=False)
+start_time = time.time()
+for i in range(deg_max):
+    X = PolynomialRegression.Design_Matrix(x, y, degrees[i])
 
-for lmbda in lmbdadas:
-    for i in range(deg_max):
-        X = PolynomialRegression.Design_Matrix(x, y, degrees[i])
-
-        MSE_train_mean, MSE_train_STD, MSE_test_mean, MSE_test_STD = OLS.Cross_Validation(X, z, k)
-        MSE_OLS_CV[i] = MSE_test_mean
-        MSE_OLS_CV_STD[i] = MSE_test_STD
-
-        # OLS without CV
-        X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.25)
-        X_train, X_test, z_train, z_test = PolynomialRegression.scale_data(X_train, X_test, z_train, z_test)
-        beta, MSE_train, MSE_test, R2_train, R2_test = OLS.regr_model(X_train, X_test, z_train, z_test, None)
-        MSE_OLS[i] = MSE_test
+    MSE_train_mean, MSE_train_STD, MSE_test_mean, MSE_test_STD = OLS.Cross_Validation(X, z, k)
+    MSE_OLS_CV[i] = MSE_test_mean
+    MSE_OLS_CV_STD[i] = MSE_test_STD
+    for lmbda, j in zip(lmbdas, range(len(lmbdas))):
 
         # Ridge
         MSE_train_mean, MSE_train_STD, MSE_test_mean, MSE_test_STD = Ridge.Cross_Validation(X, z, k, lmbda=lmbda)  
-        MSE_Ridge_CV[i] = MSE_test_mean
-        MSE_Ridge_CV_STD[i] = MSE_test_STD
+        MSE_Ridge_CV[i,j] = MSE_test_mean
+        MSE_Ridge_CV_STD[i,j] = MSE_test_STD
 
-        # Ridge without CV
-        X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.25)
-        X_train, X_test, z_train, z_test = PolynomialRegression.scale_data(X_train, X_test, z_train, z_test)
-        beta, MSE_train, MSE_test, R2_train, R2_test = Ridge.regr_model(X_train, X_test, z_train, z_test, lmbda=lmbda)
-        MSE_Ridge[i] = MSE_test
-
-        
         MSE_train_mean, MSE_train_STD, MSE_test_mean, MSE_test_STD = Ridge.Cross_Validation(X, z, k, lmbda=lmbda)  
-        MSE_LASSO_CV[i] = MSE_test_mean
-        MSE_LASSO_CV_STD[i] = MSE_test_STD
+        MSE_LASSO_CV[i,j] = MSE_test_mean
+        MSE_LASSO_CV_STD[i,j] = MSE_test_STD  
 
-        # LASSO without CV
-        X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.25)
-        X_train, X_test, z_train, z_test = PolynomialRegression.scale_data(X_train, X_test, z_train, z_test)
-        beta, MSE_train, MSE_test, R2_train, R2_test = LASSO_default(X_train, X_test, z_train, z_test, lmbda=lmbda)
-        MSE_LASSO[i] = MSE_test   
+    print(f"CV: {i/deg_max*100:.1f}%, duration: {(time.time()-start_time):.2f}s", end="\r")
 
-    # Again this is kind of scuffed, I just felt like having everything in 1 loop but its prob best to separate OLS and the others.
+print(f"CV: 100.0%, duration: {(time.time()-start_time):.2f}s")
 
+for lmbda, j in zip(lmbdas, range(len(lmbdas))):
     plt.figure(figsize=(10, 6))
-    plt.title("MSE of OLS regression with and without CV")
-    plt.plot(degrees, MSE_OLS, label="Without CV")
-    plt.errorbar(degrees, MSE_OLS_CV, MSE_OLS_CV_STD, label="With CV", capsize=5)
+    plt.title("MSE of CV")
+    plt.errorbar(degrees, MSE_OLS_CV, MSE_OLS_CV_STD, label="OLS", capsize=5)
+    plt.errorbar(degrees, MSE_Ridge_CV[:,j], MSE_Ridge_CV_STD[:,j], label=rf"Ridgewith $\lambda=${lmbda}", capsize=5)
+    plt.errorbar(degrees, MSE_LASSO_CV[:,j], MSE_LASSO_CV_STD[:,j], label=rf"LASSOwith $\lambda=${lmbda}", capsize=5)
+    print(f"lmbda = {lmbda}:")
+    print(f"    OLS: min: {np.min(MSE_OLS_CV):.2e}, mean: {np.mean(MSE_OLS_CV):.2e}, best poly deg: {np.argmin(MSE_OLS_CV)+1}")
+    print(f"    Ridge: min: {np.min(MSE_Ridge_CV[:,j]):.2e}, mean: {np.mean(MSE_Ridge_CV[:,j]):.2e}, best poly deg: {np.argmin(MSE_Ridge_CV[:,j])+1}")
+    print(f"    LASSO: min: {np.min(MSE_LASSO_CV[:,j]):.2e}, mean: {np.mean(MSE_LASSO_CV[:,j]):.2e}, best poly deg: {np.argmin(MSE_LASSO_CV[:,j])+1}")
+    print()
     plt.xlabel("Degree")
     plt.ylabel("MSE")
-    plt.grid(True)
-    plt.legend()
-    if save:
-        plt.savefig(f"Figures/CV_OLS.pdf")
 
-    plt.figure(figsize=(10, 6))
-    plt.title(fr"MSE of Ridge regression with and without CV and $\lambda=${lmbda}")
-    plt.plot(degrees, MSE_Ridge, label="Without CV")
-    plt.errorbar(degrees, MSE_Ridge_CV, MSE_Ridge_CV_STD, label="With CV", capsize=5)
-    plt.xlabel("Degree")
-    plt.ylabel("MSE")
+    ymax = np.max([np.max(q) for q in [MSE_OLS_CV[5], MSE_Ridge_CV[5,j], MSE_LASSO_CV[5,j]]]) # the 6-th poly
+    plt.ylim(0, ymax)
     plt.grid(True)
-    plt.legend()
+    plt.legend(loc="upper left")
     if save:
-        plt.savefig(f"Figures/CV_Ridge_lambda={lmbda}.pdf")
-
-    plt.figure(figsize=(10, 6))
-    plt.title(fr"MSE of LASSO regression with and without CV and $\lambda=${lmbda}")
-    plt.plot(degrees, MSE_LASSO, label="Without CV")
-    plt.errorbar(degrees, MSE_LASSO_CV, MSE_LASSO_CV_STD, label="With CV", capsize=5)
-    plt.xlabel("Degree")
-    plt.ylabel("MSE")
-    plt.grid(True)
-    plt.legend()
-    if save:
-        plt.savefig(f"Figures/CV_LASSO_lambda={lmbda}.pdf")
+        plt.savefig(f"Figures/CV/CV_{j}.pdf")
 
 plt.show()

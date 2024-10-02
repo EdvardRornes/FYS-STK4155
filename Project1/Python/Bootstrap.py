@@ -4,20 +4,20 @@ from utils import *
 from sklearn.utils import resample
 
 latex_fonts()
-save = True; overwrite = True
+save = False; overwrite = False
 folder = "Figures/OLS"
 additional_description = "no_scaling"
 # additional_description = "MINMAX"
 # additional_description = "StandardScaling"
 
 np.random.seed(42)
-N = 200; eps = 0.1
+N = 25; eps = 0.1
 franke = Franke(N, eps)
 x,y,z = franke.x, franke.y, franke.z
 data = [x,y,z]
 
-samples = 100
-deg_max = 20
+samples = 50
+deg_max = 10
 
 BOOTSTRAP = PolynomialRegression("OLS", deg_max, data, scaling=additional_description, start_training=False)
 
