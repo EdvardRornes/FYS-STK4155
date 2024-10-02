@@ -9,6 +9,7 @@ from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from inspect import signature
 from pathlib import Path
+from sklearn.utils import resample
 
 # Saving files
 def save_plt(filename_n_path, overwrite=False, type="pdf", stop=50, fig=None) -> None:
@@ -335,33 +336,47 @@ class PolynomialRegression:
         y = y.reshape(-1, 1)
         return np.linalg.pinv(XTX + lambd * np.identity(XTX.shape[0])) @ X.T @ y
 
-    def Bootstrap(self, X:np.ndarray, y:np.ndarray, samples:int, lmbda=None):
-            
-        MSE_train = np.zeros(samples)
-        MSE_test = np.zeros(samples)
-
-        N = np.shape(X)[0]
-        if lmbda is None:
-            if not self.regr_model == self.OLS_fit:
-                raise Warning(f"Should probably give a lmbda value since you are using {self._regr_model_name}.")
+    def Bootstrap(self, x:np.ndarray, y:np.ndarray, z, max_deg:int, samples:int, lmbda=None):
         
-        # Perform bootstrapping for 'samples' number of resamples
-        for i in range(samples):
-            idx = np.random.randint(0, N, N)  # Random resampling with replacement
-            X_i = X[idx, :]
-            y_i = y[idx]
-            self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X_i, y_i, test_size=self.test_size_percentage, random_state=self.random_state)
-            self.X_train, self.X_test, self.y_train, self.y_test = self.scale_data(self.X_train, self.X_test, self.y_train, self.y_test, self.scaling)
+        # print(max_deg, type(max_deg))
+        error = np.zeros(max_deg)
+        bias = np.zeros(max_deg)
+        variance = np.zeros(max_deg)
+        polydegree = np.zeros(max_deg)
 
-            _, MSE_train[i], MSE_test[i], _, _ = self.regr_model(self.X_train, self.X_test, self.y_train, self.y_test, lmbda)
+        y_pred = np.zeros((max_deg, samples))
+        y_pred = []
+        for degree in range(max_deg):
+            X = self.Design_Matrix(x, y, self.degrees[degree])
+            X_train, X_test, y_train, y_test = train_test_split(X, z, test_size=self.test_size_percentage)
+            # model = make_pipeline(PolynomialFeatures(degree=degree), LinearRegression(fit_intercept=False))
 
-        # Calculate mean and std of MSE for train and test sets
-        MSE_train_mean = np.mean(MSE_train)
-        MSE_train_std = np.std(MSE_train)
-        MSE_test_mean = np.mean(MSE_test)
-        MSE_test_std = np.std(MSE_test)
+            y_pred.append(np.empty((y_test.shape[0], samples)))
 
-        return MSE_train_mean, MSE_train_std, MSE_test_mean, MSE_test_std
+            # beta, MSE_train, MSE_test, R2_train, R2_test = self.regr_model(X_train, X_test, y_train, y_test, lmbda)
+            # y_pred = np.empty((y_test.shape[0], samples))
+            for i in range(samples):
+                X_, y_ = resample(X_train, y_train)
+                # print(np.shape(X_), np.shape(beta), np.shape(y_pred[-1]))
+                # print(np.shape(X_ @ beta))
+                beta, MSE_train, MSE_test, R2_train, R2_test = self.regr_model(X_, X_test, y_, y_test, lmbda)
+                tmp = X_test @ beta 
+                y_pred[-1][:, i] = tmp[:,0]    
+
+            print(np.shape(y_test), np.shape(y_pred[-1]))
+            print(np.shape(y_test-y_pred[-1][:,0]))
+            polydegree[degree] = degree
+            # error[degree] = np.mean( np.mean((y_test - y_pred[-1][:,-1])**2))#, axis=1, keepdims=True) )
+            error[degree] = np.mean( np.mean((np.transpose([y_test])- y_pred[-1])**2, axis=1, keepdims=True) )
+            bias[degree] = np.mean( (y_test - np.mean(y_pred[-1], axis=1, keepdims=True))**2 )
+            variance[degree] = np.mean( np.var(y_pred[-1], axis=1, keepdims=True) )
+            # print('Polynomial degree:', degree)
+            # print('Error:', error[degree])
+            # print('Bias^2:', bias[degree])
+            # print('Var:', variance[degree])
+            # print('{} >= {} + {} = {}'.format(error[degree], bias[degree], variance[degree], bias[degree]+variance[degree]))
+
+        return error, bias, variance
     
     def Cross_Validation(self, X:np.ndarray, y:np.ndarray, k:int, lmbda=None):
         """
