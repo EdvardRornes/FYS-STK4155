@@ -354,6 +354,7 @@ class PolynomialRegression:
 
             for i in range(samples):
                 X_, z_ = resample(X_train, z_train)
+                # X_, z_ = X_train, z_train
                 self.regr_model(X_, X_test, z_, z_test, lmbda)
                 self.z_pred_bootstrap[-1][:, i] = self.y_pred[-1][:,0] # self.regr_model creates next self.z_pred
 
@@ -362,11 +363,11 @@ class PolynomialRegression:
 
             print(f"{degree/max_deg*100:.1f}%, duration: {(time.time()-start_time):.2f}s", end="\r")
 
-            error[degree] = np.mean(error_i)
-            bias[degree] = np.mean( (z_test - np.mean(bias_i))**2 )
-            variance[degree] = np.mean( np.var(self.z_pred_bootstrap[-1], axis=1, keepdims=True) )
+            error[degree] = np.mean(np.mean((z_test - self.z_pred_bootstrap[-1]) ** 2, axis=1, keepdims=True))
+            bias[degree] = np.mean((z_test - np.mean(self.z_pred_bootstrap[-1], axis=1, keepdims=True)) ** 2)
+            variance[degree] = np.mean(np.var(self.z_pred_bootstrap[-1], axis=1, keepdims=True))
             
-        print(f"Bootstrap: 100.0%, duration: {(time.time()-start_time):.2f}s", end="\r")
+        print(f"Bootstrap: 100.0%, duration: {(time.time()-start_time):.2f}s")
         return error, bias, variance
     
     def Cross_Validation(self, X:np.ndarray, y:np.ndarray, k:int, lmbda=None):
