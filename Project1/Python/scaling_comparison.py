@@ -19,21 +19,21 @@ data = [franke.x, franke.y, franke.z]
 for scaling_type in scaling_types:
 
     ################ Training ################
-    LASSO = PolynomialRegression(LASSO_default, deg_max, data, lmbdas=lmbdas, scaling=scaling_type)
-    LASSO_MSE_train, LASSO_MSE_test = LASSO.MSE()
-    LASSO_R2_train, LASSO_R2_test = LASSO.R2()
+    LASSO = PolynomialRegression("LASSO", deg_max, data, lmbdas=lmbdas, scaling=scaling_type)
+    LASSO_MSE_train, LASSO_MSE_test = LASSO.MSE_train, LASSO.MSE_test
+    LASSO_R2_train, LASSO_R2_test = LASSO.R2_train, LASSO.R2_test
     LASSO_beta = LASSO.beta
     LASSO_degrees = LASSO.degrees
 
-    Ridge = PolynomialRegression(Ridge_fit, deg_max, data, lmbdas=lmbdas, scaling=scaling_type)
-    Ridge_MSE_train, Ridge_MSE_test = Ridge.MSE()
-    Ridge_R2_train, Ridge_R2_test = Ridge.R2()
+    Ridge = PolynomialRegression("Ridge", deg_max, data, lmbdas=lmbdas, scaling=scaling_type)
+    Ridge_MSE_train, Ridge_MSE_test = Ridge.MSE_train, Ridge.MSE_test
+    Ridge_R2_train, Ridge_R2_test = Ridge.R2_train, Ridge.R2_test
     Ridge_beta = Ridge.beta
     Ridge_degrees = Ridge.degrees
 
-    OLS = PolynomialRegression(OLS_fit, deg_max, data, lmbdas=lmbdas, scaling=scaling_type)
-    OLS_MSE_train, OLS_MSE_test = OLS.MSE()
-    OLS_R2_train, OLS_R2_test = OLS.R2()
+    OLS = PolynomialRegression("OLS", deg_max, data, lmbdas=lmbdas, scaling=scaling_type)
+    OLS_MSE_train, OLS_MSE_test = OLS.MSE_train, OLS.MSE_test
+    OLS_R2_train, OLS_R2_test = OLS.R2_train, OLS.R2_test
     OLS_beta = OLS.beta
     OLS_degrees = OLS.degrees
 

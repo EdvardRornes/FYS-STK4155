@@ -361,7 +361,7 @@ class PolynomialRegression:
                 error_i.append(np.mean((z_test- self.z_pred_bootstrap[-1][:,i])**2))
                 bias_i.append(np.mean(self.z_pred_bootstrap[-1][:,i]))
 
-            print(f"{degree/max_deg*100:.1f}%, duration: {(time.time()-start_time):.2f}s", end="\r")
+            print(f"Bootstrap: {degree/max_deg*100:.1f}%, duration: {(time.time()-start_time):.2f}s", end="\r")
 
             error[degree] = np.mean(np.mean((z_test - self.z_pred_bootstrap[-1]) ** 2, axis=1, keepdims=True))
             bias[degree] = np.mean((z_test - np.mean(self.z_pred_bootstrap[-1], axis=1, keepdims=True)) ** 2)
@@ -374,7 +374,7 @@ class PolynomialRegression:
         """
         k-fold cross-validation for OLS, Ridge, or LASSO models
         """
-        
+
         if lmbda is None:
             if not self._regr_model_name == "OLS":
                 raise Warning(f"Should probably give a lmbda value since you are using {self._regr_model_name}.")
