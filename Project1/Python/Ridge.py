@@ -8,7 +8,7 @@ np.random.seed(1)
 
 # Plot
 latex_fonts()
-save = True; overwrite = True
+save = False; overwrite = False
 folder = "Figures/Ridge"
 additional_description = "no_scaling"
 # additional_description = "MINMAX"
@@ -22,9 +22,9 @@ franke = Franke(N, eps)
 data = [franke.x, franke.y, franke.z]
 
 # Training
-RIDGE = PolynomialRegression(Ridge_fit, deg_max, data, lmbdas=lmbdas, scaling=additional_description)
-MSE_train, MSE_test = RIDGE.MSE()
-R2_train, R2_test = RIDGE.R2()
+RIDGE = PolynomialRegression("Ridge", deg_max, data, lmbdas=lmbdas, scaling=additional_description)
+MSE_train, MSE_test = RIDGE.MSE_train, RIDGE.MSE_test
+R2_train, R2_test = RIDGE.R2_train, RIDGE.R2_test
 beta = RIDGE.beta
 degrees = RIDGE.degrees
 
@@ -83,13 +83,14 @@ R2_train_array = np.zeros(lambda_num)
 R2_test_array = np.zeros(lambda_num)
 beta_list = [0]*lambda_num
 
-X = Design_Matrix(franke.x, franke.y, deg)
+RIDGE = PolynomialRegression("Ridge", deg, data, start_training=False)
+X = PolynomialRegression.Design_Matrix(franke.x, franke.y, deg)
 # Split into training and testing and scale
 X_train, X_test, z_train, z_test = train_test_split(X, franke.z, test_size=0.25, random_state=4)
-X_train, X_test, z_train, z_test = scale_data(X_train, X_test, z_train, z_test)
+X_train, X_test, z_train, z_test = PolynomialRegression.scale_data(X_train, X_test, z_train, z_test)
 
 for i in range(lambda_num):
-    beta_list[i], MSE_train_array[i], MSE_test_array[i], R2_train_array[i], R2_test_array[i] = Ridge_fit(X_train, X_test, z_train, z_test, lmbdas[i])
+    beta_list[i], MSE_train_array[i], MSE_test_array[i], R2_train_array[i], R2_test_array[i] = RIDGE.Ridge_fit(X_train, X_test, z_train, z_test, lmbdas[i])
 
 plt.figure(figsize=(10, 6))
 plt.title(rf"MSE deg {deg}.")
