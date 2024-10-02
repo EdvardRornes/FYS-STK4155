@@ -112,70 +112,71 @@ The models are evaluated by considering their Mean Squared Error (MSE) and coeff
 \section{Theory}
 All claims made in this section which require relatively lengthy derivations are derived in Appendix \ref{Appendix:Derivations}. The general structure of all our models is that we have some data set $\{x_i,y_i\}$ where $i\in\{0,1...,n-1\}$ where $x_i$ are independent variables whilst $y_i$ are dependent variables. The data is assumed to be described by
 \begin{align}
-	\bm y=f(\bm x)+\bm \varepsilon
+	\bm y=f(\bm x)+\bm \varepsilon,
 	\label{eq:data}
 \end{align}
-where $f$ is some continuous function which takes $\bm x$ as input and $\bm\varepsilon$ is a normal distributed error $\bm\varepsilon\sim\mathcal{N}(0,\sigma^2)$. The function $f$ will then be approximated with a model $\tilde{\bm y}$ in which we will consider a polynomial expansion with coefficients $\beta_i$:
+where $f$ is some continuous function which takes $\bm x$ as input and $\bm\varepsilon$ is a normal distributed error $\bm\varepsilon\sim\mathcal{N}(0,\sigma^2)$. The function $f$ will then be approximated with a model $\tilde{\bm y}$ in which we will consider a polynomial expansion with coefficients $\beta_i$ up to degree $p$:
 \begin{align}
-	\tilde{y}_i=\sum_{j=0}^{p-1}\beta_j x_i^j
+	\tilde{y}_i=\sum_{j=0}^{p}\beta_j x_i^j.
 	\label{eq:model}
 \end{align}
-defining the $n\times p$ design matrix $\bm X$ with elements $X_{ij}=(x_i)^j$ we can rewrite this as
+Defining the $n\times p$ design matrix $\bm X$ with elements $X_{ij}=(x_i)^j$ we can rewrite this as
 \begin{align}
-	\tilde{\bm y}=\bm X\bm\beta
+	\tilde{\bm y}=\bm X\bm\beta.
 \end{align}
 Further, each model will be defined with a different cost function $C(\bm\beta)$ which we minimize to find the coefficients for each respective model.
 
-The metrics MSE and $R^2$ which we use to analyze each model are defined by
+The metrics MSE and $R^2$ which we use to analyze each model are defined by:
 \begin{align}
 	\text{MSE}(\bm y,\tilde{\bm{y}})&\equiv\frac{1}{n}\sum_{i=0}^{n-1}(y_i-\tilde y_i)^2,\\
-	R^2&\equiv1-\frac{\sum_{i=0}^{n-1}(y_i-\tilde y_i)^2}{\sum_{i=0}^{n-1}(y_i-\bar y)^2}
+	R^2&\equiv1-\frac{\sum_{i=0}^{n-1}(y_i-\tilde y_i)^2}{\sum_{i=0}^{n-1}(y_i-\bar y)^2},
 \end{align}
 where $\bar y\equiv\frac{1}{n}\sum_{i=0}^{n-1}y_i$ is the mean value of $\bm y$. Here we can see that if $\tilde{\bm{y}}=\bm y$ then $R^2=1$ implies that we have perfect accuracy. Further if $\tilde{\bm{y}}$ is simply the mean then $R^2=0$ implying that our fit is equally bad as a single line and if $R^2<0$ it means that our approximation is worse than simply taking the mean.
 
-\subsection{OLS}	\label{sec:THEORY_OLS}
-OLS is a primitive method used in linear regression to estimate coefficients of a linear model. The cost function in OLS is simply defined as the residual sum of squares (RSS)
+\subsection{OLS}	
+\label{sec:THEORY_OLS}
+OLS is a primitive method used in linear regression to estimate coefficients of a linear model. The cost function in OLS is simply defined as the residual sum of squares (RSS):
 \begin{align*}
-	C_\text{OLS}(\bm\beta)=\text{RSS}(\bm\beta)=(\bm y-\tilde{\bm y})^2=(y_i-X_{ij}\beta_j)^2
+	C_\text{OLS}(\bm\beta)=\text{RSS}(\bm\beta)=(\bm y-\tilde{\bm y})^2=(y_i-X_{ij}\beta_j)^2,
 \end{align*}
 where we employ the summation notation where repeated indices are summed over. As mentioned prior, the coefficients $\bm\beta$ are found by minimizing the cost function, i.e. taking the derivative w.r.t. $\bm\beta$. This results in
 \begin{align*}
-	\bm\beta_\text{OLS}=(\bm X^T\bm X)^{-1}\bm X^T\bm y
+	\bm\beta_\text{OLS}=(\bm X^T\bm X)^{-1}\bm X^T\bm y,
 \end{align*}
 which yields the model
 \begin{align}
-	\tilde{\bm y}_\text{OLS}=\bm X\bm \beta_\text{OLS}
+	\tilde{\bm y}_\text{OLS}=\bm X\bm \beta_\text{OLS}.
 \end{align}
 Assuming our data takes the form of (\ref{eq:data}) then the expectation value $\bm y$ is
 \begin{align*}
-	\mathbb{E}(y_i)=\mathbb{E}(f(x_i))=X_{ij}\beta_j\equiv\bm X_{i,*}\bm\beta
+	\mathbb{E}(y_i)=\mathbb{E}(f(x_i))=X_{ij}\beta_j\equiv\bm X_{i,*}\bm\beta,
 \end{align*}
 since $\mathbb{E}(\varepsilon_i)=0$ follows from its definition. The variance of $\bm y$ is given by
 \begin{align*}
-	\text{Var}(y_i)=\text{Var}(\varepsilon_i^2)=\sigma^2
+	\text{Var}(y_i)=\text{Var}(\varepsilon_i^2)=\sigma^2,
 \end{align*}
 which yields $y_i\sim\mathcal{N}(\bm X_{i,*}\bm\beta,\sigma^2)$. The expectation value of the optimal parameters $\hat{\bm\beta}$ can be found to be
 \begin{align*}
-	\mathbb{E}(\hat{\bm\beta}_\text{OLS})=\bm\beta.
+	\mathbb{E}(\hat{\bm\beta}_\text{OLS})=\bm\beta,
 \end{align*}
 with the variance
 \begin{align*}
-	\text{Var}(\hat{\bm\beta}_\text{OLS})=\sigma^2(\bm X^T \bm X)^{-1}
+	\text{Var}(\hat{\bm\beta}_\text{OLS})=\sigma^2(\bm X^T \bm X)^{-1}.
 \end{align*}
 
 \subsection{Ridge}	\label{sec:THEORY_Ridge}
 Ridge regression is an extension of OLS where define the cost function as a modified version of the OLS cost function with an added penalty term which is proportional to the coefficients $\beta_i^2$:
 \begin{align}
-	C_\text{Ridge}(\bm\beta)=C_\text{OLS}(\bm\beta)+\lambda\bm\beta^2
+	C_\text{Ridge}(\bm\beta)=C_\text{OLS}(\bm\beta)+\lambda\bm\beta^2.
 	\label{eq:cost_ridge}
 \end{align}
 Here $\lambda\geq0$ is a regularization parameter, or commonly referred to as a hyperparameter, which controls the strength of this additional penalty. This regulator essentially drives the magnitude of these coefficients allowing for more tweaking in the parameter space. This parametrization of course includes the constraint that $\bm{\beta}^2\leq t$ for some $t<\infty$ such that we can choose our arbitrary parameter $\lambda\geq0$ to be sufficiently small s.t. the cost function (\ref{eq:cost_ridge}) does not diverge. The optimal parameters for Ridge regressions can again be found by the same process as for OLS:
 \begin{align*}
-	\bm{\beta}&=(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm{y}
+	\bm{\beta}&=(\bm{X}^T\bm{X}+\lambda\bm{I})^{-1}\bm{X}^T\bm{y}.
 \end{align*}
 Here we can see that the effect of adding this penalty term is essentially taking $(\bm X^T\bm X)^{-1}\to(\bm X^T\bm X+\lambda\bm I)^{-1}$ when compared to the OLS case. In the past this was generally the starting point for Ridge regression in the cases where the matrix $\bm X^T\bm X$ was not invertible. A direct way of seeing the effect of the regulator is by considering the singular value decomposition (SVD) of $\bm X$. Doing so one can show that 
 \begin{align}
-	\tilde{\bm{y}}_\text{Ridge}=\sum_{j=0}^{p-1}\bm{u}_j\bm{u}_j^T\frac{\sigma_j^2}{\sigma_j^2+\lambda}\bm{y}
+	\tilde{\bm{y}}_\text{Ridge}=\sum_{j=0}^{p-1}\bm{u}_j\bm{u}_j^T\frac{\sigma_j^2}{\sigma_j^2+\lambda}\bm{y},
 	\label{eq:beta_ridge}
 \end{align}
 where $\bm u_i$ is the $i$-th row (column?) of the orthogonal matrix $\bm U$ stemming from the SVD: $\bm X=\bm U\bm \Sigma\bm V$. Since $\lambda\geq0$ then this added factor compared to OSL is $\leq1$. We can then see that Ridge regression effectively suppresses all the coefficients, thus $\lambda$ is often called the "shrinkage" factor. 
@@ -183,7 +184,7 @@ where $\bm u_i$ is the $i$-th row (column?) of the orthogonal matrix $\bm U$ ste
 \subsection{LASSO}	\label{sec:THEORY_LASSO}
 Similarly to Ridge, LASSO also includes a penalty factor. The cost function in this case is instead defined to be
 \begin{align}
-	C_\text{LASSO}(\bm\beta)=C_\text{OLS}(\bm\beta)+\lambda||\bm\beta||_1
+	C_\text{LASSO}(\bm\beta)=C_\text{OLS}(\bm\beta)+\lambda||\bm\beta||_1,
 	\label{eq:cost_lasso}
 \end{align}
 where
@@ -192,37 +193,37 @@ where
 \end{align*}
 is the $L^k$ norm of $\bm\beta$. Taking the derivative of (\ref{eq:cost_ridge}) w.r.t. $\bm \beta$ and requiring that this becomes zero we have
 \begin{align}
-	0=\pdv{C_\text{LASSO}}{\bm\beta}=-2\bm X^T(\bm y-\bm X\bm\beta)+\lambda\,\text{sgn}(\bm\beta)
+	0=\pdv{C_\text{LASSO}}{\bm\beta}=-2\bm X^T(\bm y-\bm X\bm\beta)+\lambda\,\text{sgn}(\bm\beta).
 \end{align}
 This has the added benefit of being able to set certain parameters to be $0$ instead of suppressing them, at the cost of losing analytical expressions for $\hat{\bm\beta}$ in non-trivial cases.
 
 \subsection{Connection to Statistics}
 The three aforementioned regression techniques all have relatively simple connections to statistical probability distribution functions. Assuming that the likelihood of an event $y_i$ with the input variables $\bm X$ and parameters $\bm\beta$ is given by a Gaussian distribution:
 \begin{align}
-	p(y_i,\bm X|\bm\beta)=\prod_{i=0}^{n-1}\frac{1}{\sqrt{2\pi\sigma^2}}\exp\left[-\frac{(y_i-\bm X_{i,*}\bm\beta)^2}{2\sigma^2}\right]
+	p(y_i,\bm X|\bm\beta)=\prod_{i=0}^{n-1}\frac{1}{\sqrt{2\pi\sigma^2}}\exp\left[-\frac{(y_i-\bm X_{i,*}\bm\beta)^2}{2\sigma^2}\right].
 \end{align}
 Further assuming that all events are independent and identically distributed the total probability density function takes the form
 \begin{align}
-	p(\bm y,\bm X|\bm\beta)=\prod_{i=0}^{n-1}p(y_i,\bm X|\bm\beta)
+	p(\bm y,\bm X|\bm\beta)=\prod_{i=0}^{n-1}p(y_i,\bm X|\bm\beta),
 \end{align}
 then taking the negative logarithm of the above and defining that as our cost function we can arrive at the exact expression for the cost function that we defined earlier, i.e. just the RSS which corresponds to OLS. A similar analysis for Ridge can be done. Using Bayes' theorem we have that $p(\bm\beta|\bm X,\bm y)\propto p(\bm y,\bm X|\bm\beta)p(\bm\beta)$ we then feed in the prior:
 \begin{align}
-	p(\beta_i)=\exp\left[-\frac{\beta_i^2}{2\tau^2}\right]
+	p(\beta_i)=\exp\left[-\frac{\beta_i^2}{2\tau^2}\right],
 \end{align}
 one arrives at the probability of the coefficients $\bm\beta$ given the data $\bm y$
 \begin{align}
-	p(\bm\beta|\bm X,\bm y)\propto p(\bm y,\bm X|\bm\beta)\cdot\prod_{i=0}^{p-1}\exp\left[-\frac{\beta_i^2}{2\tau^2}\right]
+	p(\bm\beta|\bm X,\bm y)\propto p(\bm y,\bm X|\bm\beta)\cdot\prod_{i=0}^{p-1}\exp\left[-\frac{\beta_i^2}{2\tau^2}\right].
 \end{align}
 Again, defining the cost function as the negative logarithm of this expression one arrives at the Ridge cost function with $\lambda=1/(2\tau^2)$. Finally for LASSO one assumes that the initial probability is given by the same as OLS but with the addition of the $\beta$ coefficients following a Laplace distribution
 \begin{align}
-	p(\beta_i)=\exp\left[-\frac{|\beta_i|}{\tau}\right]
+	p(\beta_i)=\exp\left[-\frac{|\beta_i|}{\tau}\right],
 \end{align}
 one arrives at the LASSO cost function with $\lambda=1/\tau$. These statistical connections help us better understand the assumptions made with each technique. With OLS one assumes that each event $y_i$ are all independent and Gaussian. Thus when this is not the case one should not be surprised if OLS performs poorly. Ridge and LASSO however do account for the chance that there are correlated events, and assumes that the coefficients that we compute are themselves Gaussian or Laplace distributed. The hyperparameter $\lambda$ now has a clear interpretation, i.e. that we essentially insert a standard deviation of the $\beta$ coefficients. The performance of these latter two can then also be used to indicate which distribution more accurately describes the coefficients.
 
 \subsection{Bias-Variance}
 The so-called Bias-Variance Trade-Off can be summarized in a single equation:
 \begin{align}
-	\mathbb{E}[(\bm y-\tilde{\bm y})^2]=\text{Bias}[\tilde{\bm y}]+\text{Var}[\tilde{\bm y}]+\sigma^2
+	\mathbb{E}[(\bm y-\tilde{\bm y})^2]=\text{Bias}[\tilde{\bm y}]+\text{Var}[\tilde{\bm y}]+\sigma^2,
 	\label{eq:MSE-bias-var}
 \end{align}
 where the bias is defined as $\mathbb E[(f(\bm x)-\mathbb E[\tilde{\bm y}])^2]$. The LHS of (\ref{eq:MSE-bias-var}) is the expected value of the MSE which tells us how well the model's predictions match the true data on average. The equation shows that we can decompose this expected MSE into 3 different components.
@@ -258,7 +259,7 @@ In this project we look to implement the three polynomial regression models; OLS
 	f(x,y)&=\frac{3}{4}\exp(-\frac{(9x-2)^2}{4}-\frac{(9y-2)^2}{4})\nonumber\\
 	&+\frac{3}{4}\exp(-\frac{(9x+1)^2}{49}-\frac{(9y+1)^2}{10})\nonumber\\
 	&+\frac{1}{2}\exp(-\frac{(9x-7)^2}{4}-\frac{(9y-3)^2}{4})\nonumber\\
-	&-\frac{1}{5}\exp(-(9x-4)^2-(9y-7)^2)
+	&-\frac{1}{5}\exp(-(9x-4)^2-(9y-7)^2).
 \end{align}
 To perform an analysis on this function we consider a polynomial fit up to degree $n$ analogous to (\ref{eq:model}) where:
 \begin{align}
@@ -267,7 +268,8 @@ To perform an analysis on this function we consider a polynomial fit up to degre
 	&+\bm\beta_{2,0}x_i^2+\bm\beta_{2,1}x_iy_i+\bm\beta_{2,2}y_i^2\nonumber\\
 	&+...\nonumber\\
 	&+\bm\beta_{n,0}x_i^n+\bm\beta_{n,1}x_i^{n-1}y+...+\bm\beta_{n,n-1}x_iy_i^{n-1}+\bm\beta_{n,n}y_i^n\bigg)\nonumber\\
-	&=\frac{1}{n+1}\sum_{i,j=0}^{n}\sum_{\substack{k=0}}^{j}\bm\beta_{j,k} x^{j-k}_i y^{k}_i\equiv \bm X\bm\beta\label{eq:bmz}
+	&=\frac{1}{n+1}\sum_{i,j=0}^{n}\sum_{\substack{k=0}}^{j}\bm\beta_{j,k} x^{j-k}_i y^{k}_i\equiv \bm X\bm\beta.
+	\label{eq:bmz}
 \end{align}
 Here the components $x_i$ and $y_i$ are entries in the input vectors $\bm x^T=\begin{bmatrix} x_0&...&x_n \end{bmatrix}$ and $\bm y^T=\begin{bmatrix} y_0& ...&y_n \end{bmatrix}$ respectively which are our independent variables. Each $\bm\beta_{i,j}$ is a $\frac{(n+1)(n+2)}{2}$ component vector with a single non-zero entry with magnitude $|\beta_{i,j}|$ and the design matrix $\bm X$ is then an $(n+1)\times\frac{(n+1)(n+2)}{2}$ matrix of the form:
 \begin{align}
@@ -276,23 +278,108 @@ Here the components $x_i$ and $y_i$ are entries in the input vectors $\bm x^T=\b
 		1 & x_1 & y_1 & x_1^2 & x_1y_1 & ... & x_1^n & ... & y_1^n\\
 		\vdots & \vdots & \vdots & \vdots & \vdots & \ddots & \vdots & \ddots & \vdots\\
 		1 & x_n & y_n & x_n^2 & x_ny_n & ... & x_n^n & ... & y_n^n
-	\end{bmatrix}
+	\end{bmatrix},
 \end{align}
 and the $\bm\beta$ vector contains the $\frac{(n+1)(n+2)}{2}$ components 
 \begin{align*}
 	\bm\beta^T&=\sum_{i=0}^n\sum_{j=0}^i\bm\beta_{i,j}^T=\begin{bmatrix}
 		\beta_{0,0}&\beta_{1,0}&\beta_{1,1}&...&\beta_{n(n-1)}&\beta_{n,n}
-	\end{bmatrix}
+	\end{bmatrix}.
 \end{align*}
 It should now be clear which unit vectors correspond to each term in (\ref{eq:bmz}).
 
 The inputs $\bm x$ and $\bm y$ are then split randomly into a training and test set with the latter comprising \(1/4\) of the data throughout our analysis. These are then used to calculate both the train and test variations of $\bm z$ and $\bm X$ using the function \href{https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.train_test_split.html}{\texttt{train\_test\_split}} from \texttt{sklearn.model\_selection}. The training and testing set may then be scaled (or not), before the \(\beta\)-coefficient is calculated. For Ridge, \(\beta_{\text{Ridge}}\) is found by numpy's \href{https://numpy.org/doc/2.0/reference/generated/numpy.linalg.pinv.html}{\texttt{np.linalg.pinv}} which gives the pseudoinverse (on the R.H. side of \eqref{eq:beta_ridge}) using the SVD. Obtaining \(\beta_{\text{OLS}}\) is then the special case of \(\beta_{\text{Ridge}}\) with \(\lambda=0\). The \(\beta\)-coefficient for LASSO on the other hand, is computed using \href{https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Lasso.html}{\texttt{sklearn.Lasso}}. 
-Sklearn's LASSO is dependent on the chosen maximum number of iterations and a tolerance parameter. Throughout this project these parameters are set to \(10^5\) and \(10^{-1}\), respectively. Lastly, the mean squared error and the R2 score is then calculated using Sklearn's \href{https://scikit-learn.org/stable/modules/model_evaluation.html}{\texttt{metrics}} library. 
+Sklearn's LASSO is dependent on the chosen maximum number of iterations and a tolerance parameter. Throughout this project these parameters are set to \(10^5\) and \(10^{-1}\), respectively. Lastly, the mean squared error and the R2 score is then calculated using Sklearn's \href{https://scikit-learn.org/stable/modules/model_evaluation.html}{\texttt{metrics}} library.
+
+Bootstrap was then implemented by running a for-loop over the polynomial degrees and another loop over the samples. Throughout we decided to use $x$ samples and only considered OLS for this part. The error, bias were calculated from their definitions whilst we used \texttt{numpy.var} for the variance. Note that for the bias the approximation
+\begin{align}
+	\mathbb E[(f(\bm x)-\mathbb E[\tilde{\bm{y}}])^2]\approx \mathbb E[(\bm y-\mathbb E[\tilde{\bm{y}}])^2]
+\end{align}
+was used. This is only valid in the low $\bm \epsilon$ limit and thus $\bm\epsilon=\mathcal{N}(0, 0.01)$ was used for this part.
+
+At last $k$-fold Cross-Validation (CV) was 
 
 % The OLS and Ridge regression fitting was done use of (\ref{eq:beta_ridge}) where for the prior we simply set $\lambda=0$. Since LASSO is more complicated we opted into using \texttt{sklearn.linear\_model}. Note that this excludes intercept by default so ... (?). The MSE and $R^2$ for all regression techniques were calculated with the \texttt{sklearn}'s \texttt{mean\_squared\_error} and \texttt{r2\_score} respectively. 
 
 
 \section{Results}
+
+\subsection{OLS}
+The MSE as a function of the polynomial degree is given in Fig. \ref{fig:OLS_mse_degree}. For low polynomial degree we can see clear signs of underfitting, and thus the MSE is relatively large here. As we go up in the polynomial degree we see that the test data settles around $p=4$
+
+
+The OLS-method showed a divergence in its MSE and \(R^2\)-score for higher polynomial degrees. Its \(\beta\)-coefficients seemed more dominant for the \(\beta\)-coefficients corresponding to polynomials of order 2 to 3; \(x^2, x^2y, y^3, \)etc. 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_MSEno_scaling.pdf}
+	\caption{OLS as a function of the max polynomial degree with \(N=50\), \(p_{\text{max}}=10\) and \(\epsilon=0.1\). The solid and dashed lines correspond to the training and test sets respectively.}
+	\label{fig:OLS_mse_degree}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_R2no_scaling.pdf}
+	\caption{The \(R^2\)-score for the OLS-method with \(N=50\), \(p_{\text{max}}=10\) and \(\epsilon=0.1\). The solid and dashed lines correspond to the training and test sets respectively.}
+	\label{fig:OLS_r2_degree}
+\end{figure}
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_betano_scaling.pdf}
+	\caption{The \(\beta\)-coefficients for the OLS-fit with \(N=50\), \(p_{\text{max}}=10\) and \(\epsilon=0.1\). The plots shows the polynomial degree from 0 (green) to 25 (red).}
+\label{fig:OLS_beta_degree}
+\end{figure}
+
+
+\subsection{Ridge}
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf}
+	\caption{Ridge MSE as a function of the max polynomial degree with \(N=50\), \(p_{\text{max}}=10\) and \(\epsilon=0.1\). The four chosen values for the hyperparameter $\lambda$ are $10^{-15},10^{-7},10^{-4}$ and $10^{-1}$ which are denoted by the different colors. The solid and dashed lines correspond to the training and test set respectively.}
+	\label{fig:ridge_mse_degree}
+\end{figure}
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_R2_no_scaling.pdf}
+	\caption{Ridge $R^2$-score as a function of the max polynomial degree with \(N=50\), \(p_{\text{max}}=10\) and \(\epsilon=0.1\). The line and color scheme is the same as for Fig. \ref{fig:ridge_mse_degree}.}
+	\label{fig:ridge_r2_degree}
+\end{figure}
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf}
+	\caption{Ridge MSE with max polynomial degree $4$ as a function of the hyperparameter $\lambda$ with $N=50$ and $\epsilon=0.1$.}
+	\label{fig:ridge_logMSE_degree}
+\end{figure}
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf}
+	\caption{Ridge $R^2$-score with max polynomial degree $4$ as a function of the hyperparameter $\lambda$ with $N=50$ and $\epsilon=0.1$.}
+	\label{fig:ridge_logR2_degree}
+\end{figure}
+
+\subsection{LASSO}
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_MSE_no_scaling.pdf}
+	\caption{Ridge MSE as a function of the max polynomial degree with \(N=50\), \(p_{\text{max}}=10\) and \(\epsilon=0.1\). The three chosen values for the hyperparameter $\lambda$ are $10^{-10},10^{-2}$ and $10^{-1}$ which follow the same scheme as Fig. \ref{fig:ridge_mse_degree}}
+	\label{fig:lasso_mse_degree}
+\end{figure}
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_R2_no_scaling.pdf}
+	\caption{Caption}
+	\label{fig:lasso_r2_degree}
+\end{figure}
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_logMSE_no_scaling.pdf}
+	\caption{LASSO MSE with max polynomial degree $4$ as a function of the hyperparameter $\lambda$ with $N=50$ and $\epsilon=0.1$.}
+	\label{fig:LASSO_logMSE_degree}
+\end{figure}
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf}
+	\caption{LASSO $R^2$-score with max polynomial degree $4$ as a function of the hyperparameter $\lambda$ with $N=50$ and $\epsilon=0.1$.}
+	\label{fig:LASSO_logR2_degree}
+\end{figure}
 \color{red}Feels like this is more set up as a conclusion than results. Think it's better to talk about it chronologically, i.e. talk about OLS, then Ridge and finally LASSO, and then start to compare them ones the plots have already been established. Then we can conclude that LASSO performs the worst out of the 3 and now the $\lambda$ should have been established to make it easier to write these claims.\color{black}
 
 
@@ -303,81 +390,6 @@ Between the choice of min-max scaling, standard scaling and no scaling, it was f
 
 We found that all the three models are quite dependent on the size \(N\) of the sample-data set and on \(p\). Keeping \(p\) fixed and increasing \(N\), we found that the MSE of both the test and the training-data decreased. To better analyzie the performance of the three models we found that with \(N=25\) and \(p=25\). \color{red}Think going past deg 10 is kind of redundant as we already see things go crazy past like deg 7. Looking at previous reports people generally tend to choose 5-8 as their maximum.\color{black}
 
-
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf}
-	\caption{Caption}
-	\label{fig:ridge_mse_degree}
-\end{figure}
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_R2_no_scaling.pdf}
-	\caption{Caption}
-	\label{fig:ridge_r2_degree}
-\end{figure}
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf}
-	\caption{Caption}
-	\label{fig:ridge_logMSE_degree}
-\end{figure}
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf}
-	\caption{Caption}
-	\label{fig:ridge_logR2_degree}
-\end{figure}
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_MSE_no_scaling.pdf}
-	\caption{Caption}
-	\label{fig:lasso_mse_degree}
-\end{figure}
-\begin{figure}[ht!]
-\centering
-\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_R2_no_scaling.pdf}
-\caption{Caption}
-\label{fig:lasso_r2_degree}
-\end{figure}
-%\begin{figure}[ht!]
-%	\centering
-%	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_logMSE_no_scaling.pdf}
-%	\caption{Caption}
-%	\label{fig:LASSO_logMSE_degree}
-%\end{figure}
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf}
-	\caption{Caption}
-	\label{fig:LASSO_logR2_degree}
-\end{figure}
-
-\subsection{OLS}
-The OLS-method showed a divergence in its MSE and \(R^2\)-score for higher polynomial degrees. Its \(\beta\)-coefficients seemed more dominant for the \(\beta\)-coefficients corresponding to polynomials of order 2 to 3; \(x^2, x^2y, y^3, \)etc. 
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_MSEno_scaling.pdf}
-	\caption{The MSE for the OLS-method with \(N=25\), \(p_{\text{max}}=25\) and \(\epsilon=0.1\).}
-	\label{fig:OLS_mse_degree}
-\end{figure}
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_R2no_scaling.pdf}
-	\caption{The \(R^2\)-score for the OLS-method with \(N=25\), \(p_{\text{max}}=25\) and \(\epsilon=0.1\).}
-	\label{fig:OLS_r2_degree}
-\end{figure}
-\begin{figure}[H]
-\centering
-\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_betano_scaling.pdf}
-\caption{The \(\beta\)-coefficients for the OLS-fit with \(N=25\), \(p_{\text{max}}=25\) and \(\epsilon=0.1\). The plots shows the polynomial degree from 0 (green) to 25 (red).}
-\label{fig:OLS_beta_degree}
-\end{figure}
-
-
-\subsection{Ridge}
-
-\subsection{LASSO}
 
 \section{Discussion}
 For the Franke function, the fact that the most dominating \(\beta\)-coefficients where those corresponding to an polynomial degree of approximately \(2-4\), is likely tied to the fact the the Franke function is a sum of Gaussian functions. A Gaussian function is Taylor expanded as \(e^{-a(x-b)^2} = 1 -a(x-b)^2 + a^2(x-b)^4/2 + ...\), which clearly highlights the importance of terms involving polynomial degrees around \(2-4\). \color{red} I don't really understand the argument here. Is the argument that since factorials scale very fast and powers of $x,y\in[0,1]$ become small that higher order terms become negligible? If so then I would expect the model to be very insensitive to changes in the $\beta$ coefficients corresponding to large powers and thus allowing them to become incredibly large without a large effect so it kind of seems like it's the opposite way around? This is of course only true for OLS since Ridge and LASSO have an explicit penalty term for large coefficients so they all get driven down by that.\color{black}

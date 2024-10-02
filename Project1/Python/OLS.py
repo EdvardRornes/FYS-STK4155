@@ -44,7 +44,7 @@ for i in range(len(beta)):
     tmp = beta[i]
 
     color = colors(i / (len(beta) - 1))
-    ax.plot(num, tmp, color=color, lw=2.5, alpha=0.7)
+    ax.plot(num, tmp, color=color, lw=2.5, alpha=0.7, marker='o')
 
 # Colorbar:
 norm = mcolors.Normalize(vmin=0, vmax=len(beta)-1) 
