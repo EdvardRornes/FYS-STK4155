@@ -7,7 +7,7 @@ np.random.seed(0)
 
 # Plot:
 latex_fonts()
-save = True; overwrite = True
+save = False; overwrite = False
 folder = "Figures/LASSO"
 additional_description = "no_scaling"
 # additional_description = "MINMAX"
@@ -21,9 +21,9 @@ franke = Franke(N, eps)
 data = [franke.x, franke.y, franke.z]
 
 # Training
-LASSO = PolynomialRegression(LASSO_default, deg_max, data, lmbdas=lmbdas)
-MSE_train, MSE_test = LASSO.MSE()
-R2_train, R2_test = LASSO.R2()
+LASSO = PolynomialRegression("LASSO", deg_max, data, lmbdas=lmbdas)
+MSE_train, MSE_test = LASSO.MSE_train, LASSO.MSE_test
+R2_train, R2_test = LASSO.R2_train, LASSO.R2_test
 beta = LASSO.beta
 degrees = LASSO.degrees
 
@@ -83,7 +83,8 @@ R2_train_array = np.zeros(lambda_num)
 R2_test_array = np.zeros(lambda_num)
 beta_list = [0]*lambda_num
 
-X = Design_Matrix(franke.x, franke.y, deg)
+
+X = PolynomialRegression.Design_Matrix(franke.x, franke.y, deg)
 # Split into training and testing and scale
 X_train, X_test, z_train, z_test = train_test_split(X, franke.z, test_size=0.25, random_state=4)
 

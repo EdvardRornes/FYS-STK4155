@@ -22,9 +22,9 @@ franke = Franke(N, eps)
 data = [franke.x, franke.y, franke.z]
 
 # Regression
-OLS = PolynomialRegression(OLS_fit, deg_max, data, scaling=additional_description)
-MSE_train, MSE_test = OLS.MSE()
-R2_train, R2_test = OLS.R2()
+OLS = PolynomialRegression("OLS", deg_max, data, scaling=additional_description)
+MSE_train, MSE_test = OLS.MSE_train, OLS.MSE_test
+R2_train, R2_test = OLS.R2_train, OLS.R2_test
 beta = OLS.beta
 
 degrees = OLS.degrees

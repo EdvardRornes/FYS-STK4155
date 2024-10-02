@@ -37,9 +37,9 @@ for name, file in files.items():
     y = y.flatten()
 
     ########## Reg-models ##########
-    OLS = PolynomialRegression(OLS_fit, deg_max, [x,y,z], regr_model_name="OLS")
-    RIDGE = PolynomialRegression(Ridge_fit, deg_max, [x,y,z], lmbdas=lmbdas, regr_model_name="RIDGE")
-    LASSO = PolynomialRegression(LASSO_default, deg_max, [x,y,z], lmbdas=lmbdas, regr_model_name="LASSO")
+    OLS = PolynomialRegression("OLS", deg_max, [x,y,z])
+    RIDGE = PolynomialRegression("Ridge", deg_max, [x,y,z], lmbdas=lmbdas)
+    LASSO = PolynomialRegression("LASSO", deg_max, [x,y,z], lmbdas=lmbdas)
 
     MSE_OLS = OLS.MSE_test
     MSE_RIDGE = RIDGE.MSE_test
@@ -57,18 +57,18 @@ for name, file in files.items():
     
     # Calculate OLS
     for i in range(deg_max):
-        X = Design_Matrix(x, y, degrees[i])
+        X = OLS.Design_Matrix(x, y, degrees[i])
 
         # CV:
-        _, _, MSE_test_mean, MSE_test_STD = Cross_Validation(X, z, k)
+        _, _, MSE_test_mean, MSE_test_STD = OLS.Cross_Validation(X, z, k)
         MSE_OLS_CV[i] = MSE_test_mean; MSE_OLS_CV_STD[i] = MSE_test_STD
 
         # lambdas:
         for j in range(len(lmbdas)):
-            _ , _, MSE_test_mean, MSE_test_STD = Cross_Validation(X, z, k, "RIDGE", lmbda=lmbdas[j])
+            _ , _, MSE_test_mean, MSE_test_STD = RIDGE.Cross_Validation(X, z, k, lmbda=lmbdas[j])
             MSE_RIDGE_CV[i,j] = MSE_test_mean; MSE_RIDGE_CV_STD[i,j] = MSE_test_STD
 
-            _ , _, MSE_test_mean, MSE_test_STD = Cross_Validation(X, z, k, "LASSO", lmbda=lmbdas[j])
+            _ , _, MSE_test_mean, MSE_test_STD = LASSO.Cross_Validation(X, z, k, lmbda=lmbdas[j])
             MSE_LASSO_CV[i,j] = MSE_test_mean; MSE_LASSO_CV_STD[i,j] = MSE_test_STD
 
     """
