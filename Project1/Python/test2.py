@@ -1,87 +1,47 @@
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.linear_model import LinearRegression, Ridge, Lasso
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.utils import resample
 
-from utils import *
+np.random.seed(2018)
 
-np.random.seed(1) # 9
-
-# latex_fonts()
-save = True; overwrite = True
-folder = "Figures/LASSO"
-additional_description = "no_scaling"
-# additional_description = "MINMAX"
-# additional_description = "StandardScaling"
-
-N = 50; eps = 0.1
-franke = Franke(N, eps)
-x,y,z = franke.x, franke.y, franke.z
-data = [x,y,z]
-
-samples = 10
-deg_max = 10
-degrees = np.arange(1, deg_max+1)
-MSE_train_mean = np.zeros(len(degrees))
-MSE_test_mean  = np.zeros(len(degrees))
-MSE_train_std  = np.zeros(len(degrees))
-MSE_test_std   = np.zeros(len(degrees))
-
-plt.figure(figsize=(10, 6))
-ymin, ymax = 1e-5, 1e2
-plt.title("OLS Regression MSE with Bootstrap and Standard Error Bars")
-
-def errorbar_with_caution(degrees: np.ndarray, y_mean: np.ndarray, y_std: np.ndarray, ymin: float, ymax: float, label="") -> None:
-    # Calculate lower and upper errors
-    lower_err = y_std.copy()
-    upper_err = y_std.copy()
-
-    # Identify where the lower error bar would go below ymin
-    uplims = (y_mean - lower_err) < ymin
-    # Identify where the upper error bar would go above ymax
-    lolims = (y_mean + upper_err) > ymax
-
-    # Adjust lower errors where they would go below ymin
-    lower_err[uplims] = y_mean[uplims] - ymin  # Error bar ends at ymin
-
-    # Adjust upper errors where they would go above ymax
-    upper_err[lolims] = ymax - y_mean[lolims]  # Error bar ends at ymax
-
-    print("Lower errors:", lower_err)
-    print("Upper errors:", upper_err)
-    
-    lower_err = np.maximum(lower_err, 0)
-    upper_err = np.maximum(upper_err, 0)
+n = 40
+n_boostraps = 100
+maxdegree = 14
 
 
-    print("Lower errors:", lower_err)
-    print("Upper errors:", upper_err)
+# Make data set.
+x = np.linspace(-3, 3, n).reshape(-1, 1)
+y = np.exp(-x**2) + 1.5 * np.exp(-(x-2)**2)+ np.random.normal(0, 0.1, x.shape)
+error = np.zeros(maxdegree)
+bias = np.zeros(maxdegree)
+variance = np.zeros(maxdegree)
+polydegree = np.zeros(maxdegree)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
 
-    # Plot error bars with limits
-    plt.errorbar(
-        degrees,
-        y_mean,
-        yerr=[lower_err, upper_err],
-        fmt='o',
-        capsize=5,
-        label=label,
-        uplims=uplims,
-        lolims=lolims
-    )
+for degree in range(maxdegree):
+    model = make_pipeline(PolynomialFeatures(degree=degree), LinearRegression(fit_intercept=False))
+    y_pred = np.empty((y_test.shape[0], n_boostraps))
+    for i in range(n_boostraps):
+        x_, y_ = resample(x_train, y_train)
+        y_pred[:, i] = model.fit(x_, y_).predict(x_test).ravel()
 
-# Call the function for test data
-errorbar_with_caution(degrees, MSE_test_mean, MSE_test_std, ymin, ymax, label="MSE for test data")
+    polydegree[degree] = degree
+    print(np.shape(y_test), np.shape(y_pred))
+    error[degree] = np.mean( np.mean((y_test - y_pred)**2, axis=1, keepdims=True) )
+    bias[degree] = np.mean( (y_test - np.mean(y_pred, axis=1, keepdims=True))**2 )
+    variance[degree] = np.mean( np.var(y_pred, axis=1, keepdims=True) )
+    # print('Polynomial degree:', degree)
+    # print('Error:', error[degree])
+    # print('Bias^2:', bias[degree])
+    # print('Var:', variance[degree])
+    # print('{} >= {} + {} = {}'.format(error[degree], bias[degree], variance[degree], bias[degree]+variance[degree]))
 
-# Uncomment the following line to include training data as well
-# errorbar_with_caution(degrees, MSE_train_mean, MSE_train_std, ymin, ymax, label="MSE for training data")
-
-plt.yscale('log')
-plt.ylim(ymin, ymax)
-plt.xlabel("Degree")
-plt.ylabel("MSE")
-plt.grid(True)
+plt.plot(polydegree, error, label='Error')
+plt.plot(polydegree, bias, label='bias')
+plt.plot(polydegree, variance, label='Variance')
 plt.legend()
-
-# Save the figure if needed
-# if save:
-#     plt.savefig("Figures/Bootstrap_OLS.pdf")
-
 plt.show()
