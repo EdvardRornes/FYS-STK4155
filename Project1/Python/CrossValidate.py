@@ -29,39 +29,43 @@ MSE_LASSO        = np.zeros(len(degrees))
 lmbdadas = [1e-10, 1e-5, 1e-2, 1e-1, 1, 10]
 
 
+OLS = PolynomialRegression("OLS", deg_max, data, start_training=False)
+Ridge = PolynomialRegression("OLS", deg_max, data, start_training=False)
+LASSO = PolynomialRegression("OLS", deg_max, data, start_training=False)
+
 for lmbda in lmbdadas:
     for i in range(deg_max):
-        X = Design_Matrix(x, y, degrees[i])
+        X = PolynomialRegression.Design_Matrix(x, y, degrees[i])
 
-        MSE_train_mean, MSE_train_STD, MSE_test_mean, MSE_test_STD = Cross_Validation(X, z, k)
+        MSE_train_mean, MSE_train_STD, MSE_test_mean, MSE_test_STD = OLS.Cross_Validation(X, z, k)
         MSE_OLS_CV[i] = MSE_test_mean
         MSE_OLS_CV_STD[i] = MSE_test_STD
 
         # OLS without CV
         X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.25)
-        X_train, X_test, z_train, z_test = scale_data(X_train, X_test, z_train, z_test)
-        beta, MSE_train, MSE_test, R2_train, R2_test = OLS_fit(X_train, X_test, z_train, z_test)
+        X_train, X_test, z_train, z_test = PolynomialRegression.scale_data(X_train, X_test, z_train, z_test)
+        beta, MSE_train, MSE_test, R2_train, R2_test = OLS.regr_model(X_train, X_test, z_train, z_test, None)
         MSE_OLS[i] = MSE_test
 
         # Ridge
-        MSE_train_mean, MSE_train_STD, MSE_test_mean, MSE_test_STD = Cross_Validation(X, z, k, reg_method="RIDGE", lmbda=lmbda)  
+        MSE_train_mean, MSE_train_STD, MSE_test_mean, MSE_test_STD = Ridge.Cross_Validation(X, z, k, lmbda=lmbda)  
         MSE_Ridge_CV[i] = MSE_test_mean
         MSE_Ridge_CV_STD[i] = MSE_test_STD
 
         # Ridge without CV
         X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.25)
-        X_train, X_test, z_train, z_test = scale_data(X_train, X_test, z_train, z_test)
-        beta, MSE_train, MSE_test, R2_train, R2_test = Ridge_fit(X_train, X_test, z_train, z_test, lmbda=lmbda)
+        X_train, X_test, z_train, z_test = PolynomialRegression.scale_data(X_train, X_test, z_train, z_test)
+        beta, MSE_train, MSE_test, R2_train, R2_test = Ridge.regr_model(X_train, X_test, z_train, z_test, lmbda=lmbda)
         MSE_Ridge[i] = MSE_test
 
         
-        MSE_train_mean, MSE_train_STD, MSE_test_mean, MSE_test_STD = Cross_Validation(X, z, k, reg_method="RIDGE", lmbda=lmbda)  
+        MSE_train_mean, MSE_train_STD, MSE_test_mean, MSE_test_STD = Ridge.Cross_Validation(X, z, k, lmbda=lmbda)  
         MSE_LASSO_CV[i] = MSE_test_mean
         MSE_LASSO_CV_STD[i] = MSE_test_STD
 
         # LASSO without CV
         X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.25)
-        X_train, X_test, z_train, z_test = scale_data(X_train, X_test, z_train, z_test)
+        X_train, X_test, z_train, z_test = PolynomialRegression.scale_data(X_train, X_test, z_train, z_test)
         beta, MSE_train, MSE_test, R2_train, R2_test = LASSO_default(X_train, X_test, z_train, z_test, lmbda=lmbda)
         MSE_LASSO[i] = MSE_test   
 
