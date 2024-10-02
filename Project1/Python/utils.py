@@ -342,31 +342,29 @@ class PolynomialRegression:
         bias = np.zeros(max_deg)
         variance = np.zeros(max_deg)
 
-        self.y_pred_bootstrap = []
+        self.z_pred_bootstrap = []
         start_time = time.time()
         for degree in range(max_deg):
             X = self.Design_Matrix(x, y, degree)
-            X_train, X_test, y_train, y_test = train_test_split(X, z, test_size=self.test_size_percentage)
-
-            y_test = y_test.reshape(-1,1)
-
-            self.y_pred_bootstrap.append(np.empty((y_test.shape[0], samples)))
+            X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=self.test_size_percentage)
+            z_test = z_test.reshape(-1,1)
+            self.z_pred_bootstrap.append(np.empty((z_test.shape[0], samples)))
             error_i = []
             bias_i = []
-            for i in range(samples):
-                X_, y_ = resample(X_train, y_train)
-                self.regr_model(X_, X_test, y_, y_test, lmbda)
-                self.y_pred_bootstrap[-1][:, i] = self.y_pred[-1][:,0] # self.regr_model creates next self.y_pred
 
-                error_i.append(np.mean((y_test- self.y_pred_bootstrap[-1][:,i])**2))
-                bias_i.append(np.mean(self.y_pred_bootstrap[-1][:,i]))
+            for i in range(samples):
+                X_, z_ = resample(X_train, z_train)
+                self.regr_model(X_, X_test, z_, z_test, lmbda)
+                self.z_pred_bootstrap[-1][:, i] = self.y_pred[-1][:,0] # self.regr_model creates next self.z_pred
+
+                error_i.append(np.mean((z_test- self.z_pred_bootstrap[-1][:,i])**2))
+                bias_i.append(np.mean(self.z_pred_bootstrap[-1][:,i]))
 
             print(f"{degree/max_deg*100:.1f}%, duration: {(time.time()-start_time):.2f}s", end="\r")
 
             error[degree] = np.mean(error_i)
-            bias[degree] = np.mean( (y_test - np.mean(self.y_pred_bootstrap[-1], axis=1, keepdims=True))**2 )
-            bias[degree] = np.mean( (y_test - np.mean(bias_i))**2 )
-            variance[degree] = np.mean( np.var(self.y_pred_bootstrap[-1], axis=1, keepdims=True) )
+            bias[degree] = np.mean( (z_test - np.mean(bias_i))**2 )
+            variance[degree] = np.mean( np.var(self.z_pred_bootstrap[-1], axis=1, keepdims=True) )
             
         print(f"Bootstrap: 100.0%, duration: {(time.time()-start_time):.2f}s", end="\r")
         return error, bias, variance
@@ -445,151 +443,6 @@ class LASSO_fit:
     
 LASSO_default = LASSO_fit() # Usually used
 
-############# Scaling #############
-# def scale_data(X_train, X_test, y_train, y_test, scaler_type="StandardScaler", b=1, a=0):
-#     """
-#     Scales data using sklearn.preprocessing. Currently only supports standard scaling and min-max scaling.
-#     """
-#     if scaler_type.upper() == "STANDARDSCALER" or scaler_type.upper() == "STANDARDSCALING":
-#         scaler_X = StandardScaler()
-#         scaler_y = StandardScaler()
-#     elif scaler_type.upper() == "NO_SCALING":
-#         return X_train, X_test, y_train, y_test
-#     elif scaler_type.upper() in ["MINMAX", "MIN_MAX"]:
-#         scaler_X = MinMaxScaler(feature_range=(a, b))
-#         scaler_y = MinMaxScaler(feature_range=(a, b))
-        
-#     elif scaler_type.upper() == "NO_SCALING":
-#         return X_train, X_test, y_train, y_test
-    
-#     else:
-#         raise ValueError(f"Did not recognize: {scaler_type}")
-#     # Fit on training data and transform both training and testing sets
-#     X_train_scaled = scaler_X.fit_transform(X_train)
-#     X_test_scaled = scaler_X.transform(X_test)
-    
-#     # Scale target values
-#     y_train_scaled = scaler_y.fit_transform(y_train.reshape(-1, 1)).flatten()
-#     y_test_scaled = scaler_y.transform(y_test.reshape(-1, 1)).flatten()
-    
-#     return X_train_scaled, X_test_scaled, y_train_scaled, y_test_scaled
-
-# def Bootstrap(X:np.ndarray, y:np.ndarray, samples:int, reg_method="OLS", scaling_type="no_scaling", 
-#               lmbda=None, test_percentage=0.25,  max_iter=int(1e5), tol=1e-1):
-#     if reg_method.upper() == "OLS":
-#         def fit(X_train, X_test, y_train, y_test, lmbda):
-#             return OLS_fit(X_train, X_test, y_train, y_test)
-        
-#     elif reg_method.upper() == "LASSO":
-#         def fit(X_train, X_test, y_train, y_test, lmbda):
-#             LASS = LASSO_fit(max_iter=max_iter, tol=tol)
-#             return LASS(X_train, X_test, y_train, y_test, lmbda)
-        
-#         if lmbda is None:
-#             raise ValueError(f"Argument 'lmbda' needs to be a float for LASSO-method")
-        
-#     elif reg_method.upper() == "RIDGE":
-#         def fit(X_train, X_test, y_train, y_test, lmbda):
-#             return Ridge_fit(X_train, X_test, y_train, y_test, lmbda)
-        
-#         if lmbda is None:
-#             raise ValueError(f"Argument 'lmbda' needs to be a float for RIDGE-method")
-        
-#     else:
-#         raise ValueError(f"Does not recognize reg-method: {reg_method}")
-        
-#     MSE_train = np.zeros(samples)
-#     MSE_test = np.zeros(samples)
-
-#     N = np.shape(X)[0]
-
-#     # Perform bootstrapping for 'samples' number of resamples
-#     for i in range(samples):
-#         idx = np.random.randint(0, N, N)  # Random resampling with replacement
-#         X_i = X[idx, :]
-#         y_i = y[idx]
-#         X_train, X_test, y_train, y_test = train_test_split(X_i, y_i, test_size=test_percentage, random_state=4)
-#         X_train, X_test, y_train, y_test = scale_data(X_train, X_test, y_train, y_test, scaler_type=scaling_type)
-
-#         _, MSE_train[i], MSE_test[i], _, _ = fit(X_train, X_test, y_train, y_test, lmbda)
-
-#     # Calculate mean and std of MSE for train and test sets
-#     MSE_train_mean = np.mean(MSE_train)
-#     MSE_train_std = np.std(MSE_train)
-#     MSE_test_mean = np.mean(MSE_test)
-#     MSE_test_std = np.std(MSE_test)
-
-#     return MSE_train_mean, MSE_train_std, MSE_test_mean, MSE_test_std
-
-# def Cross_Validation(X:np.ndarray, y:np.ndarray, k:int, reg_method="OLS", lmbda=None, max_iter=int(1e5), tol=1e-1):
-#     """
-#     k-fold cross-validation for OLS, Ridge, or LASSO models
-#     """
-#     if reg_method.upper() == "OLS":
-#         def fit(X_train, X_test, y_train, y_test, lmbda):
-#             return OLS_fit(X_train, X_test, y_train, y_test)
-        
-#     elif reg_method.upper() == "LASSO":
-#         def fit(X_train, X_test, y_train, y_test, lmbda):
-#             LASS = LASSO_fit(max_iter=max_iter, tol=tol)
-#             return LASS(X_train, X_test, y_train, y_test, lmbda)
-        
-#         if lmbda is None:
-#             raise ValueError(f"Argument 'lmbda' needs to be a float for LASSO-method")
-        
-#     elif reg_method.upper() == "RIDGE":
-#         def fit(X_train, X_test, y_train, y_test, lmbda):
-#             return Ridge_fit(X_train, X_test, y_train, y_test, lmbda)
-        
-#         if lmbda is None:
-#             raise ValueError(f"Argument 'lmbda' needs to be a float for RIDGE-method")
-        
-#     else:
-#         raise ValueError(f"Does not recognize reg-method: {reg_method}")
-    
-#     N = np.shape(X)[0]
-#     shuffle_idx = np.random.permutation(N)  # Shuffle the dataset
-#     X = X[shuffle_idx, :]
-#     y = y[shuffle_idx]
-
-#     kfold_idx = np.linspace(0, N, k + 1)  # Indices for k folds
-
-#     MSE_train_array = np.zeros(k)
-#     MSE_test_array = np.zeros(k)
-
-#     for i in range(k):
-#         # Define training and testing sets based on k-folds
-#         i_0 = int(kfold_idx[i])
-#         i_1 = int(kfold_idx[i + 1])
-#         i_test = np.arange(i_0, i_1)
-#         X_test = X[i_test, :]
-#         X_train = np.delete(X, i_test, 0)
-
-#         y_test = y[i_test]
-#         y_train = np.delete(y, i_test)
-
-#         X_train, X_test, y_train, y_test = scale_data(X_train, X_test, y_train, y_test)
-
-#         _, MSE_train_array[i], MSE_test_array[i], _, _ = fit(X_train, X_test, y_train, y_test, lmbda)
-        
-#     # Calculate mean and std for MSE for train and test sets across all folds
-#     MSE_train_mean = np.mean(MSE_train_array)
-#     MSE_train_std = np.std(MSE_train_array)
-#     MSE_test_mean = np.mean(MSE_test_array)
-#     MSE_test_std = np.std(MSE_test_array)
-
-#     return MSE_train_mean, MSE_train_std, MSE_test_mean, MSE_test_std
-
-# def bias_variance(X_train:np.ndarray, X_test:np.ndarray, y_train:np.ndarray, y_test:np.ndarray, lmbda:float) -> list:
-#     beta = Ridge_Reg(X_train, y_train, lmbda)
-
-#     y_tilde = X_train @ beta
-#     y_pred = X_test @ beta 
-
-#     bias = np.mean((y_tilde-y_test)**2)
-#     variance = np.mean(np.var(y_pred, axis=0))
-
-#     return bias, variance
 
 def get_latitude_and_conversion(filename):
     with rasterio.open(filename) as dataset:
