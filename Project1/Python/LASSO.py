@@ -15,8 +15,8 @@ additional_description = "no_scaling"
 # additional_description = "StandardScaling"
 
 # Setup
-deg_max = 15
-lmbdas = [1e-20, 1e-3, 1e-2]
+deg_max = 17
+lmbdas = [1e-10, 1e-2, 1e-1]
 N = 100; eps = 0.1
 franke = Franke(N, eps)
 data = [franke.x, franke.y, franke.z]
