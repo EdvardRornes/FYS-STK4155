@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.5) (preloaded format=pdflatex 2024.8.15)  3 OCT 2024 15:35
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 23.5) (preloaded format=pdflatex 2024.8.15)  3 OCT 2024 16:02
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -655,15 +655,15 @@ Overfull \hbox (1.04001pt too wide) detected at line 273
  []
 
 [4]
-<Python/Figures/OLS/OLS_MSEno_scaling.pdf, id=191, 722.7pt x 433.62pt>
-File: Python/Figures/OLS/OLS_MSEno_scaling.pdf Graphic file (type pdf)
-<use Python/Figures/OLS/OLS_MSEno_scaling.pdf>
-Package pdftex.def Info: Python/Figures/OLS/OLS_MSEno_scaling.pdf  used on input line 313.
+<Python/Figures/OLS/OLS_MSE_no_scaling.pdf, id=191, 722.7pt x 433.62pt>
+File: Python/Figures/OLS/OLS_MSE_no_scaling.pdf Graphic file (type pdf)
+<use Python/Figures/OLS/OLS_MSE_no_scaling.pdf>
+Package pdftex.def Info: Python/Figures/OLS/OLS_MSE_no_scaling.pdf  used on input line 313.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-<Python/Figures/OLS/OLS_R2no_scaling.pdf, id=196, 722.7pt x 433.62pt>
-File: Python/Figures/OLS/OLS_R2no_scaling.pdf Graphic file (type pdf)
-<use Python/Figures/OLS/OLS_R2no_scaling.pdf>
-Package pdftex.def Info: Python/Figures/OLS/OLS_R2no_scaling.pdf  used on input line 320.
+<Python/Figures/OLS/OLS_R2_no_scaling.pdf, id=196, 722.7pt x 433.62pt>
+File: Python/Figures/OLS/OLS_R2_no_scaling.pdf Graphic file (type pdf)
+<use Python/Figures/OLS/OLS_R2_no_scaling.pdf>
+Package pdftex.def Info: Python/Figures/OLS/OLS_R2_no_scaling.pdf  used on input line 320.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
 <Python/Figures/OLS/OLS_betano_scaling_100.pdf, id=201, 867.24pt x 433.62pt>
 File: Python/Figures/OLS/OLS_betano_scaling_100.pdf Graphic file (type pdf)
@@ -685,16 +685,16 @@ Overfull \hbox (49.32918pt too wide) in paragraph at lines 332--334
 []  [] 
  []
 
-[5 <./Python/Figures/OLS/OLS_MSEno_scaling.pdf> <./Python/Figures/OLS/OLS_R2no_scaling.pdf> <./Python/Figures/OLS/OLS_betano_scaling_100.pdf>]
-<Python/Figures/OLS/OLS_MSEMINMAX.pdf, id=303, 722.7pt x 433.62pt>
-File: Python/Figures/OLS/OLS_MSEMINMAX.pdf Graphic file (type pdf)
-<use Python/Figures/OLS/OLS_MSEMINMAX.pdf>
-Package pdftex.def Info: Python/Figures/OLS/OLS_MSEMINMAX.pdf  used on input line 342.
+[5 <./Python/Figures/OLS/OLS_MSE_no_scaling.pdf> <./Python/Figures/OLS/OLS_R2_no_scaling.pdf> <./Python/Figures/OLS/OLS_betano_scaling_100.pdf>]
+<Python/Figures/OLS/OLS_MSE_MINMAX.pdf, id=303, 722.7pt x 433.62pt>
+File: Python/Figures/OLS/OLS_MSE_MINMAX.pdf Graphic file (type pdf)
+<use Python/Figures/OLS/OLS_MSE_MINMAX.pdf>
+Package pdftex.def Info: Python/Figures/OLS/OLS_MSE_MINMAX.pdf  used on input line 342.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-<Python/Figures/OLS/OLS_MSEStandardScaling.pdf, id=306, 722.7pt x 433.62pt>
-File: Python/Figures/OLS/OLS_MSEStandardScaling.pdf Graphic file (type pdf)
-<use Python/Figures/OLS/OLS_MSEStandardScaling.pdf>
-Package pdftex.def Info: Python/Figures/OLS/OLS_MSEStandardScaling.pdf  used on input line 349.
+<Python/Figures/OLS/OLS_MSE_StandardScaling.pdf, id=306, 722.7pt x 433.62pt>
+File: Python/Figures/OLS/OLS_MSE_StandardScaling.pdf Graphic file (type pdf)
+<use Python/Figures/OLS/OLS_MSE_StandardScaling.pdf>
+Package pdftex.def Info: Python/Figures/OLS/OLS_MSE_StandardScaling.pdf  used on input line 349.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
 <Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf, id=310, 722.7pt x 433.62pt>
 File: Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf Graphic file (type pdf)
@@ -711,7 +711,7 @@ File: Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf Graphic file (type pdf)
 <use Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf>
 Package pdftex.def Info: Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf  used on input line 374.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
- [6 <./Python/Figures/OLS/OLS_betano_scaling_1000.pdf> <./Python/Figures/OLS/OLS_MSEMINMAX.pdf> <./Python/Figures/OLS/OLS_MSEStandardScaling.pdf> <./Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf>]
+ [6 <./Python/Figures/OLS/OLS_betano_scaling_1000.pdf> <./Python/Figures/OLS/OLS_MSE_MINMAX.pdf> <./Python/Figures/OLS/OLS_MSE_StandardScaling.pdf> <./Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf>]
 <Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf, id=407, 722.7pt x 433.62pt>
 File: Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf Graphic file (type pdf)
 <use Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf>
@@ -738,28 +738,28 @@ File: Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf Graphic file (type pdf)
 Package pdftex.def Info: Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf  used on input line 406.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
  [7 <./Python/Figures/Ridge/RIDGE_R2_no_scaling.pdf> <./Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf> <./Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf> <./Python/Figures/LASSO/LASSO_MSE_no_scaling.pdf> <./Python/Figures/LASSO/LASSO_R2_no_scaling.pdf> <./Python/Figures/LASSO/LASSO_logMSE_no_scaling.pdf>]
-<Python/Figures/CV/CV_0.pdf, id=510, 722.7pt x 433.62pt>
-File: Python/Figures/CV/CV_0.pdf Graphic file (type pdf)
-<use Python/Figures/CV/CV_0.pdf>
-Package pdftex.def Info: Python/Figures/CV/CV_0.pdf  used on input line 418.
+<Python/Figures/CV/CV_0_no_scaling.pdf, id=510, 722.7pt x 433.62pt>
+File: Python/Figures/CV/CV_0_no_scaling.pdf Graphic file (type pdf)
+<use Python/Figures/CV/CV_0_no_scaling.pdf>
+Package pdftex.def Info: Python/Figures/CV/CV_0_no_scaling.pdf  used on input line 418.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-<Python/Figures/CV/CV_1.pdf, id=513, 722.7pt x 433.62pt>
-File: Python/Figures/CV/CV_1.pdf Graphic file (type pdf)
-<use Python/Figures/CV/CV_1.pdf>
-Package pdftex.def Info: Python/Figures/CV/CV_1.pdf  used on input line 424.
+<Python/Figures/CV/CV_1_no_scaling.pdf, id=513, 722.7pt x 433.62pt>
+File: Python/Figures/CV/CV_1_no_scaling.pdf Graphic file (type pdf)
+<use Python/Figures/CV/CV_1_no_scaling.pdf>
+Package pdftex.def Info: Python/Figures/CV/CV_1_no_scaling.pdf  used on input line 424.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-<Python/Figures/CV/CV_2.pdf, id=516, 722.7pt x 433.62pt>
-File: Python/Figures/CV/CV_2.pdf Graphic file (type pdf)
-<use Python/Figures/CV/CV_2.pdf>
-Package pdftex.def Info: Python/Figures/CV/CV_2.pdf  used on input line 430.
+<Python/Figures/CV/CV_2_no_scaling.pdf, id=516, 722.7pt x 433.62pt>
+File: Python/Figures/CV/CV_2_no_scaling.pdf Graphic file (type pdf)
+<use Python/Figures/CV/CV_2_no_scaling.pdf>
+Package pdftex.def Info: Python/Figures/CV/CV_2_no_scaling.pdf  used on input line 430.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-<Python/Figures/CV/CV_3.pdf, id=519, 722.7pt x 433.62pt>
-File: Python/Figures/CV/CV_3.pdf Graphic file (type pdf)
-<use Python/Figures/CV/CV_3.pdf>
-Package pdftex.def Info: Python/Figures/CV/CV_3.pdf  used on input line 436.
+<Python/Figures/CV/CV_3_no_scaling.pdf, id=519, 722.7pt x 433.62pt>
+File: Python/Figures/CV/CV_3_no_scaling.pdf Graphic file (type pdf)
+<use Python/Figures/CV/CV_3_no_scaling.pdf>
+Package pdftex.def Info: Python/Figures/CV/CV_3_no_scaling.pdf  used on input line 436.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
- [8 <./Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf> <./Python/Figures/CV/CV_0.pdf> <./Python/Figures/CV/CV_1.pdf> <./Python/Figures/CV/CV_2.pdf>]
-<Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf, id=706, 722.7pt x 433.62pt>
+ [8 <./Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf> <./Python/Figures/CV/CV_0_no_scaling.pdf> <./Python/Figures/CV/CV_1_no_scaling.pdf> <./Python/Figures/CV/CV_2_no_scaling.pdf>]
+<Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf, id=612, 722.7pt x 433.62pt>
 File: Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf Graphic file (type pdf)
 <use Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf>
 Package pdftex.def Info: Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf  used on input line 445.
@@ -776,7 +776,7 @@ Overfull \hbox (6.02885pt too wide) detected at line 501
 []
  []
 
-[9 <./Python/Figures/CV/CV_3.pdf> <./Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf>]
+[9 <./Python/Figures/CV/CV_3_no_scaling.pdf> <./Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf>]
 Overfull \hbox (2.44194pt too wide) detected at line 528
 []
  []
@@ -798,7 +798,7 @@ Package rerunfilecheck Info: File `project1.out' has not changed.
  ) 
 Here is how much of TeX's memory you used:
  23369 strings out of 475503
- 425959 string characters out of 5761834
+ 426295 string characters out of 5761834
  1959248 words of memory out of 5000000
  44173 multiletter control sequences out of 15000+600000
  571561 words of font info for 86 fonts, out of 8000000 for 9000
@@ -808,9 +808,9 @@ Here is how much of TeX's memory you used:
 pdfTeX warning (dest): name{Hfootnote.1} has been referenced but does not exist, replaced by a fixed one
 
 <C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx10.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx12.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx9.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi7.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi9.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmib10.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr5.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr6.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr7.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr8.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr9.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy6.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy9.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmti9.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmtt10.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmtt8.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10.pfb><C:/Users/isakc/AppData/Local/Programs/MiKTeX/fonts/type1/public/cm-super/sfrm1000.pfb>
-Output written on project1.pdf (10 pages, 788539 bytes).
+Output written on project1.pdf (10 pages, 770631 bytes).
 PDF statistics:
- 894 PDF objects out of 1000 (max. 8388607)
+ 769 PDF objects out of 1000 (max. 8388607)
  78 named destinations out of 1000 (max. 500000)
  316 words of extra memory for PDF output out of 10000 (max. 10000000)
 

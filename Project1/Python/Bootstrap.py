@@ -10,7 +10,8 @@ additional_description = "no_scaling"
 # additional_description = "MINMAX"
 # additional_description = "StandardScaling"
 
-N = 100; eps = 0.1
+np.random.seed(42)
+N = 25; eps = 0.1
 franke = Franke(N, eps)
 x,y,z = franke.x, franke.y, franke.z
 data = [x,y,z]

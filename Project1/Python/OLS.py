@@ -7,12 +7,13 @@ from matplotlib.ticker import ScalarFormatter
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from utils import *
-np.random.seed(1)
 
-# Creating plot
+# Plot
 latex_fonts()
 save = True; overwrite = True
 folder = "Figures/OLS"
+
+################ Scaling options ################
 additional_description = "no_scaling"
 # additional_description = "MINMAX"
 # additional_description = "StandardScaling"
@@ -85,7 +86,7 @@ plt.tight_layout()
 
 
 if save:
-    save_plt(f"{folder}/OLS_beta{additional_description}_{N}", overwrite=overwrite)
+    save_plt(f"{folder}/OLS_beta_{additional_description}", overwrite=overwrite)
 
 ############### MSE-plot ###############
 plt.figure(figsize=(10, 6))
@@ -102,7 +103,7 @@ plt.title(r"OLS MSE (Franke)")
 plt.legend()
 plt.grid(True)
 if save:
-    save_plt(f"{folder}/OLS_MSE{additional_description}", overwrite=overwrite)
+    save_plt(f"{folder}/OLS_MSE_{additional_description}", overwrite=overwrite)
 
 ############### R²-plot ###############
 plt.figure(figsize=(10, 6))
@@ -123,5 +124,5 @@ plt.title(r"OLS $R^2 (Franke)$")
 plt.legend()
 plt.grid(True)
 if save:
-    save_plt(f"{folder}/OLS_R2{additional_description}", overwrite=overwrite)
+    save_plt(f"{folder}/OLS_R2_{additional_description}", overwrite=overwrite)
 plt.show()
