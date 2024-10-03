@@ -4,16 +4,21 @@ import imageio.v2 as imageio
 from utils import *
 import matplotlib.lines as mlines
 
-
 # Define terrain files
 files = {
     'Grand Canyon': 'Data/GrandCanyon.tif',
     'Mount Everest': 'Data/Everest.tif'
 }
-# Setup:
+# Plot
 save = True
 latex_fonts()
 
+################ Scaling options ################
+additional_description = "no_scaling"
+# additional_description = "MINMAX"
+# additional_description = "StandardScaling"
+
+# Setup
 deg_max = 30
 degrees = np.arange(1, deg_max + 1)
 lmbdas = [1e-8]

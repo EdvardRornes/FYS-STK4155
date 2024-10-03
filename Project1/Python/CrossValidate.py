@@ -3,18 +3,26 @@ import matplotlib.pyplot as plt
 
 from utils import *
 
-save = True
-# latex_fonts()
+# Plot
+save = True; overwrite = True
+latex_fonts()
 
+################ Scaling options ################
+additional_description = "no_scaling"
+additional_description = "MINMAX"
+additional_description = "StandardScaling"
+
+# Setup
 N = 75; eps = 0.1
 franke = Franke(N, eps)
 x,y,z = franke.x, franke.y, franke.z
 data = [x,y,z]
 lmbdas = [1e-10, 1e-7, 1e-4, 1e-1]
 
+# Number of folds
 k = 10
 
-deg_max = 6
+deg_max = 15
 degrees = np.arange(1, deg_max+1)
 MSE_OLS_CV       = np.zeros(len(degrees))
 MSE_OLS_CV_STD   = np.zeros(len(degrees))
@@ -25,9 +33,9 @@ MSE_LASSO_CV_STD = np.zeros((len(degrees), len(lmbdas)))
 
 
 
-OLS = PolynomialRegression("OLS", deg_max, data, start_training=False)
-Ridge = PolynomialRegression("OLS", deg_max, data, start_training=False)
-LASSO = PolynomialRegression("OLS", deg_max, data, start_training=False)
+OLS = PolynomialRegression("OLS", deg_max, data, start_training=False, scaling=additional_description)
+Ridge = PolynomialRegression("OLS", deg_max, data, start_training=False, scaling=additional_description)
+LASSO = PolynomialRegression("OLS", deg_max, data, start_training=False, scaling=additional_description)
 start_time = time.time()
 for i in range(deg_max):
     X = PolynomialRegression.Design_Matrix(x, y, degrees[i])
@@ -53,9 +61,9 @@ print(f"CV: 100.0%, duration: {(time.time()-start_time):.2f}s")
 for lmbda, j in zip(lmbdas, range(len(lmbdas))):
     plt.figure(figsize=(10, 6))
     plt.title("MSE of CV")
-    plt.errorbar(degrees, MSE_OLS_CV, MSE_OLS_CV_STD, label="OLS", capsize=5)
-    plt.errorbar(degrees, MSE_Ridge_CV[:,j], MSE_Ridge_CV_STD[:,j], label=rf"Ridgewith $\lambda=${lmbda}", capsize=5)
-    plt.errorbar(degrees, MSE_LASSO_CV[:,j], MSE_LASSO_CV_STD[:,j], label=rf"LASSOwith $\lambda=${lmbda}", capsize=5)
+    plt.errorbar(degrees, MSE_OLS_CV, MSE_OLS_CV_STD, lw=2.5, label="OLS", capsize=5)
+    plt.errorbar(degrees, MSE_Ridge_CV[:,j], MSE_Ridge_CV_STD[:,j], lw=2.5, label=rf"Ridgewith $\lambda={lmbda}$", capsize=5)
+    plt.errorbar(degrees, MSE_LASSO_CV[:,j], MSE_LASSO_CV_STD[:,j], lw=2.5, label=rf"LASSOwith $\lambda={lmbda}$", capsize=5)
     print(f"lmbda = {lmbda}:")
     print(f"    OLS: min: {np.min(MSE_OLS_CV):.2e}, mean: {np.mean(MSE_OLS_CV):.2e}, best poly deg: {np.argmin(MSE_OLS_CV)+1}")
     print(f"    Ridge: min: {np.min(MSE_Ridge_CV[:,j]):.2e}, mean: {np.mean(MSE_Ridge_CV[:,j]):.2e}, best poly deg: {np.argmin(MSE_Ridge_CV[:,j])+1}")
@@ -65,10 +73,10 @@ for lmbda, j in zip(lmbdas, range(len(lmbdas))):
     plt.ylabel("MSE")
 
     ymax = np.max([np.max(q) for q in [MSE_OLS_CV[5], MSE_Ridge_CV[5,j], MSE_LASSO_CV[5,j]]]) # the 6-th poly
-    plt.ylim(0, ymax)
+    # plt.ylim(0, ymax)
     plt.grid(True)
     plt.legend(loc="upper left")
     if save:
-        plt.savefig(f"Figures/CV/CV_{j}.pdf")
+        save_plt(f"Figures/CV/CV_{j}_{additional_description}", overwrite=overwrite)
 
 plt.show()

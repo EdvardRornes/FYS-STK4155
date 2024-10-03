@@ -3,20 +3,21 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from sklearn.model_selection import train_test_split
 from utils import *
-np.random.seed(0)
 
-# Plot:
+# Plot
 latex_fonts()
-save = False; overwrite = False
+save = True; overwrite = True
 folder = "Figures/LASSO"
+
+################ Scaling options ################
 additional_description = "no_scaling"
 # additional_description = "MINMAX"
 # additional_description = "StandardScaling"
 
 # Setup
-deg_max = 10
-lmbdas = [1e-10, 1e-2, 1e-1]
-N = 50; eps = 0.1
+deg_max = 15
+lmbdas = [1e-20, 1e-3, 1e-2]
+N = 100; eps = 0.1
 franke = Franke(N, eps)
 data = [franke.x, franke.y, franke.z]
 
@@ -92,7 +93,7 @@ for i in range(lambda_num):
     _, MSE_train_array[i], MSE_test_array[i], R2_train_array[i], R2_test_array[i] = LASSO_default(X_train, X_test, z_train, z_test, lmbdas[i])
 
 plt.figure(figsize=(10, 6))
-plt.title(rf"MSE deg {deg}.")
+plt.title(rf"MSE deg {deg}")
 plt.plot(np.log10(lmbdas), MSE_train_array, label="MSE train", lw=2.5)
 plt.plot(np.log10(lmbdas), MSE_test_array, label="MSE test", lw=2.5)
 plt.xlabel(r"$\log_{10}(\lambda)$")
@@ -100,10 +101,11 @@ plt.ylabel("MSE")
 plt.xlim(lambda_exp_start, lambda_exp_stop)
 plt.legend()
 plt.grid(True)
-save_plt(f"{folder}/LASSO_logMSE_{additional_description}", overwrite=overwrite)
+if save:
+    save_plt(f"{folder}/LASSO_logMSE_{additional_description}", overwrite=overwrite)
 
 plt.figure(figsize=(10, 6))
-plt.title(rf"$R^2$ with deg {deg}.")
+plt.title(rf"$R^2$ with deg {deg}")
 plt.plot(np.log10(lmbdas), R2_train_array,label=r"$R^2$ train", lw=2.5)
 plt.plot(np.log10(lmbdas), R2_test_array,label=r"$R^2$ test", lw=2.5)
 plt.xlabel(r"$\log_{10}(\lambda)$")
@@ -111,6 +113,7 @@ plt.ylabel(r"$R^2$")
 plt.xlim(lambda_exp_start, lambda_exp_stop)
 plt.legend()
 plt.grid(True)
-save_plt(f"{folder}/LASSO_logR2_{additional_description}", overwrite=overwrite)
+if save:
+    save_plt(f"{folder}/LASSO_logR2_{additional_description}", overwrite=overwrite)
 
 plt.show()

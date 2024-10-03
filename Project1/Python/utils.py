@@ -11,6 +11,8 @@ from inspect import signature
 from pathlib import Path
 from sklearn.utils import resample
 
+np.random.seed(4)
+
 # Saving files
 def save_plt(filename_n_path, overwrite=False, type="pdf", stop=50, fig=None) -> None:
     filename = f"{filename_n_path}.{type}"
@@ -183,6 +185,7 @@ class PolynomialRegression:
                 
                 # Split into training and testing and scale
                 X_train, X_test, z_train, z_test = train_test_split(X, self.z, test_size=self.test_size_percentage, random_state=self.random_state)
+                z_train = z_train.reshape(-1,1); z_test = z_test.reshape(-1,1)
                 X_train, X_test, z_train, z_test = self.scale_data(X_train, X_test, z_train, z_test, self.scaling)
 
                 self.beta[deg], self.MSE_train[deg], self.MSE_test[deg], self.R2_train[deg], self.R2_test[deg] = self.regr_model(X_train, X_test, z_train, z_test, None)
@@ -212,6 +215,7 @@ class PolynomialRegression:
                     self.X.append(X)
                     # Split into training and testing and scale
                     X_train, X_test, z_train, z_test = train_test_split(X, self.z, test_size=self.test_size_percentage, random_state=self.random_state)
+                    z_train = z_train.reshape(-1,1); z_test = z_test.reshape(-1,1)
                     X_train, X_test, z_train, z_test = self.scale_data(X_train, X_test, z_train, z_test, self.scaling)
 
                     beta, self.MSE_train[deg, i], self.MSE_test[deg, i], self.R2_train[deg, i], self.R2_test[deg, i] = self.regr_model(X_train, X_test, z_train, z_test, l)
@@ -252,10 +256,14 @@ class PolynomialRegression:
     def OLS_fit(self, X_train:np.ndarray, X_test:np.ndarray, y_train:np.ndarray, y_test:np.ndarray) -> list:
         """
         Parameters
-            * X_train:          array of size (n1 x p) 
-            * X_test:           array of size (n2 x p) 
+            * X_train:          array of size (n1 x f(p)) 
+            * X_test:           array of size (n2 x f(p)) 
             * y_train:          array of size (n1) 
             * y_test:           array of size (n2)
+
+            f(p) = (p + 1) * (p + 2) // 2
+            n1 = int(N * test_size)
+            n2 = N - n1
 
         Calculates beta-coefficient, and the MSE and R2 score for train and test-data. Uses the fact that beta_OLS = beta_Ridge(lambda = 0).
 
