@@ -11,6 +11,8 @@ from inspect import signature
 from pathlib import Path
 from sklearn.utils import resample
 
+np.random.seed(4)
+
 # Saving files
 def save_plt(filename_n_path, overwrite=False, type="pdf", stop=50, fig=None) -> None:
     filename = f"{filename_n_path}.{type}"
@@ -231,7 +233,8 @@ class PolynomialRegression:
             * y_test:           array of size (n2)
             * lmbda:            float sent to Ridge_Reg 
 
-        Uses Ridge_Reg on the train-data to calculate the the beta-coefficient in y = X@beta + epsilon. Using the obtained beta, predicts y on test and train data, and then their respective MSE/R2. 
+        Uses Ridge_Reg on the train-data to calculate the the beta-coefficient in y = X@beta + epsilon. Using the obtained beta, predicts y on test and
+        train data, and then their respective MSE/R2. 
 
         Returns 
             beta, MSE_train, MSE_test, R2_train, R2_test 
