@@ -4,8 +4,6 @@ import matplotlib.cm as cm
 import matplotlib.colors as mcolors
 from matplotlib.ticker import ScalarFormatter
 
-from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
 from utils import *
 
 # Plot

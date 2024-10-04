@@ -1,7 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from utils import *
-from sklearn.utils import resample
 
 latex_fonts()
 save = False; overwrite = False

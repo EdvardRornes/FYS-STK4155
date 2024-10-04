@@ -3,9 +3,10 @@ import matplotlib.pyplot as plt
 
 from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
-from random import random, seed
+from utils import *
 
-fig = plt.figure()
+latex_fonts()
+fig = plt.figure(figsize=(10, 10), constrained_layout=True)
 ax = fig.add_subplot(111, projection='3d')  # Use add_subplot instead of gca
 
 # Make data.
@@ -23,6 +24,8 @@ def FrankeFunction(x, y):
 z = FrankeFunction(x, y)
 print(np.min(z))
 
+ax.view_init(elev=20, azim=65)
+
 # Plot the surface.
 surf = ax.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
 
@@ -33,5 +36,6 @@ ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
 
 # Add a color bar which maps values to colors.
 fig.colorbar(surf, shrink=0.5, aspect=5)
+plt.savefig('Figures/FrankeFunction.pdf', transparent=True, bbox_inches='tight')
 
 plt.show()
