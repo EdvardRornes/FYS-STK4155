@@ -1,0 +1,12 @@
+\providecommand{\href}[2]{#2}\begingroup\raggedright\begin{thebibliography}{1}
+
+\bibitem{USGS_EarthExplorer}
+{U.S. Geological Survey}, ``{EarthExplorer: Terrain Elevation Data}.''
+  \url{https://earthexplorer.usgs.gov}, 2024.
+\newblock Accessed: 20/09/2024. Extracted terrain elevation data.
+
+\bibitem{Bishop2006}
+C.~M. Bishop, {\em Pattern Recognition and Machine Learning}, vol.~1.
+\newblock Springer, 2006.
+
+\end{thebibliography}\endgroup
