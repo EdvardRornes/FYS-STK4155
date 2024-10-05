@@ -260,11 +260,12 @@ Both resampling techniques are used to gain insight into the models performance 
 \subsection{Scaling}
 Data scaling is an important tool in machine learning and data analysis. It may be used to simply make data more understandable as to keep them on a more human friendly scale, or if the data varies over several order of magnitude can be used to avoid numerical error and instability. The two most common ways to scale data are \texttt{MIN-MAX} and \texttt{StandardScaling}. MIN-MAX does as its name suggests; the range of the feature $x_i$ gets scaled to the interval $[a,b]$ one applies the following transformation
 \begin{align}
-	x_i\to(b-a)\frac{x_i-\text{min}(x_i)}{\text{max}(x_i)-\text{min}(x_i)}-a
+	x_i\to(b-a)\frac{x_i-\text{min}(x_i)}{\text{max}(x_i)-\text{min}(x_i)}-a.
 \end{align}
+
 StandardScaling however subtracts the mean value of the smple from each data point and divides this by the standard deviation of the sample:
 \begin{align}
-	x_i\to\frac{x_i-\bar x_i}{\sigma(x_i)}
+	x_i\to\frac{x_i-\bar x_i}{\sigma(x_i)}.
 \end{align}
 
 
@@ -450,17 +451,16 @@ The domain \(\lambda\gtrsim 10^{-3}\) is likely when $\lambda$ becomes too large
 For the current case the only advantage that LASSO has over OLS is just insensitivity to increase in degree, and thus it is less important to keep the complexity of the model at an optimal level. However Ridge also accomplishes this whilst not massively increasing and decreasing the MSE and $R^2$-score respectively.
 
 \subsection{Bootstrap and Cross Validation}
-The Bootstrap method \(100\) samples is shown in \ref{fig:bootstrap}.
+Using the Bootstrap method with \(100\) samples, the bias, variance and error is shown in fig. \ref{fig:bootstrap} for an OLS regression of \(N=100\) data samples from the Franke function \eqref{eq:franke}. The figure shows a close-to constant variance for polynomial degrees smaller than \(p\sim7\), whereas for \(p\gtrsim 7\) the variance increases steadily. On the other hand, the bias starts out above \(\sim0.1\), gradually decreasing, reaching a minimum for \(p\) in the range \(4-9\), before rising again for \(p\gtrsim 9\). These specific values of \(p\) is dependent on the sample size \(N=100\) and the amount of samples taken by the Bootstrap method. However, the general shape of the error curve in fig. \ref{fig:bootstrap} is expected independent of these settings. The error is supposed to be proportional to the sum of the variance and the bias, as seen in \eqref{eq:MSE-bias-var}. Visually, fig. \ref{fig:bootstrap} confirms this, although the sum is not explicitly given. 
+
 \begin{figure}[ht!]
 	\centering
 	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf}
 	\caption{The bias, variance and error of a OLS regression on data generated from \(N=25\) samples of the Franke function \eqref{eq:franke} with noise proportional to \(\varepsilon=0.01\). The metrics are generated using the bootstrap method.}
 	\label{fig:bootstrap}
 \end{figure}
+Cross validation is performed for the three regression methods OLS, Ridge and LASSO on data generated from the Franke function \eqref{eq:franke}. The results are obtained with \(\lambda\)-parameter for Ridge and LASSO taking the values \(\lambda \in\{ 10^{-10}, 10^{-7}, 10^{-4}, 10^{-1}\}\) \color{red}\(\leftarrow\) we only show \(\lambda=10^{-6}\), should we show more?\color{black}.
 
-Cross validation is performed for the three regression methods OLS, Ridge and LASSO on data generated from the Franke function \eqref{eq:franke}. The results are obtained with \(\lambda\)-parameter for Ridge and LASSO taking the values \(\lambda \in\{ 10^{-10}, 10^{-7}, 10^{-4}, 10^{-1}\}\).
-
-The 
 \begin{figure}[ht!]
 	\centering
 	\includegraphics[width=\linewidth]{Python/Figures/CV/CV_no_scaling.pdf}
@@ -469,7 +469,7 @@ The
 \end{figure}
 
 \subsection{Terrain Data}
-The 
+
 
 \begin{figure*}
 	content...

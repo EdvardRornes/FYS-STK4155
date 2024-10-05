@@ -10,7 +10,7 @@ files = {
     'Mount Everest': 'Data/Everest.tif'
 }
 # Plot
-np.random.seed(0)
+np.random.seed(42)
 latex_fonts()
 save = True; overwrite = True
 folder = "Figures/Terrain"
@@ -18,15 +18,28 @@ folder = "Figures/Terrain"
 ################ Scaling options ################
 additional_description = "Unscaled"
 # additional_description = "MINMAX"
-# additional_description = "StandardScaling"
+additional_description = "StandardScaling"
 
 # Setup
-deg_max = 15
-degrees = np.arange(1, deg_max + 1)
+deg_max = 50; deg_max_cv = 50
+degrees = np.arange(1, deg_max + 1); degrees_cv = np.arange(1, deg_max_cv + 1)
 lmbdas = [1e-8]
 k = 10
 
-N = 25
+N = 50
+
+# For lmbda-log plot:
+log_lambda_start = -10
+log_lambda_stop = -1
+lambda_num = 100
+deg_analysis = 44
+
+lmbdadas = np.logspace(log_lambda_start, log_lambda_stop, lambda_num)
+
+MSE_train_array = np.zeros(lambda_num)
+MSE_test_array = np.zeros(lambda_num)
+R2_train_array = np.zeros(lambda_num)
+R2_test_array = np.zeros(lambda_num)
 
 
 # Iterate through terrain files
@@ -44,20 +57,20 @@ for name, file in files.items():
     y = y.flatten()
 
     ########## Reg-models ##########
-    OLS = PolynomialRegression("OLS", deg_max, [x,y,z], start_training=True, scaling=additional_description)
-    RIDGE = PolynomialRegression("RIDGE", deg_max, [x,y,z], lmbdas=lmbdas, start_training=True, scaling=additional_description)
-    LASSO = PolynomialRegression("LASSO", deg_max, [x,y,z], lmbdas=lmbdas, start_training=True, scaling=additional_description)
+    OLS = PolynomialRegression("OLS", deg_max_cv, [x,y,z], start_training=True, scaling=additional_description)
+    RIDGE = PolynomialRegression("RIDGE", deg_max_cv, [x,y,z], lmbdas=lmbdas, start_training=True, scaling=additional_description)
+    LASSO = PolynomialRegression("LASSO", deg_max_cv, [x,y,z], lmbdas=lmbdas, start_training=True, scaling=additional_description)
     
     ########## CV-storage ##########
-    MSE_OLS_CV   = np.zeros(deg_max);                MSE_OLS_CV_STD   = np.zeros(deg_max)
-    MSE_RIDGE_CV = np.zeros((deg_max, len(lmbdas))); MSE_RIDGE_CV_STD = np.zeros((deg_max, len(lmbdas)))
-    MSE_LASSO_CV = np.zeros((deg_max, len(lmbdas))); MSE_LASSO_CV_STD = np.zeros((deg_max, len(lmbdas)))
+    MSE_OLS_CV   = np.zeros(deg_max_cv);                MSE_OLS_CV_STD   = np.zeros(deg_max_cv)
+    MSE_RIDGE_CV = np.zeros((deg_max_cv, len(lmbdas))); MSE_RIDGE_CV_STD = np.zeros((deg_max_cv, len(lmbdas)))
+    MSE_LASSO_CV = np.zeros((deg_max_cv, len(lmbdas))); MSE_LASSO_CV_STD = np.zeros((deg_max_cv, len(lmbdas)))
     
     plt.figure(1, figsize=(10, 6))
     
     start_time = time.time()
-    for i in range(deg_max):
-        X = OLS.Design_Matrix(x, y, degrees[i])
+    for i in range(deg_max_cv):
+        X = OLS.Design_Matrix(x, y, degrees_cv[i])
 
         # OLS:
         _, _, MSE_test_mean, MSE_test_STD = OLS.Cross_Validation(X, z, k)
@@ -71,19 +84,19 @@ for name, file in files.items():
             _ , _, MSE_test_mean, MSE_test_STD = LASSO.Cross_Validation(X, z, k, lmbda=lmbdas[j])
             MSE_LASSO_CV[i,j] = MSE_test_mean; MSE_LASSO_CV_STD[i,j] = MSE_test_STD
 
-        print(f"{i/deg_max*100:.1f}%, duration: {time.time()-start_time:.2f}s", end="\r")
+        print(f"CV: {i/deg_max_cv*100:.1f}%, duration: {time.time()-start_time:.2f}s", end="\r")
 
-    print(f"100.0, duration: {time.time()-start_time:.2f}s")
+    print(f"CV: 100.0%, duration: {time.time()-start_time:.2f}s")
     """
     - style: LASSO, -. style: RIDGE, errorbars means CV.
     """
-    plt.errorbar(degrees, MSE_OLS_CV, MSE_OLS_CV_STD, label="OLS", capsize=5, lw=2.5)
+    plt.errorbar(degrees_cv, MSE_OLS_CV, MSE_OLS_CV_STD, label="OLS", capsize=5, lw=2.5)
     for j in range(len(lmbdas)):
         # LASSO:
-        plt.errorbar(degrees, MSE_LASSO_CV[:,j], MSE_LASSO_CV_STD[:,j], label=rf"LASSO, $\lambda = {lmbdas[j]}$", capsize=5, lw=2.5)
+        plt.errorbar(degrees_cv, MSE_LASSO_CV[:,j], MSE_LASSO_CV_STD[:,j], label=rf"LASSO, $\lambda = {lmbdas[j]}$", capsize=5, lw=2.5)
 
         # RIDGE: 
-        plt.errorbar(degrees, MSE_RIDGE_CV[:,j], MSE_RIDGE_CV_STD[:,j], label=rf"Ridge, $\lambda = {lmbdas[j]}$", capsize=5, lw=2.5)
+        plt.errorbar(degrees_cv, MSE_RIDGE_CV[:,j], MSE_RIDGE_CV_STD[:,j], label=rf"Ridge, $\lambda = {lmbdas[j]}$", capsize=5, lw=2.5)
 
     plt.title(fr"MSE of OLS, Ridge, and LASSO with CV({name}) {additional_description}")
     plt.xlabel("Degree")
@@ -93,19 +106,6 @@ for name, file in files.items():
     # plt.legend(handles=handles, labels=labels)
     if save:
         save_plt(f"{folder}/Terrain_CV_Regression_{name}_{additional_description}", overwrite=overwrite)
-
-    # Setup
-    log_lambda_start = -10
-    log_lambda_stop = -1
-    lambda_num = 100
-    deg_analysis = 10
-
-    lmbdadas = np.logspace(log_lambda_start, log_lambda_stop, lambda_num)
-
-    MSE_train_array = np.zeros(lambda_num)
-    MSE_test_array = np.zeros(lambda_num)
-    R2_train_array = np.zeros(lambda_num)
-    R2_test_array = np.zeros(lambda_num)
 
     
     RIDGE = PolynomialRegression("RIDGE", deg_max, [x,y,z], lmbdas=lmbdadas, start_training=False)
@@ -126,7 +126,7 @@ for name, file in files.items():
     plt.legend()
     plt.grid(True)
     if save:
-        save_plt(f"{folder}/RIDGE_logMSE_{name}_{additional_description}", overwrite=overwrite)
+        save_plt(f"{folder}/RIDGE_logMSE_{name}_{additional_description}_{deg_analysis}", overwrite=overwrite)
 
     plt.figure(figsize=(10, 6))
     plt.title(rf"Ridge $R^2$ with polynomial degree $p={deg_analysis}$ ({name}) {additional_description}")
@@ -138,7 +138,7 @@ for name, file in files.items():
     plt.legend()
     plt.grid(True)
     if save:
-        save_plt(f"{folder}/RIDGE_logR2_{name}_{additional_description}", overwrite=overwrite)
+        save_plt(f"{folder}/RIDGE_logR2_{name}_{additional_description}_{deg_analysis}", overwrite=overwrite)
 
 
     LASSO = PolynomialRegression("LASSO", deg_max, [x,y,z], lmbdas=lmbdadas, start_training=False)
