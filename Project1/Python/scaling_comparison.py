@@ -4,7 +4,7 @@ from utils import *
 # latex_fonts()
 save = False; overwrite = False
 folder = "Figures/Comparison"
-scaling_type1 = "no_scaling"
+scaling_type1 = "Unscaled"
 scaling_type2 = "MINMAX"
 scaling_type3 = "StandardScaling"
 scaling_types = [scaling_type1, scaling_type2, scaling_type3]

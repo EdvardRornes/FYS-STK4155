@@ -95,7 +95,7 @@ class Franke:
         
 class PolynomialRegression:
 
-    def __init__(self, regr_model:str, deg_max:int, data:list, lmbdas=None, scaling="no_scaling", max_iter=int(1e5), tol=1e-1, 
+    def __init__(self, regr_model:str, deg_max:int, data:list, lmbdas=None, scaling="Unscaled", max_iter=int(1e5), tol=1e-1, 
                  test_size_percentage=0.25, random_state=4, start_training=True):
         """
         Parameters
@@ -103,7 +103,7 @@ class PolynomialRegression:
             * deg_max:                      maximum polynomial degree
             * data:                         list on the form [x,y,z] 
             * lmbdas (None):                lambda values, in case of LASS or RIDGE   
-            * scaling (no_scaling):         scaling type, by default no scaling, possible values: ['no_scaling', 'MINMAX', 'StandardScaling']     
+            * scaling (Unscaled):         scaling type, by default no scaling, possible values: ['Unscaled', 'MINMAX', 'StandardScaling']     
             * max_iter (1e5):               for LASSO only: max number of iterations
             * tol (1e-1):                   for LASSO only: tolerance
             * test_size_percentage (0.25):  percentage of data beeing used for testing
@@ -299,13 +299,13 @@ class PolynomialRegression:
         if scaler_type.upper() == "STANDARDSCALER" or scaler_type.upper() == "STANDARDSCALING":
             scaler_X = StandardScaler()
             scaler_y = StandardScaler()
-        elif scaler_type.upper() == "NO_SCALING":
+        elif scaler_type.upper() == "UNSCALED":
             return X_train, X_test, y_train, y_test
         elif scaler_type.upper() in ["MINMAX", "MIN_MAX"]:
             scaler_X = MinMaxScaler(feature_range=(a, b))
             scaler_y = MinMaxScaler(feature_range=(a, b))
             
-        elif scaler_type.upper() == "NO_SCALING":
+        elif scaler_type.upper() == "UNSCALED":
             return X_train, X_test, y_train, y_test
         
         else:

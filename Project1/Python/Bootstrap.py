@@ -2,13 +2,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils import *
 
+# Plot
 latex_fonts()
 save = False; overwrite = False
 folder = "Figures/OLS"
-additional_description = "no_scaling"
+
+################ Scaling options ################
+additional_description = "Unscaled"
 # additional_description = "MINMAX"
 # additional_description = "StandardScaling"
 
+# Setup
 np.random.seed(42)
 N = 25; eps = 0.1
 franke = Franke(N, eps)

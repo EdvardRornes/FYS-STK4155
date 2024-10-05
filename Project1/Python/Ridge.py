@@ -11,7 +11,7 @@ save = True; overwrite = True
 folder = "Figures/Ridge"
 
 ################ Scaling options ################
-additional_description = "no_scaling"
+additional_description = "Unscaled"
 # additional_description = "MINMAX"
 # additional_description = "StandardScaling"
 
@@ -84,7 +84,7 @@ log_lambda_stop = -1
 lambda_num = 100
 deg_analysis = 6
 
-lmbdas = np.logspace(log_lambda_start, log_lambda_stop, num=lambda_num)
+lmbdas = np.logspace(log_lambda_start, log_lambda_stop, lambda_num)
 
 MSE_train_array = np.zeros(lambda_num)
 MSE_test_array = np.zeros(lambda_num)
@@ -102,7 +102,7 @@ for i in range(lambda_num):
     beta_list[i], MSE_train_array[i], MSE_test_array[i], R2_train_array[i], R2_test_array[i] = RIDGE.Ridge_fit(X_train, X_test, z_train, z_test, lmbdas[i])
 
 plt.figure(figsize=(10, 6))
-plt.title(rf"MSE with polynomial degree $p={deg_analysis}$")
+plt.title(rf"Ridge MSE on Franke function with polynomial degree $p={deg_analysis}$")
 plt.plot(np.log10(lmbdas), MSE_train_array, label="MSE train", lw=2.5)
 plt.plot(np.log10(lmbdas), MSE_test_array, label="MSE test", lw=2.5)
 plt.xlabel(r"$\log_{10}(\lambda)$")
@@ -114,7 +114,7 @@ if save:
     save_plt(f"{folder}/RIDGE_logMSE_{additional_description}", overwrite=overwrite)
 
 plt.figure(figsize=(10, 6))
-plt.title(rf"$R^2$ with polynomial degree $p={deg_analysis}$")
+plt.title(rf"$Ridge R^2$ on Franke function with polynomial degree $p={deg_analysis}$")
 plt.plot(np.log10(lmbdas), R2_train_array,label=r"$R^2$ train", lw=2.5)
 plt.plot(np.log10(lmbdas), R2_test_array,label=r"$R^2$ test", lw=2.5)
 plt.xlabel(r"$\log_{10}(\lambda)$")

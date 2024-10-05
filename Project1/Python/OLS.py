@@ -2,8 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
-from matplotlib.ticker import ScalarFormatter
+import math
 
+from matplotlib.ticker import ScalarFormatter
 from utils import *
 
 # Plot
@@ -12,8 +13,8 @@ save = True; overwrite = True
 folder = "Figures/OLS"
 
 ################ Scaling options ################
-additional_description = "no_scaling"
-# additional_description = "MINMAX"
+additional_description = "Unscaled"
+additional_description = "MINMAX"
 # additional_description = "StandardScaling"
 
 # Setup
@@ -36,7 +37,7 @@ degrees = OLS.degrees
 ################ Beta-plot ################
 p_stop = 8 # Where to stop the left plot
 minor_ticks = np.arange(0, len(beta[-1]), 1)
-major_ticks = [np.math.factorial(n + 2)/(np.math.factorial(2)* np.math.factorial(n)) for n in range(deg_max)] # Poly-degree
+major_ticks = [math.factorial(n + 2)/(math.factorial(2)* math.factorial(n)) for n in range(deg_max)] # Poly-degree
 yticks = np.arange(-1, 6, 1)
 fig, axs = plt.subplots(1,2, figsize=(12,6))
 fig.suptitle(r'$\beta$-coefficient for various polynomial degrees $p$ (Franke)')
@@ -66,7 +67,7 @@ for ax in axs:
 
 
 # axs[0].set_ylim(y0[0], y0[1])
-axs[0].set_xlim(0, np.math.factorial(p_stop + 2)/(np.math.factorial(2)* np.math.factorial(p_stop)))
+axs[0].set_xlim(0, math.factorial(p_stop + 2)/(math.factorial(2)* math.factorial(p_stop)))
 axs[0].set_xlabel(r"$\beta_n$")
 axs[0].set_ylabel(r"$\beta$")
 
@@ -97,7 +98,7 @@ plt.xlim(1, deg_max)
 plt.yscale("log")
 plt.ylabel(r'$\log_{10}(MSE)$')
 # plt.ylabel(r'MSE')
-plt.title(r"OLS MSE (Franke)")
+plt.title(rf"OLS MSE (Franke) {additional_description}")
 plt.legend()
 plt.grid(True)
 if save:
@@ -116,9 +117,7 @@ plt.xlim(1, deg_max)
 # plt.yscale("log")
 plt.ylabel(r'$\log_{10}(R^2)$')
 plt.ylabel(r'$R^2$')
-
-plt.title(r"OLS MSE (Franke)")
-plt.title(r"OLS $R^2 (Franke)$")
+plt.title(rf"OLS $R^2$ (Franke) {additional_description}")
 plt.legend()
 plt.grid(True)
 if save:

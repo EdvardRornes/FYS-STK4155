@@ -89,5 +89,5 @@ for i, name in enumerate(terrain_data):
 
 # Adjust layout and show all plots at once
 plt.tight_layout()
-plt.savefig(f'Figures/TerrainContourAndImage.pdf')
+plt.savefig(f'Figures/Terrain/TerrainContourAndImage.pdf')
 plt.show()

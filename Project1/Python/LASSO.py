@@ -10,13 +10,13 @@ save = True; overwrite = True
 folder = "Figures/LASSO"
 
 ################ Scaling options ################
-additional_description = "no_scaling"
+additional_description = "Unscaled"
 # additional_description = "MINMAX"
 # additional_description = "StandardScaling"
 
 # Setup
 deg_max = 17
-lmbdas = [1e-10, 1e-2, 1e-1]
+lmbdas = [1e-20, 1e-2, 1e-1]
 N = 100; eps = 0.1
 franke = Franke(N, eps)
 data = [franke.x, franke.y, franke.z]
@@ -66,7 +66,7 @@ plt.legend(handles=handles,labels=labels)
 plt.xlabel(r'Degree')
 plt.ylabel(r'$R^2$')
 plt.xlim(1, deg_max)
-plt.title(rf"LASSO $R^2$")
+plt.title(rf"LASSO $R^2$ as a function of polynomial degree")
 plt.grid(True)
 if save:
     save_plt(f"{folder}/LASSO_R2_{additional_description}", overwrite=overwrite)

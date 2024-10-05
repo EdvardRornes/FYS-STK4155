@@ -84,6 +84,10 @@ pra,
 \renewcommand{\O}{\mathcal{O}}
 \newcommand{\f}[2]{\frac{#1}{#2}}
 \newcommand{\p}{\partial}
+\makeatletter
+\renewcommand{\p@subsection}{}
+\renewcommand{\p@subsubsection}{}
+\makeatletter
 
 \begin{document}
 	
@@ -201,6 +205,7 @@ is the $L^k$ norm of $\bm\beta$. Taking the derivative of (\ref{eq:cost_ridge}) 
 This has the added benefit of being able to set certain parameters to be $0$ instead of suppressing them, at the cost of losing analytical expressions for $\hat{\bm\beta}$ in non-trivial cases.
 
 \subsection{Connection to Statistics}
+\label{sec:stats}
 The three aforementioned regression techniques all have relatively simple connections to statistical probability distribution functions. Assuming that the likelihood of an event $y_i$ with the input variables $\bm X$ and parameters $\bm\beta$ is given by a Gaussian distribution:
 \begin{align}
 	p(y_i,\bm X|\bm\beta)=\prod_{i=0}^{n-1}\frac{1}{\sqrt{2\pi\sigma^2}}\exp\left[-\frac{(y_i-\bm X_{i,*}\bm\beta)^2}{2\sigma^2}\right].
@@ -252,6 +257,17 @@ Cross-validation is particularly advantageous for its ability to reduce the vari
 
 Both resampling techniques are used to gain insight into the models performance and helps us ensure that the conclusions drawn from our analysis are not overly dependent on a particular division of the dataset.
 
+\subsection{Scaling}
+Data scaling is an important tool in machine learning and data analysis. It may be used to simply make data more understandable as to keep them on a more human friendly scale, or if the data varies over several order of magnitude can be used to avoid numerical error and instability. The two most common ways to scale data are \texttt{MIN-MAX} and \texttt{StandardScaling}. MIN-MAX does as its name suggests; the range of the feature $x_i$ gets scaled to the interval $[a,b]$ one applies the following transformation
+\begin{align}
+	x_i\to(b-a)\frac{x_i-\text{min}(x_i)}{\text{max}(x_i)-\text{min}(x_i)}-a
+\end{align}
+StandardScaling however subtracts the mean value of the smple from each data point and divides this by the standard deviation of the sample:
+\begin{align}
+	x_i\to\frac{x_i-\bar x_i}{\sigma(x_i)}
+\end{align}
+
+
 \section{Implementation}
 In this project we look to implement the three polynomial regression models; OLS, Ridge and  LASSO, on 2D surface functions; \(f(x,y)=z\), with \(x,y\in[0,1]\). Before testing our models on actual data, we work with the Franke function which can be visualized in Fig. \ref{fig:frankefunction} shows a visualization and is given by:
 \begin{align}	\label{eq:franke}
@@ -265,7 +281,7 @@ In this project we look to implement the three polynomial regression models; OLS
 	\caption{Visualization of the Franke function (\ref{eq:franke})}
 	\label{fig:frankefunction}
 \end{figure}
-To perform an analysis on this function we consider a polynomial fit up to degree $n$ analogous to (\ref{eq:model}) where:
+Note that since $x,y\in[0,1]$ we have already essentially scaled the data with MIN-MAX scaling. Since considering the function for negative values of $x$ and $y$ essentially gives us a different surface we have decided that there is no reason to perform StandardScaling for this case. As such we proceed without any further scaling of the data for the Franke function. To perform an analysis on this function we consider a polynomial fit up to degree $n$ analogous to (\ref{eq:model}) where:
 \begin{align}
 	\tilde{\bm{z}}&=\f1{n+1}\sum_{i=0}^{n}\bigg(\bm\beta_{0,0}\nonumber\\
 	&+\bm\beta_{1,0}x_i+\bm\beta_{1,1}y_i\nonumber\\
@@ -305,25 +321,30 @@ was used. This is only valid in the low $\bm \varepsilon$ limit and thus $\bm\va
 
 Next $k$-fold Cross-Validation (CV) was implemented by taking in the design matrix $\bm X$, the target vector $\bm z$, the number of folds $k$ and the hyperparameter $\lambda$. The data set is then shuffled in hopes that each fold does not contain any ordering bias. The shuffled data set is split into $k$ folds where one of the folds is the test set and the remaining $k-1$ folds are used as training sets. This is iterated over $k$ times as explained in the theory section and finally the average and standard deviation over the $k$ runs are calculated.
 
-Once everything has been implemented, we use the programs created to run on both the Franke function and the aforementioned terrain data from \cite{USGS_EarthExplorer}. For the latter we decided on two topologically interesting places: Mount Everest and the Grand Canyon. 
+Once everything has been implemented, we use the programs created to run on both the Franke function and the aforementioned terrain data from \cite{USGS_EarthExplorer}. For the latter we decided on two topologically interesting places: Mount Everest and the Grand Canyon. The image and contour plot for these are given in Fig. \ref{fig:GC_ME_Image_Contour}. Note however that these figures have a resolution of $2^{15}\times 2^{15}$, but for computational ease we will limit ourselves to a small subsection of this.
+\begin{figure*}
+	\includegraphics[width=0.6\linewidth]{Python/Figures/Terrain/TerrainContourAndImage.pdf}
+	\caption{Image and contour-plot of the Grand Canyon and Mount Everest in orange and blue respectively obtained from \cite{USGS_EarthExplorer}.}
+	\label{fig:GC_ME_Image_Contour}
+\end{figure*}
 
 \section{Results \& Discussion}
 
 \subsection{The Franke Function}
 We first consider the results obtained from the data samples generated from the Franke test function \eqref{eq:franke} using OLS, Ridge, and LASSO with an added normal-distributed noise proportional to \(\varepsilon=0.1\).
 \subsubsection{OLS}
-In this section we present the results of applying the OLS regression method on data generated from the Franke function in \eqref{eq:franke}. The first part of this section presents metrics and the generated \(\beta\)-coefficients using no scaling, while the last parts presents the differences of the MSE using no scaling, min-max scaling and standard scaling.
+%In this section we present the results of applying the OLS regression method on data generated from the Franke function in \eqref{eq:franke}. The first part of this section presents metrics and the generated \(\beta\)-coefficients using no scaling, while the last parts presents the differences of the MSE using no scaling, min-max scaling and standard scaling.
 
 The MSE and $R^2$-score for both the train and test data as a function of the polynomial degree are given in Figs. \ref{fig:OLS_mse_degree} and \ref{fig:OLS_r2_degree}. The MSE of the test data exhibits a square-well shape with its lowest point at around \(p=6\), while the MSE of the training data steadily decreases as \(p\) increases. Similar traits are seen for the $R^2$ plot, however mirrored vertically. This is as expected for low $p$ as the Franke function is too complicated to be accurately described by low order polynomials. Once the polynomial degree becomes too high we start to clear signs of overfitting as we see sharp increases (decreases) in the MSE ($R^2$). 
 \begin{figure}[ht!]
 	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_MSE_no_scaling.pdf}
+	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_MSE_Unscaled.pdf}
 	\caption{The (log) MSE of the train (solid) and test (dashed) data from the OLS regression method using data generated by \(N=100\) datapoints from the Franke function in \eqref{eq:franke}, with noise proportional to \(\varepsilon=0.1\). The y-axis is logarithmic, and the x-axis gives the polynomial degree \(p\in[0,17]\). No scaling has been applied to the data.}
 	\label{fig:OLS_mse_degree}
 \end{figure}
 \begin{figure}[ht!]
 	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_R2_no_scaling.pdf}
+	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_R2_Unscaled.pdf}
 	\caption{The \(R^2\)-score of train (solid) and test (dashed) data from the OLS regression method using data generated by \(N=100\) datapoints from the Franke function in \eqref{eq:franke}, with noise proportional to \(\varepsilon=0.1\). The x-axis gives the polynomial degree \(p\in[0,17]\). No scaling has been applied to the data.}
 	\label{fig:OLS_r2_degree}
 \end{figure}
@@ -334,29 +355,30 @@ The \(\beta\)-coefficients for \(N=100\) and \(N=1000\) datapoints can be seen i
 	\hspace{-7.5mm}
 	\includegraphics[width=1.15\linewidth]{Python/Figures/OLS/OLS_betano_scaling_100.pdf}
 	\caption{The \(\beta\)-coefficients for the OLS-fit of \(N=100\) datapoints generated from the Franke function \eqref{eq:franke} with noise proportional to \(\varepsilon=0.1\). The plots shows the polynomial degree from 0 (green) to 17 (red). The left hand side is restricted to \(\beta\)-coefficients corresponding to up to \(p=8\). The solid lines in the background indicate where the last coefficient of a given polynomial degree is placed. No scaling has been applied to the data.}
-\label{fig:OLS_beta_degree_100}
+	\label{fig:OLS_beta_degree_100}
 \end{figure}
 \begin{figure}[H]
 	\hspace{-7.5mm}
 	\includegraphics[width=1.15\linewidth]{Python/Figures/OLS/OLS_betano_scaling_1000.pdf}
 	\caption{The \(\beta\)-coefficients for the OLS-fit of \(N=1000\) datapoints generated from the Franke function \eqref{eq:franke} with noise proportional to \(\varepsilon=0.1\). The plots shows the polynomial degree from 0 (green) to 17 (red). The left hand side is restricted to \(\beta\)-coefficients corresponding to up to \(p=8\). The solid lines in the background indicate where the last coefficient of a given polynomial degree is placed. No scaling has been applied to the data.}
-\label{fig:OLS_beta_degree_1000}
+	\label{fig:OLS_beta_degree_1000}
 \end{figure}
 
-Figs. \ref{fig:OLS_mse_degree_minmax} and \ref{fig:OLS_mse_degree_standard} are generated using min-max scaling and standard scaling respectively. When compared to no scaling in Fig. \ref{fig:OLS_mse_degree} we see that standard scaling gives a relatively poor fit in comparison, whereas the min-max scaling is relatively similar. The latter scaling does basically nothing as with sufficiently many points we will essentially be dividing by $1$, or in the case of $N=100$ we would expect to be dividing by $\sim0.98$ as we expect the min and max to be on average $0.01$ away from $0$ and $1$ respectively. Standard scaling performing worse here is also to be expected as the Franke function becomes less well behaved for negative values of the input variables $x$ and $y$. Due to this the terrain becomes more spiked and as a result it is a harder function to predict. This case is only relevant for the Franke function as it was designed for $x,y\in[0,1]$ instead of $x$ and $y$ being centered around $0$ with a larger range.
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_MSE_MINMAX.pdf}
-	\caption{The MSE of train (solid) and test (dashed) data from the OLS regression method using data generated by \(N=100\) datapoints from the Franke function in \eqref{eq:franke}, with noise proportional to \(\varepsilon=0.1\). The y-axis is logarithmic, and the x-axis gives the polynomial degree \(p\in[0,17]\). Min-max scaling has been applied to the data.}
-	\label{fig:OLS_mse_degree_minmax}
-\end{figure}
-
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_MSE_StandardScaling.pdf}
-	\caption{The MSE of train (solid) and test (dashed) data from the OLS regression method using data generated by \(N=100\) datapoints from the Franke function in \eqref{eq:franke}, with noise proportional to \(\varepsilon=0.1\). The y-axis is logarithmic, and the x-axis gives the polynomial degree \(p\in[0,17]\). Standard scaling has been applied to the data.}
-	\label{fig:OLS_mse_degree_standard}
-\end{figure}
+%%%%% There is no reason to scale the data in the case of Franke. However for terrain we must do this.
+%Figs. \ref{fig:OLS_mse_degree_minmax} and \ref{fig:OLS_mse_degree_standard} are generated using min-max scaling and standard scaling respectively. When compared to no scaling in Fig. \ref{fig:OLS_mse_degree} we see that standard scaling gives a relatively poor fit in comparison, whereas the min-max scaling is relatively similar. The latter scaling does basically nothing as with sufficiently many points we will essentially be dividing by $1$, or in the case of $N=100$ we would expect to be dividing by $\sim0.98$ as we expect the min and max to be on average $0.01$ away from $0$ and $1$ respectively. Standard scaling performing worse here is also to be expected as the Franke function becomes less well behaved for negative values of the input variables $x$ and $y$. Due to this the terrain becomes more spiked and as a result it is a harder function to predict. This case is only relevant for the Franke function as it was designed for $x,y\in[0,1]$ instead of $x$ and $y$ being centered around $0$ with a larger range.
+%\begin{figure}[ht!]
+%	\centering
+%	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_R2_MINMAX.pdf}
+%	\caption{The $R^2$ of train (solid) and test (dashed) data from the OLS regression method using data generated by \(N=100\) datapoints from the Franke function in \eqref{eq:franke}, with noise proportional to \(\varepsilon=0.1\). The y-axis is logarithmic, and the x-axis gives the polynomial degree \(p\in[0,17]\). Min-max scaling has been applied to the data.}
+%	\label{fig:OLS_mse_degree_minmax}
+%\end{figure}
+%
+%\begin{figure}[ht!]
+%	\centering
+%	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_R2_StandardScaling.pdf}
+%	\caption{The $R^2$ of train (solid) and test (dashed) data from the OLS regression method using data generated by \(N=100\) datapoints from the Franke function in \eqref{eq:franke}, with noise proportional to \(\varepsilon=0.1\). The y-axis is logarithmic, and the x-axis gives the polynomial degree \(p\in[0,17]\). Standard scaling has been applied to the data.}
+%	\label{fig:OLS_mse_degree_standard}
+%\end{figure}
 
 \subsubsection{Ridge}
 This section presents the MSE and \(R^2\)-score for the Ridge regression method using data generated from the Franke function \eqref{eq:franke} given in Figs. \ref{fig:ridge_mse_degree} and \ref{fig:ridge_r2_degree} respectively. These metrics are presented as functions of the polynomial degree \(p\) as before but now with various fixed \(\lambda \)'s. 
@@ -405,7 +427,7 @@ At last we look at the results for LASSO. Again the MSE and $R^2$-scores as a fu
 	\label{fig:lasso_r2_degree}
 \end{figure}
 
-This is further verified by again plotting the MSE and $R^2$ as a function of $\lambda$ in Fig. \ref{fig:LASSO_logMSE_degree} and \ref{fig:LASSO_logR2_degree}. We see that the MSE and $R^2$ are essentially invariant under a change in $\lambda$ until it goes past $10^{-3}$. The plots then sharply spike upwards and downwards for the MSE and $R^2$ respectively. Clearly this is when $\lambda$ becomes sufficiently large to set crucial $\beta$ coefficients to $0$ and thus causing the method to be underfitting the data. For the current case the only advantage that LASSO has over OLS is just insensitivity to increase in degree, and thus it is less important to keep the complexity of the model at an optimal level. However Ridge also accomplishes this whilst not massively increasing and decreasing the MSE and $R^2$-score respectively.
+This is further verified by again plotting the MSE and $R^2$ as a function of $\lambda$ in Figs. \ref{fig:LASSO_logMSE_degree} and \ref{fig:LASSO_logR2_degree}. We see that the MSE and $R^2$ are essentially invariant under a change in $\lambda$ until it goes past $10^{-3}$. The plots then sharply spike upwards and downwards for the MSE and $R^2$ respectively. Clearly this is when $\lambda$ becomes sufficiently large to set crucial $\beta$ coefficients to $0$ and thus causing the method to be underfitting the data. For the current case the only advantage that LASSO has over OLS is just insensitivity to increase in degree, and thus it is less important to keep the complexity of the model at an optimal level. However Ridge also accomplishes this whilst not massively increasing and decreasing the MSE and $R^2$-score respectively.
 
 \begin{figure}[ht!]
 	\centering
@@ -421,7 +443,7 @@ This is further verified by again plotting the MSE and $R^2$ as a function of $\
 \end{figure}
 
 
-\subsection{Bootstrap and Cross Validation}
+\subsubsection{Bootstrap and Cross Validation}
 Bootstrap...
 \begin{figure}[ht!]
 	\centering
@@ -435,31 +457,20 @@ Cross validation is performed for the three regression methods OLS, Ridge and LA
 The 
 \begin{figure}[ht!]
 	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/CV/CV_0_no_scaling.pdf}
-	\caption{Cross validation for the three models OLS, Ridge and LASSO from data generated from \(N=100\) samples of the Franke function \eqref{eq:franke} with noise proportional to \(\varepsilon=0.1\). The y-axis shows the (logarithmic) MSE with errorbars for the three methods, with \(\lambda=10^{-10}\). }
-	\label{fig:CV_0}
-\end{figure}
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/CV/CV_1_no_scaling.pdf}
-	\caption{Cross validation for the three models OLS, Ridge and LASSO from data generated from \(N=100\) samples of the Franke function \eqref{eq:franke} with noise proportional to \(\varepsilon=0.1\). The y-axis shows the (logarithmic) MSE with errorbars for the three methods, with \(\lambda=10^{-7}\). }
-	\label{fig:CV_1}
-\end{figure}
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/CV/CV_2_no_scaling.pdf}
-	\caption{Cross validation for the three models OLS, Ridge and LASSO from data generated from \(N=100\) samples of the Franke function \eqref{eq:franke} with noise proportional to \(\varepsilon=0.1\). The y-axis shows the (logarithmic) MSE with errorbars for the three methods, with \(\lambda=10^{-4}\). }
-	\label{fig:CV_2}
-\end{figure}
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/CV/CV_3_no_scaling.pdf}
-	\caption{Cross validation for the three models OLS, Ridge and LASSO from data generated from \(N=100\) samples of the Franke function \eqref{eq:franke} with noise proportional to \(\varepsilon=0.1\). The y-axis shows the (logarithmic) MSE with errorbars for the three methods, with \(\lambda=10^{-1}\). }
-	\label{fig:CV_3}
+	\includegraphics[width=\linewidth]{Python/Figures/CV/CV_no_scaling.pdf}
+	\caption{Cross validation for the three models OLS, Ridge and LASSO from data generated from \(N=100\) samples of the Franke function \eqref{eq:franke} with noise proportional to \(\varepsilon=0.1\). The y-axis shows the (logarithmic) MSE with error-bars for the three methods, with \(\lambda=10^{-6}\). }
+	\label{fig:CV}
 \end{figure}
 
+\subsection{Terrain Data}
+The 
+
+\begin{figure*}
+	content...
+\end{figure*}
+
 \section{Conclusion}
-OLS and Ridge clearly outperform LASSO massively on both the Franke function and terrain data. The current hypothesis for this being worse in both cases is likely tied to the $\beta$ coefficients simply not following a Laplace distribution. The expected bias-variance trade-off was observed explicitly by using bootstrapping. For higher (lower) polynomial degrees we clearly see an increase in the variance (bias) and helps us choose which model complexity we should aim for. 
+OLS and Ridge clearly outperform LASSO on both the Franke function and terrain data. The current hypothesis for this, following the discussion in section \ref{sec:stats}, is that LASSO performs worse due to the $\beta$ coefficients not following a Laplace distribution. If these coefficients do instead follow a Gaussian distribution and there is a low correlation between the different events $z_i$ then this is exactly what one would expect. The expected bias-variance trade-off was observed explicitly by using bootstrapping. For higher (lower) polynomial degrees we clearly see an increase in the variance (bias) and helps us choose which model complexity we should aim for. 
 
 On the terrain data we still see that OLS and Ridge outperform LASSO, however all regression methods perform relatively poorly all things considered. As a result we conclude that the specific parametrization we have performed using \eqref{eq:bmz} may not be suitable for these particular areas due to...
 
@@ -538,7 +549,5 @@ where $\mathbb{E}[(f-\tilde{\bm y})\bm\varepsilon]=0$ is justified by $\bm\varep
 	&=0
 \end{align*}
 which proves the claim. 
-
-\section{}
 	
 \end{document}
