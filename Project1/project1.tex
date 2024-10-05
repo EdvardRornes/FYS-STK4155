@@ -313,7 +313,7 @@ The inputs $\bm x$ and $\bm y$ are then split randomly into a training and test 
 For Ridge, \(\beta_{\text{Ridge}}\) is found by numpy's \href{https://numpy.org/doc/2.0/reference/generated/numpy.linalg.pinv.html}{\texttt{np.linalg.pinv}} to calculate the pseudoinverse of \eqref{eq:beta_ridge}. This function performs an SVD on the matrix $\bm X$ as was done in \eqref{eq:svd_ridge} to obtain an inverse even if the matrix is singular. Obtaining \(\beta_{\text{OLS}}\) is then the special case of \(\beta_{\text{Ridge}}\) with \(\lambda=0\). The \(\beta\)-coefficient for LASSO on the other hand, is computed using \href{https://scikit-learn.org/stable/modules/generated/sklearn.linear_model.Lasso.html}{\texttt{sklearn.Lasso}}. 
 Sklearn's LASSO is dependent on the chosen maximum number of iterations and a tolerance parameter. Throughout this project these parameters are set to \(10^5\) and \(10^{-1}\), respectively. Lastly, the mean squared error and the R2 score is then calculated using Sklearn's \href{https://scikit-learn.org/stable/modules/model_evaluation.html}{\texttt{metrics}} library.
 
-Bootstrap was then implemented by running a for-loop over the polynomial degrees and another loop over the samples. Throughout we decided to use $x$ samples and only considered OLS for this part. The error, bias were calculated from their definitions whilst \texttt{np.var} was used to calculate the variance. Note that for the bias the approximation
+Bootstrap was then implemented by running a for-loop over the polynomial degrees and another loop over the samples. Throughout we decided to use $x$ samples and only considered OLS for this part. The error and bias were calculated from their definitions whilst \texttt{np.var} was used to calculate the variance. Note that for the bias the approximation
 \begin{align}
 	\mathbb E[(f(\bm x)-\mathbb E[\tilde{\bm{y}}])^2]\approx \mathbb E[(\bm y-\mathbb E[\tilde{\bm{y}}])^2]
 \end{align}
@@ -383,13 +383,14 @@ The \(\beta\)-coefficients for \(N=100\) and \(N=1000\) datapoints can be seen i
 \subsubsection{Ridge}
 This section presents the MSE and \(R^2\)-score for the Ridge regression method using data generated from the Franke function \eqref{eq:franke} given in Figs. \ref{fig:ridge_mse_degree} and \ref{fig:ridge_r2_degree} respectively. These metrics are presented as functions of the polynomial degree \(p\) as before but now with various fixed \(\lambda \)'s. 
 
-Here we can clearly see that there is some discrepancy for different values of $\lambda$. The case where $\lambda=10^{-10}$ can be seen to have its MSE ($R^2$) increase (decrease) quite early on as the polynomial degree increases whilst the cases for larger $\lambda$ remain relatively stable throughout. From the three stable values of $\lambda$ we see that $\lambda=10^{-7}$ and $\lambda=10^{-4}$ perform much better than the others. As such one would expect the optimal $\lambda$ value to lie in between these values. All the MSE and $R^2$ scores can be seen to flatten out as the polynomial degree increases. This is due to the increased stability Ridge has due to its penalty term. This essentially works to drive down higher order polynomials reducing overfitting. As such Ridge is less sensitive to getting the correct model complexity in place unlike OLS.
+Here we can clearly see that there is some discrepancy for different values of $\lambda$. The case where $\lambda=10^{-10}$ can be seen to have its MSE ($R^2$) increase (decrease) quite early on as the polynomial degree increases whilst the cases for larger $\lambda$ remain relatively stable throughout. From the three stable values of $\lambda$ we see that $\lambda=10^{-7}$ and $\lambda=10^{-4}$ perform much better than the others. As such one would expect the optimal $\lambda$ value to lie in between these values. All the MSE and $R^2$ scores can be seen to flatten out as the polynomial degree increases. 
 \begin{figure}[ht!]
 	\centering
 	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf}
 	\caption{Ridge MSE as a function of the max polynomial degree with \(N=100\), \(p_{\text{max}}=17\) and \(\varepsilon=0.1\). The four chosen values for the hyperparameter $\lambda$ are $10^{-15},10^{-7},10^{-4}$ and $10^{-1}$ which are denoted by the different colors. The solid and dashed lines correspond to the training and test set respectively.}
 	\label{fig:ridge_mse_degree}
 \end{figure}
+This is due to the increased stability Ridge has due to its penalty term. This essentially works to drive down higher order polynomials reducing overfitting. As such Ridge is less sensitive to getting the correct model complexity in place unlike OLS.
 \begin{figure}[ht!]
 	\centering
 	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_R2_no_scaling.pdf}
@@ -397,7 +398,7 @@ Here we can clearly see that there is some discrepancy for different values of $
 	\label{fig:ridge_r2_degree}
 \end{figure}
 
-To view the dependence on $\lambda$ more explicitly we fixed the degree to \(p=6\) and used 100 logarithmically spaced values of $\lambda$ and plotted the MSE and $R^2$ as a function of $\lambda$ in Figs. \ref{fig:ridge_logMSE_degree} and \ref{fig:ridge_logR2_degree} respectively. The chosen value of $p$ was considered due to the diminishing returns from increasing past this degree as we could see in the previous figures. From these two figures it is clear to see that $\lambda\sim 10^{-6}$ yields the best score for both the MSE and $R^2$.
+To view the dependence on $\lambda$ more explicitly we fixed the degree to \(p=6\) and used 100 logarithmically spaced values of $\lambda$ and plotted the MSE and $R^2$ as a function of $\lambda$ in Figs. \ref{fig:ridge_logMSE_degree} and \ref{fig:ridge_logR2_degree} respectively. The chosen value of $p=6$ was considered due to the diminishing returns from increasing \(p\) past this value, as seen in fig. \ref{fig:ridge_mse_degree} and \ref{fig:ridge_r2_degree}. The minimum MSE and maximum \(R^2\)-score for the test data in fig. \ref{fig:ridge_logMSE_degree} and \ref{fig:ridge_logR2_degree}, respectively, suggest an optimal value of $\lambda\sim 10^{-6}$.
 
 \begin{figure}[ht!]
 	\centering
@@ -413,28 +414,32 @@ To view the dependence on $\lambda$ more explicitly we fixed the degree to \(p=6
 \end{figure}
 
 \subsubsection{LASSO}
-At last we look at the results for LASSO. Again the MSE and $R^2$-scores as a function of the polynomial degree are given in Figs. \ref{fig:lasso_mse_degree} and \ref{fig:lasso_r2_degree} respectively. Unlike the previous cases these plots are remarkably boring. Here there is a negligible effect on increasing the polynomial degree and seemingly the only effect of increasing $\lambda$ is to make the MSE ($R^2$) higher (lower). As can be seen from a very tiny change between $\lambda=10^{-20}$ and $\lambda=10^{-3}$ we see that it is very insensitive to changes in $\lambda$ in the start. Then going just 1 order of magnitude up from there we have a large spike in comparison for the case where $\lambda=10^{-2}$. 
+At last we look at the results for LASSO. Again the MSE and $R^2$-scores as a function of the polynomial degree are given in Figs. \ref{fig:lasso_mse_degree} and \ref{fig:lasso_r2_degree} respectively. Unlike in the cases of OLS and Ridge, these plots are strikingly constant, showing little to no variation. 
 \begin{figure}[ht!]
 	\centering
 	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_MSE_no_scaling.pdf}
-	\caption{LASSO MSE as a function of the max polynomial degree with \(N=100\), \(p_{\text{max}}=17\) and \(\varepsilon=0.1\). The three chosen values for the hyperparameter $\lambda$ are $10^{-20},10^{-2}$ and $10^{-1}$. The remaining description can be found under Fig. \ref{fig:ridge_mse_degree}}
+	\caption{LASSO MSE as a function of the max polynomial degree with \(N=100\), \(p_{\text{max}}=17\) and \(\varepsilon=0.1\). The three chosen values for the hyperparameter $\lambda$ are $10^{-10},10^{-2}$ and $10^{-1}$. The remaining description can be found under Fig. \ref{fig:ridge_mse_degree}}
 	\label{fig:lasso_mse_degree}
 \end{figure}
+There is a negligible effect on the MSE and \(R^2\)-score from increasing the polynomial degree, and seemingly the only effect of increasing $\lambda$ is to make the MSE ($R^2$) higher (lower). 
 \begin{figure}[ht!]
 	\centering
 	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_R2_no_scaling.pdf}
-	\caption{LASSO $R^2$ as a function of the max polynomial degree with \(N=100\), \(p_{\text{max}}=17\) and \(\varepsilon=0.1\). The three chosen values for the hyperparameter $\lambda$ are $10^{-20},10^{-2}$ and $10^{-1}$.}
+	\caption{LASSO $R^2$ as a function of the max polynomial degree with \(N=100\), \(p_{\text{max}}=17\) and \(\varepsilon=0.1\). The three chosen values for the hyperparameter $\lambda$ are $10^{-10},10^{-2}$ and $10^{-1}$.}
 	\label{fig:lasso_r2_degree}
 \end{figure}
 
 This is further verified by again plotting the MSE and $R^2$ as a function of $\lambda$ in Figs. \ref{fig:LASSO_logMSE_degree} and \ref{fig:LASSO_logR2_degree}. We see that the MSE and $R^2$ are essentially invariant under a change in $\lambda$ until it goes past $10^{-3}$. The plots then sharply spike upwards and downwards for the MSE and $R^2$ respectively. Clearly this is when $\lambda$ becomes sufficiently large to set crucial $\beta$ coefficients to $0$ and thus causing the method to be underfitting the data. For the current case the only advantage that LASSO has over OLS is just insensitivity to increase in degree, and thus it is less important to keep the complexity of the model at an optimal level. However Ridge also accomplishes this whilst not massively increasing and decreasing the MSE and $R^2$-score respectively.
 
+This can be seen from fig. \ref{fig:LASSO_logMSE_degree} and \ref{fig:LASSO_logR2_degree}, as the two metrics remain close to constant between $\lambda=10^{-10}$ and $\lambda=10^{-3}$. However, for \(\lambda\geq 10^{-3}\), the MSE (\(R^2\)) climbs (falls) almost vertically.
 \begin{figure}[ht!]
 	\centering
 	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_logMSE_no_scaling.pdf}
 	\caption{LASSO MSE with max polynomial degree $4$ as a function of the hyperparameter $\lambda$ with $N=100$ and $\varepsilon=0.1$.}
 	\label{fig:LASSO_logMSE_degree}
 \end{figure}
+% This is further verified by again plotting the MSE and $R^2$ as a function of $\lambda$ in Fig. \ref{fig:LASSO_logMSE_degree} and \ref{fig:LASSO_logR2_degree}. We see that the MSE and $R^2$ are essentially invariant under a change in $\lambda$ until it goes past $10^{-3}$. The plots then sharply spike upwards and downwards for the MSE and $R^2$ respectively. 
+The domain \(\lambda\gtrsim 10^{-3}\) is likely when $\lambda$ becomes too large to set crucial $\beta$ coefficients to $0$ and thus causing the method to be underfitting the data.
 \begin{figure}[ht!]
 	\centering
 	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf}
@@ -442,13 +447,14 @@ This is further verified by again plotting the MSE and $R^2$ as a function of $\
 	\label{fig:LASSO_logR2_degree}
 \end{figure}
 
+For the current case the only advantage that LASSO has over OLS is just insensitivity to increase in degree, and thus it is less important to keep the complexity of the model at an optimal level. However Ridge also accomplishes this whilst not massively increasing and decreasing the MSE and $R^2$-score respectively.
 
-\subsubsection{Bootstrap and Cross Validation}
-Bootstrap...
+\subsection{Bootstrap and Cross Validation}
+The Bootstrap method \(100\) samples is shown in \ref{fig:bootstrap}.
 \begin{figure}[ht!]
 	\centering
 	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf}
-	\caption{The bias, variance and error of a OLS regression on data generated from \(N=100\) samples of the Franke function \eqref{eq:franke} with noise proportional to \(\varepsilon=0.01\). The metrics are generated using the bootstrap method.}
+	\caption{The bias, variance and error of a OLS regression on data generated from \(N=25\) samples of the Franke function \eqref{eq:franke} with noise proportional to \(\varepsilon=0.01\). The metrics are generated using the bootstrap method.}
 	\label{fig:bootstrap}
 \end{figure}
 
