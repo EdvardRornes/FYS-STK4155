@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from utils import *
 
 # Plot
-save = True; overwrite = True
+save = False; overwrite = False
 latex_fonts()
 
 ################ Scaling options ################
@@ -18,6 +18,7 @@ franke = Franke(N, eps)
 x,y,z = franke.x, franke.y, franke.z
 data = [x,y,z]
 lmbdas = [1e-6] # Add more lambdas to the list to get more plots. Only 1e-6 considered since LASSO does not care and this is optimal for Ridge
+# lmbdas = [1e-10, 1e-7, 1e-4, 1e-1]
 
 # Number of folds
 k = 10
@@ -88,6 +89,6 @@ for lmbda, j in zip(lmbdas, range(len(lmbdas))):
     plt.grid(True)
     plt.legend(loc="lower left")
     if save:
-        save_plt(f"Figures/CV/CV_{additional_description}", overwrite=overwrite)
+        save_plt(f"Figures/CV/CV_{additional_description}_{j}", overwrite=overwrite)
 
 plt.show()
