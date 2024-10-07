@@ -401,6 +401,8 @@ class PolynomialRegression:
 
         MSE_train_array = np.zeros(k)
         MSE_test_array = np.zeros(k)
+        R2_train_array = np.zeros(k)
+        R2_test_array = np.zeros(k)
 
         for i in range(k):
             # Define training and testing sets based on k-folds
@@ -415,15 +417,19 @@ class PolynomialRegression:
 
             X_train, X_test, y_train, y_test = self.scale_data(X_train, X_test, y_train, y_test, self.scaling)
 
-            _, MSE_train_array[i], MSE_test_array[i], _, _ = self.regr_model(X_train, X_test, y_train, y_test, lmbda)
+            _, MSE_train_array[i], MSE_test_array[i], R2_train_array, R2_test_array = self.regr_model(X_train, X_test, y_train, y_test, lmbda)
             
         # Calculate mean and std for MSE for train and test sets across all folds
         MSE_train_mean = np.mean(MSE_train_array)
         MSE_train_std = np.std(MSE_train_array)
         MSE_test_mean = np.mean(MSE_test_array)
         MSE_test_std = np.std(MSE_test_array)
+        R2_train_mean = np.mean(R2_train_array)
+        R2_train_std = np.std(R2_train_array)
+        R2_test_mean = np.mean(R2_test_array)
+        R2_test_std = np.std(R2_test_array)
 
-        return MSE_train_mean, MSE_train_std, MSE_test_mean, MSE_test_std
+        return MSE_train_mean, MSE_train_std, MSE_test_mean, MSE_test_std, R2_train_mean, R2_train_std, R2_test_mean, R2_test_std
     
 # Introduced as a class in the case of experimenting with maximum number of iterations and fit-tolerance
 class LASSO_fit:

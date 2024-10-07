@@ -75,15 +75,15 @@ for name, file in files.items():
             X = OLS.Design_Matrix(x, y, degrees_cv[i])
 
             # OLS:
-            _, _, MSE_test_mean, MSE_test_STD = OLS.Cross_Validation(X, z, k)
+            _, _, MSE_test_mean, MSE_test_STD, _, _, _, _ = OLS.Cross_Validation(X, z, k)
             MSE_OLS_CV[i] = MSE_test_mean; MSE_OLS_CV_STD[i] = MSE_test_STD
 
             # LASSO/RIDGE:
             for j in range(len(lmbdas)):
-                _ , _, MSE_test_mean, MSE_test_STD = RIDGE.Cross_Validation(X, z, k, lmbda=lmbdas[j])
+                _ , _, MSE_test_mean, MSE_test_STD, _, _, _, _ = RIDGE.Cross_Validation(X, z, k, lmbda=lmbdas[j])
                 MSE_RIDGE_CV[i,j] = MSE_test_mean; MSE_RIDGE_CV_STD[i,j] = MSE_test_STD
 
-                _ , _, MSE_test_mean, MSE_test_STD = LASSO.Cross_Validation(X, z, k, lmbda=lmbdas[j])
+                _ , _, MSE_test_mean, MSE_test_STD, _, _, _, _ = LASSO.Cross_Validation(X, z, k, lmbda=lmbdas[j])
                 MSE_LASSO_CV[i,j] = MSE_test_mean; MSE_LASSO_CV_STD[i,j] = MSE_test_STD
 
             print(f"CV: {i/deg_max_cv*100:.1f}%, duration: {time.time()-start_time:.2f}s", end="\r")
@@ -143,7 +143,7 @@ for name, file in files.items():
         color = line[0].get_color()
         plt.plot(np.log10(lmbdadas), MSE_test_array_LASSO, "--", label="LASSO test", color=color, lw=2.5)
 
-        plt.xlabel(r"$\lambda$")
+        plt.xlabel(r"$\log_{10}\lambda$")
         plt.ylabel("MSE")
         plt.xlim(log_lambda_start, log_lambda_stop)
         plt.legend()
@@ -161,7 +161,7 @@ for name, file in files.items():
         color = line[0].get_color()
         plt.plot(np.log10(lmbdadas), R2_test_array_LASSO, "--", color=color, lw=2.5)
 
-        plt.xlabel(r"$\lambda$")
+        plt.xlabel(r"$\log_{10}\lambda$")
         plt.ylabel(r"$R^2$")
         plt.xlim(log_lambda_start, log_lambda_stop)
         plt.legend()
