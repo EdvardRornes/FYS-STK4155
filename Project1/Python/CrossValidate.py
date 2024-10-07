@@ -73,12 +73,6 @@ print(f"CV: 100.0%, duration: {(time.time()-start_time):.2f}s")
 
 method_names = ["OLS", "Ridge", "LASSO"]
 for lmbda, j in zip(lmbdas, range(len(lmbdas))):
-    plt.figure(figsize=(10, 6))
-    plt.title("MSE with 10-fold Cross-Validation")
-    plt.errorbar(degrees, MSE_OLS_CV, MSE_OLS_CV_STD, label="OLS", lw=2.5, linestyle="--", capsize=5, elinewidth=1.5, capthick=1.5)
-    plt.errorbar(degrees, MSE_Ridge_CV[:, j], MSE_Ridge_CV_STD[:, j], lw=2.5, linestyle="--", label=rf"Ridge with $\lambda={lmbda:.1e}$", capsize=5, elinewidth=1.5, capthick=1.5)
-    plt.errorbar(degrees, MSE_LASSO_CV[:, j], MSE_LASSO_CV_STD[:, j], lw=2.5, linestyle="--", label=rf"LASSO with $\lambda={lmbda:.1e}$", capsize=5, elinewidth=1.5, capthick=1.5)
-
     # Find best
     print(f"lmbda = {lmbda}:")
     print(f"    OLS: min: {np.min(MSE_OLS_CV):.2e}, mean: {np.mean(MSE_OLS_CV):.2e}, best poly deg: {np.argmin(MSE_OLS_CV)+1}")
@@ -88,28 +82,35 @@ for lmbda, j in zip(lmbdas, range(len(lmbdas))):
     print(f"    Best: min: {np.min(minmize_me):.2e}, mean: {np.min([np.mean(x) for x in [MSE_OLS_CV, MSE_Ridge_CV[:,j], MSE_LASSO_CV[:,j]]]):.2e}, w/ best poly deg: {method_names[np.argmin(minmize_me)]}")
     print()
 
-    plt.xlim(1, deg_max)
-    plt.xlabel("Degree")
-    plt.ylabel("MSE")
-    plt.yscale("log")
+    fig, axs = plt.subplots(2, 1, figsize=(10, 12))
 
-    plt.ylim(6e-3, 2e-1)
-    plt.grid(True)
-    plt.legend(loc="upper left")
-    if save:
-        save_plt(f"Figures/CV/CV_MSE_{additional_description}_{j}", overwrite=overwrite)
+    axs[0].set_title("MSE with 10-fold Cross-Validation")
+    axs[0].errorbar(degrees, MSE_OLS_CV, MSE_OLS_CV_STD, label="OLS", lw=2.5, linestyle="--", capsize=5, elinewidth=1.5, capthick=1.5)
+    axs[0].errorbar(degrees, MSE_Ridge_CV[:, j], MSE_Ridge_CV_STD[:, j], lw=2.5, linestyle="--", label=rf"Ridge with $\lambda={lmbda:.1e}$", capsize=5, elinewidth=1.5, capthick=1.5)
+    axs[0].errorbar(degrees, MSE_LASSO_CV[:, j], MSE_LASSO_CV_STD[:, j], lw=2.5, linestyle="--", label=rf"LASSO with $\lambda={lmbda:.1e}$", capsize=5, elinewidth=1.5, capthick=1.5)
+    axs[0].set_xlim(1, deg_max)
+    axs[0].set_xlabel("Degree")
+    axs[0].set_ylabel("MSE")
+    axs[0].set_yscale("log")
+    axs[0].set_ylim(6e-3, 2e-1)
+    axs[0].legend(loc="upper left")
+    axs[0].grid(True)
 
-    plt.figure(figsize=(10, 6))
-    plt.title(r"$R^2$ with 10-fold Cross-Validation")
-    plt.errorbar(degrees, R2_OLS_CV, R2_OLS_CV_STD, label="OLS", lw=2.5, linestyle="--", capsize=5, elinewidth=1.5, capthick=1.5)
-    plt.errorbar(degrees, R2_Ridge_CV[:, j], R2_Ridge_CV_STD[:, j], lw=2.5, linestyle="--", label=rf"Ridge with $\lambda={lmbda:.1e}$", capsize=5, elinewidth=1.5, capthick=1.5)
-    plt.errorbar(degrees, R2_LASSO_CV[:, j], R2_LASSO_CV_STD[:, j], lw=2.5, linestyle="--", label=rf"LASSO with $\lambda={lmbda:.1e}$", capsize=5, elinewidth=1.5, capthick=1.5)
-    plt.xlim(1, deg_max)
-    plt.xlabel("Degree")
-    plt.ylabel(r"$R^2$")
-    plt.grid(True)
-    plt.legend(loc="lower right")
+    axs[1].set_title(r"$R^2$ with 10-fold Cross-Validation")
+    axs[1].errorbar(degrees, R2_OLS_CV, R2_OLS_CV_STD, label="OLS", lw=2.5, linestyle="--", capsize=5, elinewidth=1.5, capthick=1.5)
+    axs[1].errorbar(degrees, R2_Ridge_CV[:, j], R2_Ridge_CV_STD[:, j], lw=2.5, linestyle="--", label=rf"Ridge with $\lambda={lmbda:.1e}$", capsize=5, elinewidth=1.5, capthick=1.5)
+    axs[1].errorbar(degrees, R2_LASSO_CV[:, j], R2_LASSO_CV_STD[:, j], lw=2.5, linestyle="--", label=rf"LASSO with $\lambda={lmbda:.1e}$", capsize=5, elinewidth=1.5, capthick=1.5)
+    axs[1].set_xlim(1, deg_max)
+    axs[1].set_xlabel("Degree")
+    axs[1].set_ylabel(r"$R^2$")
+    axs[1].legend(loc="lower right")
+    axs[1].grid(True)
+
+    plt.tight_layout()
+    plt.subplots_adjust(hspace=0.5)
+
     if save:
-        save_plt(f"Figures/CV/CV_R2_{additional_description}_{j}", overwrite=overwrite)
+        save_plt(f"Figures/CV/CV_MSE_R2_{additional_description}_{j}", overwrite=overwrite)
+
 
 plt.show()

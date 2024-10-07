@@ -573,3 +573,5 @@ def surface_3D(x, y, z, ax, fig):
 
     # Add a color bar which maps values to colors.
     fig.colorbar(surf, shrink=0.5, aspect=5)
+
+    

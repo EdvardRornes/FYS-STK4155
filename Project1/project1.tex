@@ -100,7 +100,7 @@ pra,
 \date{\today}
 
 \begin{abstract}
-	Regression models are widely used for analyzing and predicting data in many fields. We investigate and compare three regression models\footnote{\href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project1}{Github}}: Ordinary Least Squares, Ridge, and Least Absolute Shrinkage and Selection Operator. These were applied and analyzed on a two-dimensional Franke function and later tested on real terrain data from the US Geological Survey Earth Explorer \cite{USGS_EarthExplorer}. The models' performances are evaluated using metrics such as the Mean Squared Error and the coefficient of determination $R^2$. The bias-variance trade-off for OLS is studied where it was found that the optimal polynomial degree for the Franke function was $p=4$. We used resampling techniques such as bootstrapping and cross-validation to probe the quality of the evaluations and determine the predictiveness and generalizability of the models. The terrain data has a noticeably larger complexity as one needed to go $p\gtrsim 20$ to find reasonable fits. In our analysis of both the Franke function and the terrain data the best performing method was Ridge regression with OLS following shortly after. LASSO performed appreciably worse than the other regression methods, likely stemming from the polynomial coefficients not following a Laplace distribution.
+	Regression models are widely used for analyzing and predicting data in many fields. We investigate and compare three regression models\footnote{\href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project1}{Github}}: Ordinary Least Squares, Ridge, and Least Absolute Shrinkage and Selection Operator. These were applied and analyzed on a two-dimensional Franke function and later tested on real terrain data from the US Geological Survey Earth Explorer \cite{USGS_EarthExplorer}. The models' performances are evaluated using metrics such as the Mean Squared Error and the coefficient of determination $R^2$. The bias-variance trade-off for OLS is studied where it was found that the optimal polynomial degree for the Franke function was $p\sim4$. We used resampling techniques such as bootstrapping and cross-validation to probe the quality of the evaluations and determine the predictiveness and generalizability of the models. The terrain data has a noticeably larger complexity as one needed to go $p\gtrsim 20$ to find reasonable fits. In our analysis of both the Franke function and the terrain data the best performing method was Ridge regression with OLS following closely after. LASSO performed appreciably worse than the other regression methods, likely stemming from the polynomial coefficients not following a Laplace distribution.
 \end{abstract}
 
 \maketitle
@@ -202,7 +202,7 @@ is the $L^k$ norm of $\bm\beta$. Taking the derivative of (\ref{eq:cost_ridge}) 
 \begin{align}
 	0=\pdv{C_\text{LASSO}}{\bm\beta}=-2\bm X^T(\bm y-\bm X\bm\beta)+\lambda\,\text{sgn}(\bm\beta).
 \end{align}
-This has the added benefit of being able to set certain parameters to be $0$ instead of suppressing them, at the cost of losing analytical expressions for $\bm\beta$ in non-trivial cases.
+This has the added benefit of being able to set certain parameters to be $0$ instead of suppressing them, at the cost of losing analytical expressions for $\bm\beta$ in non-trivial cases \cite{hastie01statisticallearning}.
 
 \subsection{Connection to Statistics}
 \label{sec:stats}
@@ -228,7 +228,7 @@ Again, defining the cost function as the negative logarithm of this expression o
 \end{align}
 one arrives at the LASSO cost function with $\lambda=1/\tau$. 
 
-These statistical connections help us better understand the assumptions made with each technique. OLS implicitly assumes that each event $y_i$ are all independent and Gaussian. When this is not the case one should not be surprised if OLS performs poorly. Ridge and LASSO however do account for the chance that there are correlated events, and assumes that the coefficients we compute are themselves Gaussian or Laplace distributed respectively. The hyperparameter $\lambda$ now has a clear interpretation, i.e. that we essentially insert a standard deviation of the $\beta$ coefficients. The performance of these latter two can then also be used to indicate which distribution more accurately describes the coefficients.
+These statistical connections help us better understand the assumptions made with each technique. OLS implicitly assumes that each event $y_i$ are all independent and Gaussian. When this is not the case one should not be surprised if OLS performs poorly. Ridge and LASSO however do account for the chance that there are correlated events, and assumes that the coefficients we compute are themselves Gaussian or Laplace distributed respectively. The hyperparameter $\lambda$ now has a clear interpretation; we essentially insert a standard deviation of the $\beta$ coefficients. The performance of these latter two can then also be used to indicate which distribution more accurately describes the coefficients.
 
 \subsection{Bias-Variance}
 The so-called Bias-Variance Trade-Off can be summarized in a single equation:
@@ -236,7 +236,7 @@ The so-called Bias-Variance Trade-Off can be summarized in a single equation:
 	\mathbb{E}[(\bm y-\tilde{\bm y})^2]=\text{Bias}[\tilde{\bm y}]+\text{Var}[\tilde{\bm y}]+\sigma^2,
 	\label{eq:MSE-bias-var}
 \end{align}
-where the bias is defined as $\mathbb E[(f(\bm x)-\mathbb E[\tilde{\bm y}])^2]$. The LHS of (\ref{eq:MSE-bias-var}) is the expected value of the MSE which tells us how well the model's predictions match the true data on average. The equation shows that we can decompose this expected MSE into 3 different components.
+where the bias is defined as $\mathbb E[(f(\bm x)-\mathbb E[\tilde{\bm y}])^2]$. The LHS of (\ref{eq:MSE-bias-var}) is the expected value of the MSE which tells us how well the model's predictions match the true data on average. The equation shows that we can decompose this expected MSE into 3 different components:
 \begin{itemize}
 	\item Bias: This quantity measures how much the model's average prediction differs from its true value. A high bias implies that the assumptions and simplifications which the model is built on are not valid, i.e. that we are underfitting the data.
 	\item Var: The variance measures how much the model's predictions vary when trained on different datasets. It captures the sensitivity of the model to small changes in the training data. A high variance suggests overfitting, meaning it performs well on the training data but may be capturing noise or false patterns.
@@ -333,24 +333,19 @@ Once everything has been implemented, we use the programs created to run on both
 \end{figure*}
 
 \section{Results \& Discussion}
+We represent and discuss all the most relevant results for both the Franke function and the terrain data in this section. For additional plots, see Appendix \ref{Appendix:Misc}.
 
 \subsection{The Franke Function}
 We first consider the results obtained from the data samples generated from the Franke test function \eqref{eq:franke} using OLS, Ridge, and LASSO. In the following, unless stated otherwise, we have used $N=100$ with an added normal-distributed noise proportional to \(\varepsilon=0.1\).
 \subsubsection{OLS}
 %In this section we present the results of applying the OLS regression method on data generated from the Franke function in \eqref{eq:franke}. The first part of this section presents metrics and the generated \(\beta\)-coefficients using no scaling, while the last parts presents the differences of the MSE using no scaling, min-max scaling and standard scaling.
 
-The MSE and $R^2$-score for both the train and test data as a function of the polynomial degree are given in Figs. \ref{fig:OLS_mse_degree}. and \ref{fig:OLS_r2_degree}. The MSE of the test data exhibits a square-well shape with its lowest point at around \(p=6\), while the MSE of the training data steadily decreases as \(p\) increases. Similar traits are seen for the $R^2$ plot, however mirrored vertically. This is as expected for low $p$ as the Franke function is too complicated to be accurately described by low order polynomials. Once the polynomial degree becomes too high we start to clear signs of overfitting as we see sharp increases (decreases) in the MSE ($R^2$). 
+The MSE and $R^2$-score for both the train and test data as a function of the polynomial degree are given in Fig. \ref{fig:OLS_mse_degree}. The MSE of the test data exhibits a square-well shape with its lowest point at around \(p=6\), while the MSE of the training data steadily decreases as \(p\) increases. Similar traits are seen for the $R^2$ plot, however mirrored vertically. This is as expected for low $p$ as the Franke function is too complicated to be accurately described by low order polynomials. Once the polynomial degree becomes too high we start to clear signs of overfitting as we see sharp increases (decreases) in the MSE ($R^2$). 
 \begin{figure}[ht!]
 	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_MSE_Unscaled.pdf}
-	\caption{The (log) MSE of the train (solid) and test (dashed) data from the OLS regression method using data generated by the Franke function. The $y$-axis is logarithmic, and the $x$-axis gives the polynomial degree \(p\in[0,17]\).}
+	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_MSE_R2_Unscaled.pdf}
+	\caption{The MSE and $R^2$ of the train (solid) and test (dashed) data from the OLS regression method using data generated by the Franke function. The $y$-axis is logarithmic, and the $x$-axis gives the polynomial degree \(p\in[0,17]\).}
 	\label{fig:OLS_mse_degree}
-\end{figure}
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_R2_Unscaled.pdf}
-	\caption{The \(R^2\)-score of train (solid) and test (dashed) data from the OLS regression method using data generated by the Franke function. The $x$-axis gives the polynomial degree \(p\in[0,17]\).}
-	\label{fig:OLS_r2_degree}
 \end{figure}
 
 The \(\beta\)-coefficients for \(N=100\) and \(N=1000\) datapoints can be seen in Figs. \ref{fig:OLS_beta_degree_100}. and \ref{fig:OLS_beta_degree_1000}. respectively. The color scaling indicates what polynomial degree the \(\beta\)-coefficients correspond to. For \(N=100\) the \(\beta\)-coefficients of higher degree polynomial seem larger in overal size compared to lower degree polynomial (\(p\in[0,8]\)). However, for \(N=1000\) this behavior is opposite, meaning that the \(\beta\)-coefficients for \(p\in[0,8]\) seem larger than those corresponding to higher degree polynomials.
@@ -369,69 +364,44 @@ The \(\beta\)-coefficients for \(N=100\) and \(N=1000\) datapoints can be seen i
 \end{figure}
 
 \subsubsection{Ridge}
-This section presents the MSE and \(R^2\)-score for the Ridge regression method using data generated from the Franke function \eqref{eq:franke} given in Figs. \ref{fig:ridge_mse_degree}. and \ref{fig:ridge_r2_degree}. respectively. These metrics are presented as functions of the polynomial degree \(p\) as before but now with various fixed \(\lambda \)'s. 
+This section presents the MSE and \(R^2\)-score for the Ridge regression method using data generated from the Franke function \eqref{eq:franke} given in Fig. \ref{fig:ridge_mse_degree}. These metrics are presented as functions of the polynomial degree \(p\) as before but now with various fixed \(\lambda \)'s. 
 
 Here we can clearly see that there is some discrepancy for different values of $\lambda$. The case where $\lambda=10^{-10}$ can be seen to have its MSE ($R^2$) increase (decrease) quite early on as the polynomial degree increases whilst the cases for larger $\lambda$ remain relatively stable throughout. From the three stable values of $\lambda$ we see that $\lambda=10^{-7}$ and $\lambda=10^{-4}$ perform much better than the others. As such one would expect the optimal $\lambda$ value to lie in between these values. All the MSE and $R^2$ scores can be seen to flatten out as the polynomial degree increases. 
 \begin{figure}[ht!]
 	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_MSE_Unscaled.pdf}
-	\caption{Ridge MSE as a function of the max polynomial degree with \(p_{\text{max}}=17\). The four chosen values for the hyperparameter $\lambda$ are $10^{-15},10^{-7},10^{-4}$ and $10^{-1}$ which are denoted by the different colors. The solid and dashed lines correspond to the training and test set respectively.}
+	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_MSE_R2_Unscaled.pdf}
+	\caption{Ridge MSE and $R^2$ as a function of the max polynomial degree with \(p_{\text{max}}=17\). The four chosen values for the hyperparameter $\lambda$ are $10^{-15},10^{-7},10^{-4}$ and $10^{-1}$ which are denoted by the different colors. The solid and dashed lines correspond to the training and test set respectively.}
 	\label{fig:ridge_mse_degree}
 \end{figure}
 This is due to the increased stability Ridge has due to its penalty term. This essentially works to drive down higher order polynomials reducing overfitting. As such Ridge is less sensitive to getting the correct model complexity in place unlike OLS.
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_R2_Unscaled.pdf}
-	\caption{Ridge $R^2$-score as a function of the max polynomial degree with \(p_{\text{max}}=10\). The line and color scheme is the same as for Fig. \ref{fig:ridge_mse_degree}.}
-	\label{fig:ridge_r2_degree}
-\end{figure}
 
-To view the dependence on $\lambda$ more explicitly we fixed the degree to \(p=6\) and used 100 logarithmically spaced values of $\lambda$ and plotted the MSE and $R^2$ as a function of $\lambda$ in Figs. \ref{fig:ridge_logMSE_degree}. and \ref{fig:ridge_logR2_degree}. respectively. The chosen value of $p=6$ was considered due to the diminishing returns from increasing \(p\) past this value, as seen in Fig. \ref{fig:ridge_mse_degree}. and \ref{fig:ridge_r2_degree}. These plots suggest an optimal value of $\lambda\sim 10^{-6}$ as this is where the MSE ($R^2$) is the lowest (highest) and is thus the value that was used for further analysis.
+To view the dependence on $\lambda$ more explicitly we fixed the degree to \(p=6\) and used 100 logarithmically spaced values of $\lambda$ and plotted the MSE and $R^2$ as a function of $\lambda$ in Fig. \ref{fig:ridge_logMSE_degree}. The chosen value of $p=6$ was considered due to the diminishing returns from increasing \(p\) past this value, as seen in Fig. \ref{fig:ridge_mse_degree}. These plots suggest an optimal value of $\lambda\sim 10^{-6}$ as this is where the MSE ($R^2$) is the lowest (highest) and is thus the value that was used for further analysis.
 
 \begin{figure}[ht!]
 	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_logMSE_Unscaled.pdf}
-	\caption{Ridge MSE with max polynomial degree $4$ as a function of the hyperparameter $\lambda$.}
+	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_logMSE_R2_Unscaled.pdf}
+	\caption{Ridge MSE and $R^2$ with max polynomial degree $6$ as a function of the hyperparameter $\lambda$.}
 	\label{fig:ridge_logMSE_degree}
-\end{figure}
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/Ridge/RIDGE_logR2_Unscaled.pdf}
-	\caption{Ridge $R^2$-score with max polynomial degree $4$ as a function of the hyperparameter $\lambda$.}
-	\label{fig:ridge_logR2_degree}
 \end{figure}
 
 \subsubsection{LASSO}
-At last we look at the results for LASSO. Again the MSE and $R^2$-scores as a function of the polynomial degree are given in Figs. \ref{fig:lasso_mse_degree}. and \ref{fig:lasso_r2_degree}. respectively. Unlike in the cases of OLS and Ridge, these plots are strikingly constant, showing little to no variation. 
+At last we look at the results for LASSO. Again the MSE and $R^2$-scores as a function of the polynomial degree are given in Fig. \ref{fig:lasso_mse_degree}. Unlike in the cases of OLS and Ridge, these plots are strikingly constant, showing little to no variation. 
 \begin{figure}[ht!]
 	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_MSE_Unscaled.pdf}
-	\caption{LASSO MSE as a function of the max polynomial degree with \(p_{\text{max}}=17\). The three chosen values for the hyperparameter $\lambda$ are $10^{-10},10^{-3}$ and $10^{-2}$. The remaining description can be found under Fig. \ref{fig:ridge_mse_degree}.}
+	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_MSE_R2_Unscaled.pdf}
+	\caption{LASSO MSE and $R^2$ as a function of the max polynomial degree with \(p_{\text{max}}=17\). The three chosen values for the hyperparameter $\lambda$ are $10^{-10},10^{-3}$ and $10^{-2}$. The remaining description can be found under Fig. \ref{fig:ridge_mse_degree}.}
 	\label{fig:lasso_mse_degree}
 \end{figure}
-There is a negligible effect on the MSE and \(R^2\)-score from increasing the polynomial degree, and seemingly the only effect of increasing $\lambda$ is to make the MSE ($R^2$) higher (lower). 
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_R2_Unscaled.pdf}
-	\caption{LASSO $R^2$ as a function of the max polynomial degree with \(p_{\text{max}}=17\). The three chosen values for the hyperparameter $\lambda$ are $10^{-10},10^{-3}$ and $10^{-2}$.}
-	\label{fig:lasso_r2_degree}
-\end{figure}
+There is a negligible effect on the MSE and \(R^2\)-score from increasing the polynomial degree, and seemingly the only effect of increasing $\lambda$ is to make the MSE ($R^2$) higher (lower).
 
-This can be seen from Figs. \ref{fig:LASSO_logMSE_degree}. and \ref{fig:LASSO_logR2_degree}. as the two metrics remain close to constant between $\lambda=10^{-10}$ and $\lambda=10^{-3}$. However, for \(\lambda\geq 10^{-3}\), the MSE (\(R^2\)) climbs (falls) almost vertically. The domain \(\lambda\gtrsim 10^{-3}\) is likely when $\lambda$ becomes too large to set crucial $\beta$ coefficients to $0$ and thus causing the method to be underfitting the data.
+This can be seen from Fig. \ref{fig:LASSO_logMSE_degree}. as the two metrics remain close to constant between $\lambda=10^{-10}$ and $\lambda=10^{-3}$. However, for \(\lambda\geq 10^{-3}\), the MSE (\(R^2\)) climbs (falls) almost vertically. The domain \(\lambda\gtrsim 10^{-3}\) is likely when $\lambda$ becomes too large to set crucial $\beta$ coefficients to $0$ and thus causing the method to be underfitting the data.
 
 For the current case the only advantage that LASSO has over OLS is just insensitivity to increase in degree, and thus it is less important to keep the complexity of the model at an optimal level. However Ridge also accomplishes this whilst not massively increasing and decreasing the MSE and $R^2$-score respectively.
 \begin{figure}[ht!]
 	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_logMSE_Unscaled.pdf}
-	\caption{LASSO MSE with max polynomial degree $4$ as a function of the hyperparameter $\lambda$.}
+	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_logMSE_logR2_Unscaled.pdf}
+	\caption{LASSO MSE and $R^2$ with max polynomial degree $4$ as a function of the hyperparameter $\lambda$.}
 	\label{fig:LASSO_logMSE_degree}
-\end{figure}
-
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/LASSO/LASSO_logR2_Unscaled.pdf}
-	\caption{LASSO $R^2$-score with max polynomial degree $4$ as a function of the hyperparameter $\lambda$.}
-	\label{fig:LASSO_logR2_degree}
 \end{figure}
 
 \subsection{Bootstrap and Cross Validation}
@@ -445,27 +415,20 @@ We can see that there is a close-to constant variance for polynomial degrees sma
 	\caption{The bias, variance and error of a OLS regression on data generated from \(N=25\) samples of the Franke function with noise proportional to \(\varepsilon=0.01\). The metrics are generated using the bootstrap method.}
 	\label{fig:bootstrap}
 \end{figure}
-The MSE and $R^2$ for the three regression methods using $k$-fold Cross validation with \(\lambda=10^{-6}\) and $k=10$ on data generated from the Franke function are given in Figs. \ref{fig:Franke_MSE_CV} and \ref{fig:Franke_R2_CV}. The error bars here show the standard deviation calculated from the $10$-folds used. Here we see that for this remains much more stable across higher polynomial degrees where both OLS and Ridge are mostly flat throughout unlike in the previous cases. We see that in the $R^2$ figure that there is a downwards spike for LASSO at $p=6$. It is not immediately clear what is causing this as from the MSE there is nothing suggesting that this particular polynomial degree gives a much worse fit and is seemingly only an effect on this particular seed. Ignoring this artifact it is still rather clear that LASSO performs overall worse than both OLS and Ridge. Overall it seems that $p=4$ gives the best fit for OLS whilst Ridge performs equivalently well for many of the different polynomials. For simplicity one would then simply pick the lowest order polynomial degree which gives the best result.
+The MSE and $R^2$ for the three regression methods using $k$-fold Cross validation with \(\lambda=10^{-6}\) and $k=10$ on data generated from the Franke function are given in Fig. \ref{fig:Franke_MSE_CV}. The error bars here show the standard deviation calculated from the $10$-folds used. Here we see that for this remains much more stable across higher polynomial degrees where both OLS and Ridge are mostly flat throughout unlike in the previous cases. We see that in the $R^2$ figure that there is a downwards spike for LASSO at $p=6$. It is not immediately clear what is causing this as from the MSE there is nothing suggesting that this particular polynomial degree gives a much worse fit and is seemingly only an effect on this particular seed. Ignoring this artifact it is still rather clear that LASSO performs overall worse than both OLS and Ridge. Overall it seems that $p=4$ gives the best fit for OLS whilst Ridge performs equivalently well for many of the different polynomials. For simplicity one would then simply pick the lowest order polynomial degree which gives the best result.
 \begin{figure}[ht!]
 	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/CV/CV_MSE_Unscaled_0.pdf}
-	\caption{MSE with 10-fold Cross validation for the three methods as a function of the polynomial degree on data generated from the Franke function. The $y$-axis shows the MSE with error-bars for the three methods, with \(\lambda=10^{-6}\). }
+	\includegraphics[width=\linewidth]{Python/Figures/CV/CV_MSE_R2_Unscaled_0.pdf}
+	\caption{MSE and $R^2$ with 10-fold Cross validation for the three methods as a function of the polynomial degree on data generated from the Franke function. The $y$-axis shows the MSE with error-bars for the three methods, with \(\lambda=10^{-6}\). }
 	\label{fig:Franke_MSE_CV}
-\end{figure}
-\begin{figure}[ht!]
-	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/CV/CV_R2_Unscaled_0.pdf}
-	\caption{$R^2$ with 10-fold Cross validation for the three methods as a function of the polynomial degree on data generated from the Franke function. The $y$-axis shows the $R^2$ with error-bars for the three methods, with \(\lambda=10^{-6}\). }
-	\label{fig:Franke_R2_CV}
 \end{figure}
 
 \subsection{Terrain Data}
 % Contourplots of Grand Canyon and Mount Everest are shown in fig. \ref{fig:GC_ME_Image_Contour}. As can be seen 
-The MSE of all the three regression methods OLS, Ridge and LASSO with \(\lambda=10^{-8}\) and standard scaling is shown in \ref{fig:MSE_GrandCan_StandardScaling_50} and \ref{fig:MSE_MountEve_StandardScaling_50}, for Grand Canyon and Mount Everest, respectively. As mentioned prior, due to computational purposes we have chosen to work with only a small subsection of the full data. In particular we only work with $N=50$ points as the program already begins to slow down heavily due to the high polynomial degree required. 
 % Countourplots of Grand Canyon and Mount Everest can be seen in \ref{fig:GC_ME_Image_Contour}, which suggest a greater complexity than that of the Franke function, comparing to \ref{fig:frankefunction}. 
-Both figures once again show Ridge and OLS outperforming LASSO. LASSO slowly decreases, seemingly reaching a constant value as \(p\) increases, relatively high above OLS and Ridge. OLS and Ridge follow each other closely all the way up to \(p\sim 40\), where OLS increases, jaggedly and with greater error bars, away from Ridge. Ridge also seems to increase past this degree, albeit at a slower pace but with greater error bars. Visually, the lowest MSE is found with Ridge and a polynomial degree in the approximate range \(p\in[28,37]\). It can also be seen that the MSE of Mount Everest is much greater for low order polynomials, as is something that could be expected for mountainous terrain. However it must be noted that this subsection we are working with does not properly represent the entire mountain, but instead a small patch on the bottom left of Fig. \ref{fig:GC_ME_Image_Contour}. As such in the case of the Grand Canyon we do not map the parts with large cliffs but instead mostly flatland. Thus one may expect a lower order polynomial regression performs relatively good here.
+The MSE of all the three regression methods with \(\lambda=10^{-8}\) and standard scaling applied is shown in \ref{fig:MSE_GrandCan_StandardScaling_50} and \ref{fig:MSE_MountEve_StandardScaling_50}, for Grand Canyon and Mount Everest, respectively. As mentioned prior, due to computational purposes we have chosen to work with only a small subsection of the full data. In particular we only work with $N=50$ points as the program already begins to slow down heavily due to the high polynomial degree required. 
 
-Figs. \ref{fig:log_GrandCan_StandardScaling_35} and \ref{fig:log_MountEve_StandardScaling_35} show the \(R^2\)-score of Ridge and LASSO as a function of \(\lambda\) with \(p=35\) for the Grand Canyon and Mount Everest respectively. The two figures show Ridge giving a higher \(R^2\)-score than LASSO for all \(\lambda\in[10^{-10}, 10^{-2}]\). For Mount Everest, the maximum \(R^2\)-score is located at \(\lambda\sim 10^{-9}\), whilst Grand Canyon gives about the same \(R^2\)-score for \(\lambda\in[10^{-10}, 10^{-6}]\).
+Both figures once again show Ridge and OLS outperforming LASSO. LASSO slowly decreases, seemingly reaching a constant value as \(p\) increases, relatively high above OLS and Ridge. OLS and Ridge follow each other closely all the way up to \(p\sim 40\), where OLS increases, jaggedly and with greater error bars, away from Ridge. Ridge also seems to increase past this degree, albeit at a slower pace but with greater error bars. Visually, the lowest MSE is found with Ridge and a polynomial degree in the approximate range \(p\in[28,37]\). It can also be seen that the MSE of Mount Everest is much greater for low order polynomials, as is something that could be expected for mountainous terrain. However it must be noted that this subsection we are working with does not properly represent the entire mountain, but instead a small patch on the bottom left of Fig. \ref{fig:GC_ME_Image_Contour}. As such in the case of the Grand Canyon we do not map the parts with large cliffs but instead mostly flatland. Thus one may expect a lower order polynomial regression performs relatively good here.
 
 \begin{figure}[ht!]
 	\centering
@@ -480,6 +443,8 @@ Figs. \ref{fig:log_GrandCan_StandardScaling_35} and \ref{fig:log_MountEve_Standa
 	\caption{MSE of Mount Everest terrain data from \cite{USGS_EarthExplorer} with 10-fold cross-validation as a function of polynomial degree $p$ for all three regression methods. The error-bars show the standard deviation resulting from the 10 folds.}
 	\label{fig:MSE_MountEve_StandardScaling_50}
 \end{figure}
+
+Figs. \ref{fig:log_GrandCan_StandardScaling_35} and \ref{fig:log_MountEve_StandardScaling_35} show the \(R^2\)-score of Ridge and LASSO as a function of \(\lambda\) with \(p=35\) for the Grand Canyon and Mount Everest respectively. The two figures show Ridge giving a higher \(R^2\)-score than LASSO for all \(\lambda\in[10^{-10}, 10^{-2}]\). For Mount Everest, the maximum \(R^2\)-score is located at \(\lambda\sim 10^{-9}\), whilst Grand Canyon gives about the same \(R^2\)-score for \(\lambda\in[10^{-10}, 10^{-6}]\). It must however be noted that these $R^2$ scores are incredibly close to 1, which may be too good to be true. One could imagine that this could be due to our subsection of the terrain is topologically flat compared to the Franke function, and thus causing our fit to be better. However considering the fact that we do not overfit the model until a much higher polynomial degree compared to the Franke function. Thus we believe that this contradicts our expectation and conclude that there must be a mistake somewhere in the code.
 
 \begin{figure}[ht!]
 	\centering
@@ -498,9 +463,7 @@ Figs. \ref{fig:log_GrandCan_StandardScaling_35} and \ref{fig:log_MountEve_Standa
 \section{Conclusion}
 OLS and Ridge clearly outperform LASSO on both the Franke function and terrain data. The current hypothesis for this, following the discussion in section \ref{sec:stats}, is that LASSO performs worse due to the $\beta$ coefficients not following a Laplace distribution. If these coefficients do instead follow a Gaussian distribution and there is a low correlation between the different events $z_i$ then this is exactly what one would expect. The expected bias-variance trade-off was observed explicitly by using bootstrapping. For higher (lower) polynomial degrees we clearly see an increase in the variance (bias) and helps us choose which model complexity we should aim for. 
 
-
-
-On the terrain data we still see that OLS and Ridge outperform LASSO, however all regression methods perform relatively poorly all things considered. As a result we conclude that the specific parametrization we have performed using \eqref{eq:bmz} may not be suitable for these particular areas due to... 
+On the terrain data we still see that OLS and Ridge outperform LASSO, but all regression models perform much better than expected. This is likely due to mistakes in the code which we were unable to detect.
 
 
 
@@ -577,5 +540,8 @@ where $\mathbb{E}[(f-\tilde{\bm y})\bm\varepsilon]=0$ is justified by $\bm\varep
 	&=0
 \end{align*}
 which proves the claim. 
+\section{Additional Plots}
+\label{Appendix:Misc}
+
 	
 \end{document}

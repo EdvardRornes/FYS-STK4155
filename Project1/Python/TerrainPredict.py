@@ -101,7 +101,7 @@ for name, file in files.items():
             # RIDGE: 
             plt.errorbar(degrees_cv, MSE_RIDGE_CV[:,j], MSE_RIDGE_CV_STD[:,j], label=rf"Ridge, $\lambda = {lmbdas[j]}$", capsize=5, lw=2.5)
 
-        plt.title(fr"MSE of OLS, Ridge, and LASSO with CV({name}) {additional_description}")
+        plt.title(fr"MSE of OLS, Ridge, and LASSO with CV ({name}) {additional_description}")
         plt.xlabel("Degree")
         plt.ylabel("MSE")
         plt.grid(True)
