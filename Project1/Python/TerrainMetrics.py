@@ -12,7 +12,7 @@ files = {
 # Plot
 np.random.seed(42)
 latex_fonts()
-save = True; overwrite = True
+save = False; overwrite = False
 run_CV = True; run_log = True 
 
 folder = "Figures/Terrain"
@@ -34,7 +34,7 @@ N = 10
 log_lambda_start = -10
 log_lambda_stop = -1
 lambda_num = 100
-deg_analysis = 10
+deg_analysis = 4
 
 lmbdadas = np.logspace(log_lambda_start, log_lambda_stop, lambda_num)
 
