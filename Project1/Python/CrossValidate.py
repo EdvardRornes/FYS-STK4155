@@ -18,7 +18,6 @@ franke = Franke(N, eps)
 x,y,z = franke.x, franke.y, franke.z
 data = [x,y,z]
 lmbdas = [1e-6] # Add more lambdas to the list to get more plots. Only 1e-6 considered since LASSO does not care and this is optimal for Ridge
-# lmbdas = [1e-10, 1e-7, 1e-4, 1e-1]
 
 # Number of folds
 k = 10
@@ -84,7 +83,6 @@ for lmbda, j in zip(lmbdas, range(len(lmbdas))):
     plt.ylabel("MSE")
     plt.yscale("log"); plt.ylabel(r"$MSE$")
 
-    # ymax = np.max([np.max(q) for q in [MSE_OLS_CV[5], MSE_Ridge_CV[5, j], MSE_LASSO_CV[5, j]]]) # the 6-th poly
     plt.ylim(6e-3, 2e-1)
     plt.grid(True)
     plt.legend(loc="lower left")

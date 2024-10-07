@@ -9,7 +9,7 @@ from utils import *
 
 # Plot
 latex_fonts()
-save = True; overwrite = True
+save = False; overwrite = False
 folder = "Figures/OLS"
 
 ################ Scaling options ################
@@ -65,8 +65,6 @@ for ax in axs:
     ax.yaxis.set_major_formatter(ScalarFormatter(useMathText=True))
     ax.ticklabel_format(axis="y", style="sci", scilimits=(-3, 3))
 
-
-# axs[0].set_ylim(y0[0], y0[1])
 axs[0].set_xlim(0, math.factorial(p_stop + 2)/(math.factorial(2)* math.factorial(p_stop)))
 axs[0].set_xlabel(r"$\beta_n$")
 axs[0].set_ylabel(r"$\beta$")
@@ -74,15 +72,12 @@ axs[0].set_ylabel(r"$\beta$")
 axs[1].yaxis.set_visible(False)
 y0 = axs[1].get_ylim()
 axs[1].vlines(major_ticks, y0[0], y0[1], colors="black", alpha=0.3)
-# axs[1].set_ylim(y0[0], y0[1])
 axs[1].set_xlabel(r"$\beta_n$")
 axs[1].set_ylabel(r"$\beta$")
 
 axs[0].set_ylim(y0[0], y0[1])
 axs[0].vlines(major_ticks, y0[0], y0[1], colors="black", alpha=0.3)
 plt.tight_layout()
-
-
 
 if save:
     save_plt(f"{folder}/OLS_beta_{additional_description}", overwrite=overwrite)
@@ -94,13 +89,12 @@ color = line[0].get_color()
 plt.plot(degrees, MSE_test, "--", color=color, label=r"MSE test", lw=2.5)
 plt.xlabel(r'Degree')
 plt.xlim(1, deg_max)
-# plt.ylim(0, np.max([np.max(x) for x in [MSE_test[0], MSE_test[1], MSE_test[2], MSE_test[3], MSE_test[4]]]))
 plt.yscale("log")
 plt.ylabel(r'MSE')
-# plt.ylabel(r'MSE')
 plt.title(rf"OLS MSE as a function of polynomial degree (Franke)")
 plt.legend()
 plt.grid(True)
+
 if save:
     save_plt(f"{folder}/OLS_MSE_{additional_description}", overwrite=overwrite)
 
@@ -111,15 +105,12 @@ color = line[0].get_color()
 plt.plot(degrees, R2_test, "--", color=color, label=r"$R^2$ test", lw=2.5)
 plt.xlabel(r'Degree')
 plt.xlim(1, deg_max)
-# plt.ylim(9/10*np.min([np.min(x) for x in [R2_test[0], R2_test[1], R2_test[2], R2_test[3], R2_test[4]]]), 
-#          11/10*np.max([np.max(x) for x in [R2_train[0], R2_train[1], R2_train[2], R2_train[3], R2_train[4]]]))
-
-# plt.yscale("log")
 plt.ylabel(r'$R^2$')
 plt.ylabel(r'$R^2$')
 plt.title(rf"OLS $R^2$ as a function of polynomial degree (Franke)")
 plt.legend()
 plt.grid(True)
+
 if save:
     save_plt(f"{folder}/OLS_R2_{additional_description}", overwrite=overwrite)
 plt.show()

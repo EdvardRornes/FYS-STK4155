@@ -16,6 +16,7 @@ lmbdas = [0.01]
 N = 200; eps = 0.1
 franke = Franke(100, 0.1)
 data = [franke.x, franke.y, franke.z]
+
 for scaling_type in scaling_types:
 
     ################ Training ################
@@ -40,7 +41,7 @@ for scaling_type in scaling_types:
     for k in range(len(lmbdas)):
         ################ MSE-plot ################
         fig, axs = plt.subplots(2,2, figsize=(10,6))
-        if scaling_type == "no_scaling":
+        if scaling_type == "Unscaled":
             fig.suptitle(rf"No scaling, N={N}, $\epsilon = {eps}$")
         elif scaling_type == "MINMAX":
             fig.suptitle(rf"MIN-MAX scaling, N={N}, $\epsilon = {eps}$")

@@ -1,15 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
+
 import rasterio
 import time
+from pathlib import Path
 
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
-from inspect import signature
-from pathlib import Path
 from sklearn.utils import resample
+
+import imageio.v2 as imageio
 
 np.random.seed(4)
 
@@ -454,6 +458,8 @@ class LASSO_fit:
 LASSO_default = LASSO_fit() # Usually used
 
 
+############# Terrain-data #############
+
 def get_latitude_and_conversion(filename):
     with rasterio.open(filename) as dataset:
         meta = dataset.meta
@@ -464,3 +470,100 @@ def get_latitude_and_conversion(filename):
         lat_conversion = 111412.84 * np.cos(np.radians(latitude))
 
         return latitude, lat_conversion
+    
+def read_terrain(files:dict, pixel_size_x_degrees=0.0002777777777777778, pixel_size_y_degrees=-0.0002777777777777778) -> dict:
+    """
+    Reads terrain data from .tif files
+    Parameters
+        * files:                dictionary on the form {'name1': 'filename2', 'name2': 'filename2', ...}
+        * pixel_size_x_degrees: degrees per pixel (longitude)
+        * pixel_size_y_degrees: degrees per pixel (latitude)
+    
+    Returns 
+        * terrain_data:         dictionary on the form {'name1': 
+                                                            {'z': z_data_1:np.ndarray,
+                                                             'x': x_data_1:np.ndarray,
+                                                             'y': y_data_1:np.ndarray},
+                                                        'name2': ...}    
+    """
+
+    terrain_data = {}
+
+    for name, filepath in files.items():
+        terrain_data[name] = {} 
+        terrain_data[name]["z"] = np.array(imageio.imread(filepath))
+        lat_conversion = get_latitude_and_conversion(filepath)[1]
+
+        pixel_sizes_km_x = pixel_size_x_degrees * lat_conversion / 1000
+        pixel_sizes_km_y = abs(pixel_size_y_degrees * lat_conversion / 1000)
+
+        height, width = terrain_data[name]["z"].shape
+        coordinates_km_x = np.arange(width) * pixel_sizes_km_x
+        coordinates_km_y = np.arange(height) * pixel_sizes_km_y
+
+        terrain_data[name]["x"] = coordinates_km_x
+        terrain_data[name]["y"] = coordinates_km_y 
+
+    return terrain_data
+
+def plot_terrain(name:str, x:np.ndarray, y:np.ndarray, terrain:np.ndarray, axes:plt.axes, color_map:str) -> None:
+    """
+    Plots the image and countour plot of (x,y,terrain), assumes figure is created.
+
+    Parameters
+        * name:         name of terrain, used in title
+        * x:            longitude-data
+        * y:            latitude-data
+        * z:            terrain-data 
+        * axes:         matplotlib.pyplot axis
+        * color_map:    matplotlib-color map
+    """
+    # Convert terrain to a NumPy array explicitly to avoid deprecation warnings
+    terrain_array = np.array(terrain, dtype=np.float64) / 1000
+    
+    ### Image-plot ###
+    ax1 = axes[0]  # Access the first subplot for terrain
+    im = ax1.imshow(terrain_array, cmap=color_map, origin='lower',
+                    extent=(0, x[-1], 0, y[-1]))
+    ax1.set_title(f'Elevation of {name}')
+    ax1.set_xlabel('km')
+    ax1.set_ylabel('km')
+    
+    # Adjust color bar size
+    cbar1 = plt.colorbar(im, ax=ax1, label=r'Altitude (km)', shrink=0.7)  # Adjust the height of the color bar
+    cbar1.ax.tick_params(labelsize=15)  # Keep the tick label size as it is
+    
+    # Set x-axis ticks for terrain image
+    ax1.set_xticks(np.arange(0, x[-1] + 1, 20))  # Set x ticks at intervals of 20
+
+    ### Contour-plot ###
+    ax2 = axes[1]  # Access the second subplot for contour
+    contour = ax2.contourf(x, y, terrain_array, cmap=color_map, origin='lower')
+    ax2.set_title(f'Contour Plot of {name} Elevation')
+    ax2.set_xlabel('km')
+    ax2.set_ylabel('km')
+    
+    cbar2 = plt.colorbar(contour, ax=ax2, label=r'Altitude (km)', shrink=0.7)
+    cbar2.ax.tick_params(labelsize=15)
+
+    # Set x-axis ticks for contour
+    ax2.set_xticks(np.arange(0, x[-1] + 1, 20))  # Set x ticks at intervals of 20
+    
+    ax2.set_aspect('equal', adjustable='box')  # Maintain aspect ratio
+
+def surface_3D(x, y, z, ax, fig):
+
+    # ax.view_init(elev=20, azim=65)
+
+    # Plot the surface.
+    surf = ax.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+
+    # Customize the z axis.
+    # ax.set_zlim(-0.10, 1.40)
+    ax.zaxis.set_major_locator(LinearLocator(10))
+    ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+    ax.set_xlabel('$X$', fontsize=20)
+    ax.set_ylabel('$Y$', fontsize=20)
+
+    # Add a color bar which maps values to colors.
+    fig.colorbar(surf, shrink=0.5, aspect=5)

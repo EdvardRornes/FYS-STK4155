@@ -11,7 +11,7 @@ files = {
 }
 # Plot
 np.random.seed(42)
-latex_fonts()
+# latex_fonts()
 save = False; overwrite = False
 run_CV = True; run_log = True 
 
@@ -43,7 +43,6 @@ MSE_test_array_Ridge = np.zeros(lambda_num); MSE_test_array_LASSO = np.zeros(lam
 R2_train_array_Ridge = np.zeros(lambda_num); R2_train_array_LASSO = np.zeros(lambda_num)
 R2_test_array_Ridge = np.zeros(lambda_num); R2_test_array_LASSO = np.zeros(lambda_num)
 
-
 # Iterate through terrain files
 for name, file in files.items():
     terrain = imageio.imread(file)
@@ -57,7 +56,7 @@ for name, file in files.items():
     z = terrain_subset.flatten()
     x = x.flatten()
     y = y.flatten()
-    
+
     if run_CV:
         ########## Reg-models ##########
         OLS = PolynomialRegression("OLS", deg_max_cv, [x,y,z], start_training=True, scaling=additional_description)

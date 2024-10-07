@@ -22,20 +22,7 @@ def FrankeFunction(x, y):
     return term1 + term2 + term3 + term4
 
 z = FrankeFunction(x, y)
-print(np.min(z))
-
-ax.view_init(elev=20, azim=65)
-
-# Plot the surface.
-surf = ax.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
-
-# Customize the z axis.
-ax.set_zlim(-0.10, 1.40)
-ax.zaxis.set_major_locator(LinearLocator(10))
-ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
-
-# Add a color bar which maps values to colors.
-fig.colorbar(surf, shrink=0.5, aspect=5)
+surface_3D(x, y, z, ax, fig)
 plt.savefig('Figures/FrankeFunction.pdf', transparent=True, bbox_inches='tight')
 
 plt.show()
