@@ -466,7 +466,7 @@ The MSE of all the three regression methods OLS, Ridge and LASSO with \(\lambda=
 Both figures show the cross validated Ridge and OLS following each other until OLS increases, jaggedly and with greater error bars, away from Ridge. LASSO on the other hand, slowly decreases, seemingly reaching a constant value as \(p\) increases, above Ridge. The MSE of Mount Everest is greater for low order polynomials, while Grand Canyon seem to favor higher order polynomials. Visually, the lowest MSE is found with Ridge and a polynomial degree in the approximate range \(p\in[11, 15]\), \(p\in[4,6]\) for Grand Canyon and Mount Everest, respectively. 
 % In Grand Canyon we do not map the parts with large cliffs but instead mostly flatland. Thus one may expect a lower order polynomial regression performs relatively good here.
 
-Figs. \ref{fig:log_GrandCan_StandardScaling_35} and \ref{fig:log_MountEve_StandardScaling_35} show the MSE of Ridge and LASSO as a function of \(\lambda\) with \(p=10\), \(p=4\) for the Grand Canyon and Mount Everest respectively. In the case of Grand Canyon, fig. \ref{fig:log_GrandCan_StandardScaling_35} suggests that Ridge, with an \(\lambda\)-value of \(\sim 1e-2\), gives the best MSE. For Mount Everest, it seems both Ridge and LASSO are constant for \(\lambda\in[10^{-10}, 10^{-3}]\), with Ridge outperforming LASSO.
+Figs. \ref{fig:log_GrandCan_StandardScaling_35} and \ref{fig:log_MountEve_StandardScaling_35} show the MSE of Ridge and LASSO as a function of \(\lambda\) with \(p=10\), \(p=4\) for the Grand Canyon and Mount Everest respectively. In the case of Grand Canyon, fig. \ref{fig:log_GrandCan_StandardScaling_35} suggests that Ridge, with an \(\lambda\)-value of \(\sim 1e-7\), gives the best MSE. For Mount Everest, it seems both Ridge and LASSO are constant for \(\lambda\in[10^{-10}, 10^{-3}]\), with Ridge outperforming LASSO.
 
 \begin{figure}[ht!]
 	\centering
@@ -485,14 +485,14 @@ Figs. \ref{fig:log_GrandCan_StandardScaling_35} and \ref{fig:log_MountEve_Standa
 \begin{figure}[ht!]
 	\centering
 	\includegraphics[width=\linewidth]{Python/Figures/Terrain/logMSE_GrandCanStandardScaling_10_zoomed.pdf}
-	\caption{MSE of Grand Canyon terrain data for all three regression methods as a function of the hyperparameter $\lambda$.}
+	\caption{MSE of Grand Canyon terrain data for the Ridge and LASSO methods as a function of the hyperparameter $\lambda$.}
 	\label{fig:log_GrandCan_StandardScaling_35}
 \end{figure}
 
 \begin{figure}[ht!]
 	\centering
 	\includegraphics[width=\linewidth]{Python/Figures/Terrain/logMSE_MountEver_standardscaling_10_zoomed.pdf}
-	\caption{MSE of Mount Everest terrain data for all three regression methods as a function of the hyperparameter $\lambda$.}
+	\caption{MSE of Mount Everest terrain data for the Ridge and LASSO methods as a function of the hyperparameter $\lambda$.}
 	\label{fig:log_MountEve_StandardScaling_35}
 \end{figure}
 
