@@ -78,6 +78,7 @@ class Franke:
         self.N = N; self.eps = eps
         self.x = np.sort(np.random.rand(N))
         self.y = np.sort(np.random.rand(N))
+
         self.z_without_noise = self.franke(self.x, self.y)
         self.z = self.z_without_noise + self.eps * np.random.normal(0, 1, self.z_without_noise.shape)
 
@@ -150,7 +151,6 @@ class PolynomialRegression:
         self.y_tilde = []; self.y_pred = []
         if start_training:
             self.train()
-    
     
     def MSE(self) -> list:
         """
@@ -277,6 +277,219 @@ class PolynomialRegression:
         """
         return self.Ridge_fit(X_train, X_test, y_train, y_test, 0)
 
+    def predict_on_grid(self, x_meshed:np.ndarray, y_meshed:np.ndarray, z_meshed:np.ndarray, deg:int, lmbda) -> np.ndarray:
+        """
+        Computes the beta coefficient, MSE and R^2-score for the current instance regresion-method.
+
+        Parameters
+            * x_meshed:             2D x-grid
+            * y_meshed:             2D y-grid
+            * z_meshed:             2D z-grid
+            * deg:                  ploynomial degree
+            * lmbda (None):         float sent to regresion method
+        
+        Returns 
+            * z_pred                predicted z-values on grid (x_meshed, y_meshed)       
+            * MSE:                  mean squared error
+            * R2:                   R^2-score
+        """
+        if lmbda is None:
+            if not self._regr_model_name == "OLS":
+                raise Warning(f"Should probably give a lambda value since you are using {self._regr_model_name}.")
+            
+        x_flat = x_meshed.flatten()
+        y_flat = y_meshed.flatten()
+        z_flat = z_meshed.flatten()
+
+        X = PolynomialRegression.Design_Matrix(x_flat, y_flat, deg)
+        # X_train, X_test, z_train, z_test = train_test_split(X, z_flat, test_size=0.2)
+        X, X, z_flat, z_flat = self.scale_data(X, X, z_flat, z_flat, self.scaling)
+
+        beta, MSE, _, R2, _ = self.regr_model(X, X, z_flat, z_flat, lmbda)
+
+        beta = PolynomialRegression.Ridge_Reg(X, z_flat, 1e-6)
+        z_pred = X @ beta
+        z_shape = z_meshed.shape
+        z_pred = np.reshape(z_pred,z_shape)
+
+        return z_pred, MSE, R2
+    
+    def surface3D_visualize(self, x_meshed:np.ndarray, y_meshed:np.ndarray, z_meshed:np.ndarray, deg:int, 
+                            lmbda=None, figsize=(10,10), title=None, give_me_data=False, cmap=None) -> None:
+        """
+        Creates a 3D surface plot of the predicted surface.
+
+        Parameters
+            * x_meshed:             2D x-grid
+            * y_meshed:             2D y-grid
+            * z_meshed:             2D z-grid
+            * deg:                  ploynomial degree
+            * lmbda (None):         float sent to regresion method
+            * figsize ((10,10)):    size of figure (tuple)
+            * title:                title of figure, defaults to name of regresion method
+            * give_me_data (False): if True: plots z_meshed instead        
+        """
+        if not give_me_data:
+            z_pred, _, _ = self.predict_on_grid(x_meshed, y_meshed, z_meshed, deg, lmbda)
+        else:
+            z_pred = z_meshed
+
+        fig = plt.figure(figsize=figsize, constrained_layout=True)
+        ax = fig.add_subplot(111, projection='3d')
+        if title is None:
+            ax.set_title(f"{self._regr_model_name}")
+        else:
+            plt.title(title)
+        surface_3D(x_meshed, y_meshed, z_pred, ax, fig, cmap)
+
+    def contour_visualize(self, x_meshed:np.ndarray, y_meshed:np.ndarray, z_meshed:np.ndarray, deg:int, 
+                          lmbda=None, figsize=(10,10), title=None, give_me_data=False, cmap=None) -> None:
+        """
+        Creates a contour plot of the predicted surface.
+
+        Parameters
+            * x_meshed:             2D x-grid
+            * y_meshed:             2D y-grid
+            * z_meshed:             2D z-grid
+            * deg:                  ploynomial degree
+            * lmbda (None):         float sent to regresion method
+            * figsize ((10,10)):    size of figure (tuple)
+            * title:                title of figure, defaults to name of regresion method
+            * give_me_data (False): if True: plots z_meshed instead        
+        """
+
+        if not give_me_data:
+            z_pred, _, _ = self.predict_on_grid(x_meshed, y_meshed, z_meshed, deg, lmbda)
+        else:
+            z_pred = z_meshed
+
+        plt.figure()
+        plt.title("Terrain OLS", fontsize=20)
+        if cmap is None:
+            plt.contourf(x_meshed, y_meshed, z_pred,cmap=cm.coolwarm)
+        else:
+            plt.contourf(x_meshed, y_meshed, z_pred,cmap=cmap)
+        cbar = plt.colorbar()
+        cbar.ax.tick_params(labelsize=20)
+        plt.xlabel("x", fontsize=20)
+        plt.ylabel("y", fontsize=20)
+        plt.yticks(fontsize=20)
+        plt.xticks(fontsize=20)
+        if title is None:
+            plt.title(f"{self._regr_model_name}")
+        else:
+            plt.title(title)
+        
+    def Bootstrap(self, x:np.ndarray, y:np.ndarray, z:np.ndarray, max_deg:int, samples:int, lmbda=None) -> list:
+        """
+        Computes the error, bias and variance of the current instance regresion method using the Bootstrap method. Resampling 
+        'samples' many time
+
+        Parameters
+            * x:        x-values 
+            * y:        y-values 
+            * z:        z=f(x,y)-values
+            * max_deg:  maximum polynomial degree
+            * samples:  amount of times to resample
+            * lmbda:    lambda value used in Ridge and LASSO
+        
+        Returns
+            * error:    error
+            * bias:     bias 
+            * variance: variance
+        """
+        error = np.zeros(max_deg)
+        bias = np.zeros(max_deg)
+        variance = np.zeros(max_deg)
+
+        self.z_pred_bootstrap = []
+        start_time = time.time()
+        for degree in range(max_deg):
+            X = self.Design_Matrix(x, y, degree)
+            X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=self.test_size_percentage)
+            z_test = z_test.reshape(-1,1)
+            self.z_pred_bootstrap.append(np.empty((z_test.shape[0], samples)))
+            error_i = []
+            bias_i = []
+
+            for i in range(samples):
+                X_, z_ = resample(X_train, z_train)
+                # X_, z_ = X_train, z_train
+                self.regr_model(X_, X_test, z_, z_test, lmbda)
+                self.z_pred_bootstrap[-1][:, i] = self.y_pred[-1][:,0] # self.regr_model creates next self.z_pred
+
+                error_i.append(np.mean((z_test- self.z_pred_bootstrap[-1][:,i])**2))
+                bias_i.append(np.mean(self.z_pred_bootstrap[-1][:,i]))
+
+            print(f"Bootstrap: {degree/max_deg*100:.1f}%, duration: {(time.time()-start_time):.2f}s", end="\r")
+
+            error[degree] = np.mean(np.mean((z_test - self.z_pred_bootstrap[-1]) ** 2, axis=1, keepdims=True))
+            bias[degree] = np.mean((z_test - np.mean(self.z_pred_bootstrap[-1], axis=1, keepdims=True)) ** 2)
+            variance[degree] = np.mean(np.var(self.z_pred_bootstrap[-1], axis=1, keepdims=True))
+            
+        print(f"Bootstrap: 100.0%, duration: {(time.time()-start_time):.2f}s")
+        return error, bias, variance
+    
+    def Cross_Validation(self, X:np.ndarray, y:np.ndarray, k:int, lmbda=None) -> list:
+        """
+        Computes the k-fold cross-validation for OLS, Ridge, or LASSO models.
+
+        Parameters
+            * X:        design matrix 
+            * y:        y=f(X)-values 
+            * k:        number of folds
+            * lmbda:    lambda value used in Ridge and LASSO
+        
+        Returns
+            * MSE_train_mean:       mean squared error of the average train-part
+            * MSE_train_std:        mean squared error of the standard deviance of the train-part
+            * MSE_test_mean:        mean squared error of the average train-partt
+            * MSE_test_std:         mean squared error of the standard deviance of the train-part
+            * R2_train_mean:        R^2-score of the average train-part
+            * R2_train_std:         R^2-score of the standard deviance of the train-part
+            * R2_test_mean:         R^2-score of the average train-partt
+            * R2_test_std:          R^2-score of the standard deviance of the train-part
+        """
+
+        if lmbda is None:
+            if not self._regr_model_name == "OLS":
+                raise Warning(f"Should probably give a lambda value since you are using {self._regr_model_name}.")
+        
+        N = np.shape(X)[0]
+        shuffle_idx = np.random.permutation(N)  # Shuffle the dataset
+        X = X[shuffle_idx, :]
+        y = y[shuffle_idx]
+
+        kfold_idx = np.linspace(0, N, k + 1)  # Indices for k folds
+
+        MSE_train_array = np.zeros(k)
+        MSE_test_array = np.zeros(k)
+        R2_train_array = np.zeros(k)
+        R2_test_array = np.zeros(k)
+
+        for i in range(k):
+            # Define training and testing sets based on k-folds
+            i_0 = int(kfold_idx[i])
+            i_1 = int(kfold_idx[i + 1])
+            i_test = np.arange(i_0, i_1)
+            X_test = X[i_test, :]
+            X_train = np.delete(X, i_test, 0)
+
+            y_test = y[i_test]
+            y_train = np.delete(y, i_test)
+
+            X_train, X_test, y_train, y_test = self.scale_data(X_train, X_test, y_train, y_test, self.scaling)
+
+            _, MSE_train_array[i], MSE_test_array[i], R2_train_array, R2_test_array = self.regr_model(X_train, X_test, y_train, y_test, lmbda)
+            
+        # Calculate mean and std for MSE for train and test sets across all folds
+        MSE_train_mean = np.mean(MSE_train_array); MSE_train_std = np.std(MSE_train_array)
+        MSE_test_mean = np.mean(MSE_test_array); MSE_test_std = np.std(MSE_test_array)
+        R2_train_mean = np.mean(R2_train_array); R2_train_std = np.std(R2_train_array)
+        R2_test_mean = np.mean(R2_test_array); R2_test_std = np.std(R2_test_array)
+
+        return MSE_train_mean, MSE_train_std, MSE_test_mean, MSE_test_std, R2_train_mean, R2_train_std, R2_test_mean, R2_test_std
+    
     @staticmethod
     def Design_Matrix(x:np.ndarray, y:np.ndarray, p:int) -> np.ndarray:
         """
@@ -348,88 +561,6 @@ class PolynomialRegression:
         XTX = X.T @ X
         y = y.reshape(-1, 1)
         return np.linalg.pinv(XTX + lambd * np.identity(XTX.shape[0])) @ X.T @ y
-
-    def Bootstrap(self, x:np.ndarray, y:np.ndarray, z:np.ndarray, max_deg:int, samples:int, lmbda=None):
-        
-        error = np.zeros(max_deg)
-        bias = np.zeros(max_deg)
-        variance = np.zeros(max_deg)
-
-        self.z_pred_bootstrap = []
-        start_time = time.time()
-        for degree in range(max_deg):
-            X = self.Design_Matrix(x, y, degree)
-            X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=self.test_size_percentage)
-            z_test = z_test.reshape(-1,1)
-            self.z_pred_bootstrap.append(np.empty((z_test.shape[0], samples)))
-            error_i = []
-            bias_i = []
-
-            for i in range(samples):
-                X_, z_ = resample(X_train, z_train)
-                # X_, z_ = X_train, z_train
-                self.regr_model(X_, X_test, z_, z_test, lmbda)
-                self.z_pred_bootstrap[-1][:, i] = self.y_pred[-1][:,0] # self.regr_model creates next self.z_pred
-
-                error_i.append(np.mean((z_test- self.z_pred_bootstrap[-1][:,i])**2))
-                bias_i.append(np.mean(self.z_pred_bootstrap[-1][:,i]))
-
-            print(f"Bootstrap: {degree/max_deg*100:.1f}%, duration: {(time.time()-start_time):.2f}s", end="\r")
-
-            error[degree] = np.mean(np.mean((z_test - self.z_pred_bootstrap[-1]) ** 2, axis=1, keepdims=True))
-            bias[degree] = np.mean((z_test - np.mean(self.z_pred_bootstrap[-1], axis=1, keepdims=True)) ** 2)
-            variance[degree] = np.mean(np.var(self.z_pred_bootstrap[-1], axis=1, keepdims=True))
-            
-        print(f"Bootstrap: 100.0%, duration: {(time.time()-start_time):.2f}s")
-        return error, bias, variance
-    
-    def Cross_Validation(self, X:np.ndarray, y:np.ndarray, k:int, lmbda=None):
-        """
-        k-fold cross-validation for OLS, Ridge, or LASSO models
-        """
-
-        if lmbda is None:
-            if not self._regr_model_name == "OLS":
-                raise Warning(f"Should probably give a lmbda value since you are using {self._regr_model_name}.")
-        
-        N = np.shape(X)[0]
-        shuffle_idx = np.random.permutation(N)  # Shuffle the dataset
-        X = X[shuffle_idx, :]
-        y = y[shuffle_idx]
-
-        kfold_idx = np.linspace(0, N, k + 1)  # Indices for k folds
-
-        MSE_train_array = np.zeros(k)
-        MSE_test_array = np.zeros(k)
-        R2_train_array = np.zeros(k)
-        R2_test_array = np.zeros(k)
-
-        for i in range(k):
-            # Define training and testing sets based on k-folds
-            i_0 = int(kfold_idx[i])
-            i_1 = int(kfold_idx[i + 1])
-            i_test = np.arange(i_0, i_1)
-            X_test = X[i_test, :]
-            X_train = np.delete(X, i_test, 0)
-
-            y_test = y[i_test]
-            y_train = np.delete(y, i_test)
-
-            X_train, X_test, y_train, y_test = self.scale_data(X_train, X_test, y_train, y_test, self.scaling)
-
-            _, MSE_train_array[i], MSE_test_array[i], R2_train_array, R2_test_array = self.regr_model(X_train, X_test, y_train, y_test, lmbda)
-            
-        # Calculate mean and std for MSE for train and test sets across all folds
-        MSE_train_mean = np.mean(MSE_train_array)
-        MSE_train_std = np.std(MSE_train_array)
-        MSE_test_mean = np.mean(MSE_test_array)
-        MSE_test_std = np.std(MSE_test_array)
-        R2_train_mean = np.mean(R2_train_array)
-        R2_train_std = np.std(R2_train_array)
-        R2_test_mean = np.mean(R2_test_array)
-        R2_test_std = np.std(R2_test_array)
-
-        return MSE_train_mean, MSE_train_std, MSE_test_mean, MSE_test_std, R2_train_mean, R2_train_std, R2_test_mean, R2_test_std
     
 # Introduced as a class in the case of experimenting with maximum number of iterations and fit-tolerance
 class LASSO_fit:
@@ -557,15 +688,14 @@ def plot_terrain(name:str, x:np.ndarray, y:np.ndarray, terrain:np.ndarray, axes:
     
     ax2.set_aspect('equal', adjustable='box')  # Maintain aspect ratio
 
-def surface_3D(x, y, z, ax, fig):
-
-    # ax.view_init(elev=20, azim=65)
+def surface_3D(x, y, z, ax, fig,cmap=None):
 
     # Plot the surface.
-    surf = ax.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    if cmap is None:
+            surf = ax.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
+    else:
+        surf = ax.plot_surface(x, y, z, cmap=cmap, linewidth=0, antialiased=False)
 
-    # Customize the z axis.
-    # ax.set_zlim(-0.10, 1.40)
     ax.zaxis.set_major_locator(LinearLocator(10))
     ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
     ax.set_xlabel('$X$', fontsize=20)
