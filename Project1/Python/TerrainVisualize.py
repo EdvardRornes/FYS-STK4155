@@ -5,7 +5,7 @@ from utils import *
 
 if __name__ == "__main__":
     # latex_fonts()
-    contour_plot = True; surface_3D_plot = False
+    contour_plot = False; surface_3D_plot = True
 
     surface_3D_skip_every = 50
     # Filenames

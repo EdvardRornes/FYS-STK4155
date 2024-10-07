@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from utils import *
 
 # Plot
-save = True; overwrite = True
+save = False; overwrite = False
 latex_fonts()
 
 ################ Scaling options ################
@@ -24,18 +24,12 @@ k = 10
 
 deg_max = 17
 degrees = np.arange(1, deg_max+1)
-MSE_OLS_CV       = np.zeros(len(degrees))
-MSE_OLS_CV_STD   = np.zeros(len(degrees))
-R2_OLS_CV        = np.zeros(len(degrees))
-R2_OLS_CV_STD    = np.zeros(len(degrees))
-MSE_Ridge_CV     = np.zeros((len(degrees), len(lmbdas)))
-MSE_Ridge_CV_STD = np.zeros((len(degrees), len(lmbdas)))
-R2_Ridge_CV      = np.zeros((len(degrees), len(lmbdas)))
-R2_Ridge_CV_STD  = np.zeros((len(degrees), len(lmbdas)))
-MSE_LASSO_CV     = np.zeros((len(degrees), len(lmbdas)))
-MSE_LASSO_CV_STD = np.zeros((len(degrees), len(lmbdas)))
-R2_LASSO_CV      = np.zeros((len(degrees), len(lmbdas)))
-R2_LASSO_CV_STD  = np.zeros((len(degrees), len(lmbdas)))
+MSE_OLS_CV       = np.zeros(len(degrees)); MSE_OLS_CV_STD   = np.zeros(len(degrees))
+R2_OLS_CV        = np.zeros(len(degrees)); R2_OLS_CV_STD    = np.zeros(len(degrees))
+MSE_Ridge_CV     = np.zeros((len(degrees), len(lmbdas))); MSE_Ridge_CV_STD = np.zeros((len(degrees), len(lmbdas)))
+R2_Ridge_CV      = np.zeros((len(degrees), len(lmbdas))); R2_Ridge_CV_STD  = np.zeros((len(degrees), len(lmbdas)))
+MSE_LASSO_CV     = np.zeros((len(degrees), len(lmbdas))); MSE_LASSO_CV_STD = np.zeros((len(degrees), len(lmbdas)))
+R2_LASSO_CV      = np.zeros((len(degrees), len(lmbdas))); R2_LASSO_CV_STD  = np.zeros((len(degrees), len(lmbdas)))
 
 
 

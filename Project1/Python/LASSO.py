@@ -6,7 +6,7 @@ from utils import *
 
 # Plot
 latex_fonts()
-save = True; overwrite = True
+save = False; overwrite = False
 folder = "Figures/LASSO"
 
 ################ Scaling options ################
