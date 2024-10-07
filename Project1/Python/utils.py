@@ -487,9 +487,9 @@ def read_terrain(files:dict, pixel_size_x_degrees=0.0002777777777777778, pixel_s
     
     Returns 
         * terrain_data:         dictionary on the form {'name1': 
-                                                            {'z': z_data_1:np.ndarray,
-                                                             'x': x_data_1:np.ndarray,
-                                                             'y': y_data_1:np.ndarray},
+                                                           {'z': z_data_1:np.ndarray,
+                                                            'x': x_data_1:np.ndarray,
+                                                            'y': y_data_1:np.ndarray},
                                                         'name2': ...}    
     """
 
