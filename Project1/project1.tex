@@ -112,7 +112,7 @@ OLS is the simplest and most foundational method which estimates relationship by
 
 To compare these regression methods, we use a two-dimensional Franke function which allows us to test the performance of each under controlled conditions. Later we apply each method to real terrain data which is obtained from \cite{USGS_EarthExplorer}.
 
-The regression methods are evaluated by considering their Mean Squared Error (MSE) and coefficient of determination $R^2$. Further to make our evaluation more reliable, resampling techniques such as bootstrapping and cross-validation are used. These methods provide a quantitative description of how well each model performs on different data sets.
+The regression methods are evaluated by considering their Mean Squared Error (MSE) and coefficient of determination $R^2$. Further to make our evaluation more reliable, resampling techniques such as bootstrapping and cross-validation are used. These methods provide a quantitative description of how well each method and the model in general performs on different data sets.
 \section{Theory}
 All claims made in this section which require relatively lengthy derivations are derived in Appendix \ref{Appendix:Derivations}. The general structure of all our models is that we have some data set $\{x_i,y_i\}$ where $i\in\{0,1...,n-1\}$ where $x_i$ are independent variables whilst $y_i$ are dependent variables. The data is assumed to be described by
 \begin{align}
@@ -155,7 +155,7 @@ which yields the model
 \end{align}
 Assuming our data takes the form of (\ref{eq:data}) then the expectation value $\bm y$ is
 \begin{align*}
-	\mathbb{E}(y_i)=\mathbb{E}(f(x_i))=X_{ij}\beta_j\equiv\bm X_{i,*}\bm\beta,
+	\mathbb{E}(y_i)=\mathbb{E}(f(x_i))=\sum_{j=0}^{p-1}X_{ij}\beta_j\equiv\bm X_{i,*}\bm\beta,
 \end{align*}
 since $\mathbb{E}(\varepsilon_i)=0$ follows from its definition. The variance of $\bm y$ is given by
 \begin{align*}
