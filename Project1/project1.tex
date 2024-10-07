@@ -458,21 +458,40 @@ The MSE and $R^2$ for the three regression methods using $k$-fold Cross validati
 \end{figure}
 
 \subsection{Terrain Data}
-Figs. x,y,z, show the MSE and $R^2$ for all three regression methods. Additionally we have plotted the $\lambda$ dependence of Ridge and LASSO for the MSE and $R^2$ with polynomial degree $p=44$ in Figs. x,y. We see that LASSO consistently performs worse across all metrics compared to OLS and Ridge. 
+% Contourplots of Grand Canyon and Mount Everest are shown in fig. \ref{fig:GC_ME_Image_Contour}. As can be seen 
+The MSE of all the three regression models OLS, Ridge and LASSO with \(\lambda=10^{-8}\) and standard scaling is shown in \ref{fig:MSE_GrandCan_StandardScaling_50} and \ref{fig:MSE_MountEve_StandardScaling_50}, for Grand Canyon and Mount Everest, respectively. 
+% Countourplots of Grand Canyon and Mount Everest can be seen in \ref{fig:GC_ME_Image_Contour}, which suggest a greater complexity than that of the Franke function, comparing to \ref{fig:frankefunction}. 
+Both figures show Ridge and OLS outperforming LASSO. LASSO slowly decreases, seemingly reaching a constant value as \(p\) increases, relatively high above OLS and Ridge. OLS and Ridge follow each other closely all the way up to \(p\sim 40\), where OLS increases, jaggedly and with greater error bars, away from Ridge. Ridge seem to also increase past this degree, though slower, but also with greater error bars.
 
-Further in Fig. x we plot the MSE of all regression models as a function of the polynomial degree where he have used $k=10$-fold CV.
-%\begin{figure}[ht!]
-%	\centering
-%	\includegraphics[width=\linewidth]{Python/Figures/Terrain/LASSO_logMSE_Grand Canyon_StandardScaling_44.pdf}
-%	\caption{Terrain LASSO MSE as a function of $\lambda$}
-%	\label{fig:Terrain_Lasso_MSE_lambda}
-%\end{figure}
-%\begin{figure}[ht!]
-%\centering
-%\includegraphics[width=\linewidth]{Python/Figures/Terrain/LASSO_logR2_Grand Canyon_StandardScaling_44.pdf}
-%\caption{Terrain LASSO RIDGE as a function of $\lambda$}
-%\label{fig:Terrain_Lasso_R2_lambda}
-%\end{figure}
+Visually, the lowest MSE is found with Ridge and a polynomial degree in the approximate range \(p\in[28,37]\). Fig. \ref{fig:log_GrandCan_StandardScaling_35} and fig. \ref{fig:log_MountEve_StandardScaling_35} shows the \(R^2\)-score of Ridge and LASSO as a function of \(\lambda\), with \(p\) chosen as \(p=35\). The two figures shows Ridge giving a higher \(R^2\)-score than LASSO for all \(\lambda\in[10^{-10}, 10^{-2}]\). For Mount Everest, the maximum \(R^2\)-score is located at \(\lambda\sim 10^{-9}\), whilst Grand Canyon gives about the same \(R^2\)-score for \(\lambda\in[10^{-10}, 10^{-6}]\).
+
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/Terrain/MSE_GrandCanyon_StandardScaling_50.png}
+	\caption{MSE}
+	\label{fig:MSE_GrandCan_StandardScaling_50}
+\end{figure}
+
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/Terrain/MSE_MountEverest_StandardScaling_50.png}
+	\caption{MSE}
+	\label{fig:MSE_MountEve_StandardScaling_50}
+\end{figure}
+
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/Terrain/logR2_GrandCanStandardScaling_35_zoomed.png}
+	\caption{MSE}
+	\label{fig:log_GrandCan_StandardScaling_35}
+\end{figure}
+
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/Terrain/logR2_MountEver_standardscaling_35_zoomed.png}
+	\caption{MSE}
+	\label{fig:log_MountEve_StandardScaling_35}
+\end{figure}
 
 \section{Conclusion}
 OLS and Ridge clearly outperform LASSO on both the Franke function and terrain data. The current hypothesis for this, following the discussion in section \ref{sec:stats}, is that LASSO performs worse due to the $\beta$ coefficients not following a Laplace distribution. If these coefficients do instead follow a Gaussian distribution and there is a low correlation between the different events $z_i$ then this is exactly what one would expect. The expected bias-variance trade-off was observed explicitly by using bootstrapping. For higher (lower) polynomial degrees we clearly see an increase in the variance (bias) and helps us choose which model complexity we should aim for. 
