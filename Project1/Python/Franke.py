@@ -10,8 +10,8 @@ fig = plt.figure(figsize=(10, 10), constrained_layout=True)
 ax = fig.add_subplot(111, projection='3d')  # Use add_subplot instead of gca
 
 # Make data.
-x = np.arange(0, 1, 0.05)
-y = np.arange(0, 1, 0.05)
+x = np.arange(0, 1, 0.0001)
+y = np.arange(0, 1, 0.0001)
 x, y = np.meshgrid(x, y)
 
 def FrankeFunction(x, y):
