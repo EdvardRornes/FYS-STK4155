@@ -294,7 +294,6 @@ INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/tfm/public/amsfon
 INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/tfm/public/cm/cmbx8.tfm
 INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/tfm/public/amsfonts/cmextra/cmmib8.tfm
 INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/tfm/public/amsfonts/cmextra/cmbsy8.tfm
-INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/tfm/public/cm/cmtt8.tfm
 INPUT /Users/isakonsagerrukan/Library/Application Support/MiKTeX/texmfs/data/fonts/map/pdftex/pdftex.map
 INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/tfm/jknappen/ec/tcrm1000.tfm
 INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/tfm/public/cm/cmtt10.tfm
@@ -334,54 +333,54 @@ INPUT ./Python/Figures/OLS/OLS_betano_scaling_1000.pdf
 INPUT ./Python/Figures/OLS/OLS_betano_scaling_1000.pdf
 INPUT ./Python/Figures/OLS/OLS_betano_scaling_1000.pdf
 INPUT ./Python/Figures/OLS/OLS_betano_scaling_1000.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_R2_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_R2_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_R2_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_R2_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_R2_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_R2_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf
-INPUT ./Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_MSE_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_MSE_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_MSE_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_MSE_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_MSE_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_MSE_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_R2_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_R2_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_R2_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_R2_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_R2_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_R2_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_logMSE_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_logMSE_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_logMSE_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_logMSE_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_logMSE_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_logMSE_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf
-INPUT ./Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_MSE_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_MSE_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_MSE_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_MSE_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_MSE_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_MSE_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_R2_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_R2_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_R2_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_R2_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_R2_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_R2_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_logMSE_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_logMSE_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_logMSE_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_logMSE_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_logMSE_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_logMSE_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_logR2_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_logR2_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_logR2_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_logR2_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_logR2_Unscaled.pdf
+INPUT ./Python/Figures/Ridge/RIDGE_logR2_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_MSE_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_MSE_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_MSE_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_MSE_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_MSE_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_MSE_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_R2_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_R2_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_R2_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_R2_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_R2_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_R2_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_logMSE_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_logMSE_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_logMSE_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_logMSE_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_logMSE_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_logMSE_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_logR2_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_logR2_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_logR2_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_logR2_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_logR2_Unscaled.pdf
+INPUT ./Python/Figures/LASSO/LASSO_logR2_Unscaled.pdf
 INPUT ./Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf
 INPUT ./Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf
 INPUT ./Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf
@@ -394,6 +393,34 @@ INPUT ./Python/Figures/CV/CV_no_scaling.pdf
 INPUT ./Python/Figures/CV/CV_no_scaling.pdf
 INPUT ./Python/Figures/CV/CV_no_scaling.pdf
 INPUT ./Python/Figures/CV/CV_no_scaling.pdf
+INPUT ./Python/Figures/Terrain/MSE_GrandCanyon_StandardScaling_50.png
+INPUT ./Python/Figures/Terrain/MSE_GrandCanyon_StandardScaling_50.png
+INPUT ./Python/Figures/Terrain/MSE_GrandCanyon_StandardScaling_50.png
+INPUT ./Python/Figures/Terrain/MSE_GrandCanyon_StandardScaling_50.png
+INPUT ./Python/Figures/Terrain/MSE_GrandCanyon_StandardScaling_50.png
+INPUT ./Python/Figures/Terrain/MSE_GrandCanyon_StandardScaling_50.png
+INPUT ./Python/Figures/Terrain/MSE_GrandCanyon_StandardScaling_50.png
+INPUT ./Python/Figures/Terrain/MSE_MountEverest_StandardScaling_50.png
+INPUT ./Python/Figures/Terrain/MSE_MountEverest_StandardScaling_50.png
+INPUT ./Python/Figures/Terrain/MSE_MountEverest_StandardScaling_50.png
+INPUT ./Python/Figures/Terrain/MSE_MountEverest_StandardScaling_50.png
+INPUT ./Python/Figures/Terrain/MSE_MountEverest_StandardScaling_50.png
+INPUT ./Python/Figures/Terrain/MSE_MountEverest_StandardScaling_50.png
+INPUT ./Python/Figures/Terrain/MSE_MountEverest_StandardScaling_50.png
+INPUT ./Python/Figures/Terrain/logR2_GrandCanStandardScaling_35_zoomed.png
+INPUT ./Python/Figures/Terrain/logR2_GrandCanStandardScaling_35_zoomed.png
+INPUT ./Python/Figures/Terrain/logR2_GrandCanStandardScaling_35_zoomed.png
+INPUT ./Python/Figures/Terrain/logR2_GrandCanStandardScaling_35_zoomed.png
+INPUT ./Python/Figures/Terrain/logR2_GrandCanStandardScaling_35_zoomed.png
+INPUT ./Python/Figures/Terrain/logR2_GrandCanStandardScaling_35_zoomed.png
+INPUT ./Python/Figures/Terrain/logR2_GrandCanStandardScaling_35_zoomed.png
+INPUT ./Python/Figures/Terrain/logR2_MountEver_standardscaling_35_zoomed.png
+INPUT ./Python/Figures/Terrain/logR2_MountEver_standardscaling_35_zoomed.png
+INPUT ./Python/Figures/Terrain/logR2_MountEver_standardscaling_35_zoomed.png
+INPUT ./Python/Figures/Terrain/logR2_MountEver_standardscaling_35_zoomed.png
+INPUT ./Python/Figures/Terrain/logR2_MountEver_standardscaling_35_zoomed.png
+INPUT ./Python/Figures/Terrain/logR2_MountEver_standardscaling_35_zoomed.png
+INPUT ./Python/Figures/Terrain/logR2_MountEver_standardscaling_35_zoomed.png
 INPUT ./project1.bbl
 INPUT ./project1.bbl
 INPUT project1.bbl
@@ -448,8 +475,6 @@ INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsf
 INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmti9.pfb
 INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmtt10.pfb
 INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmtt10.pfb
-INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmtt8.pfb
-INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmtt8.pfb
 INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmtt9.pfb
 INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmtt9.pfb
 INPUT /Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/symbols/msam10.pfb

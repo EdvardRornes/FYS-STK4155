@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (MiKTeX 22.1) (preloaded format=pdflatex 2023.9.27)  5 OCT 2024 18:10
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (MiKTeX 22.1) (preloaded format=pdflatex 2023.9.27)  7 OCT 2024 12:37
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -621,23 +621,18 @@ File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 LaTeX Font Info:    Trying to load font information for U+msb on input line 103.
  (/Library/Application Support/MiKTeX/texmfs/install/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
-Underfull \hbox (badness 10000) in paragraph at lines 106--106
-  [][][]\OT1/cmr/m/n/8 GitHub Repos-i-tory: []$\OT1/cmtt/m/n/8 https : / / github . com / EdvardRornes /
- []
-
-[1{/Users/isakonsagerrukan/Library/Application Support/MiKTeX/texmfs/data/fonts/map/pdftex/pdftex.map}
+) [1{/Users/isakonsagerrukan/Library/Application Support/MiKTeX/texmfs/data/fonts/map/pdftex/pdftex.map}
 pdfTeX warning (ext4): destination with the same identifier (name{frontmatter.2}) has been already used, duplicate ignored
 <argument> ...shipout:D \box_use:N \l_shipout_box 
                                                   \__shipout_drop_firstpage_...
-l.139 
-      ] [2]
+l.137 \end{align}
+                 ] [2]
 Underfull \hbox (badness 1354) in paragraph at lines 241--242
  []\OT1/cmr/m/n/10 Bias: This quan-tity mea-sures how much the
  []
 
 [3]
-<Python/Figures/FrankeFunction.pdf, id=188, 728.76042pt x 594.88214pt>
+<Python/Figures/FrankeFunction.pdf, id=187, 728.76042pt x 594.88214pt>
 File: Python/Figures/FrankeFunction.pdf Graphic file (type pdf)
 <use Python/Figures/FrankeFunction.pdf>
 Package pdftex.def Info: Python/Figures/FrankeFunction.pdf  used on input line 281.
@@ -648,126 +643,151 @@ Overfull \hbox (1.04001pt too wide) detected at line 294
  []
 
 [4 <./Python/Figures/FrankeFunction.pdf>]
-Underfull \hbox (badness 10000) in paragraph at lines 314--316
+Underfull \hbox (badness 10000) in paragraph at lines 315--317
 []\OT1/cmr/m/n/10 For Ridge, $\OML/cmm/m/it/10 ^^L[]$ \OT1/cmr/m/n/10 is found by numpy's
  []
 
 
-Underfull \hbox (badness 3323) in paragraph at lines 314--316
+Underfull \hbox (badness 3323) in paragraph at lines 315--317
 []\OT1/cmtt/m/n/10 np.linalg.pinv[] \OT1/cmr/m/n/10 to cal-cu-late the pseu-doin-verse of
  []
 
 
-Underfull \hbox (badness 1112) in paragraph at lines 314--316
+Underfull \hbox (badness 1112) in paragraph at lines 315--317
 \OT1/cmr/m/n/10 for LASSO on the other hand, is com-puted us-ing
  []
 
-<Python/Figures/Terrain/TerrainContourAndImage.pdf, id=223, 867.24pt x 867.24pt>
+<Python/Figures/Terrain/TerrainContourAndImage.pdf, id=222, 867.24pt x 867.24pt>
 File: Python/Figures/Terrain/TerrainContourAndImage.pdf Graphic file (type pdf)
 <use Python/Figures/Terrain/TerrainContourAndImage.pdf>
-Package pdftex.def Info: Python/Figures/Terrain/TerrainContourAndImage.pdf  used on input line 327.
+Package pdftex.def Info: Python/Figures/Terrain/TerrainContourAndImage.pdf  used on input line 328.
 (pdftex.def)             Requested size: 306.00311pt x 305.9999pt.
-<Python/Figures/OLS/OLS_MSE_Unscaled.pdf, id=228, 722.7pt x 433.62pt>
+<Python/Figures/OLS/OLS_MSE_Unscaled.pdf, id=227, 722.7pt x 433.62pt>
 File: Python/Figures/OLS/OLS_MSE_Unscaled.pdf Graphic file (type pdf)
 <use Python/Figures/OLS/OLS_MSE_Unscaled.pdf>
-Package pdftex.def Info: Python/Figures/OLS/OLS_MSE_Unscaled.pdf  used on input line 342.
+Package pdftex.def Info: Python/Figures/OLS/OLS_MSE_Unscaled.pdf  used on input line 343.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-<Python/Figures/OLS/OLS_R2_Unscaled.pdf, id=231, 722.7pt x 433.62pt>
+<Python/Figures/OLS/OLS_R2_Unscaled.pdf, id=230, 722.7pt x 433.62pt>
 File: Python/Figures/OLS/OLS_R2_Unscaled.pdf Graphic file (type pdf)
 <use Python/Figures/OLS/OLS_R2_Unscaled.pdf>
-Package pdftex.def Info: Python/Figures/OLS/OLS_R2_Unscaled.pdf  used on input line 348.
+Package pdftex.def Info: Python/Figures/OLS/OLS_R2_Unscaled.pdf  used on input line 349.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-<Python/Figures/OLS/OLS_betano_scaling_100.pdf, id=236, 867.24pt x 433.62pt>
+[5]
+<Python/Figures/OLS/OLS_betano_scaling_100.pdf, id=245, 867.24pt x 433.62pt>
 File: Python/Figures/OLS/OLS_betano_scaling_100.pdf Graphic file (type pdf)
 <use Python/Figures/OLS/OLS_betano_scaling_100.pdf>
-Package pdftex.def Info: Python/Figures/OLS/OLS_betano_scaling_100.pdf  used on input line 357.
+Package pdftex.def Info: Python/Figures/OLS/OLS_betano_scaling_100.pdf  used on input line 358.
 (pdftex.def)             Requested size: 282.8985pt x 141.44753pt.
 
-Overfull \hbox (17.61449pt too wide) in paragraph at lines 356--358
+Overfull \hbox (17.61449pt too wide) in paragraph at lines 357--359
 []  [] 
  []
 
-<Python/Figures/OLS/OLS_betano_scaling_1000.pdf, id=239, 867.24pt x 433.62pt>
+<Python/Figures/OLS/OLS_betano_scaling_1000.pdf, id=248, 867.24pt x 433.62pt>
 File: Python/Figures/OLS/OLS_betano_scaling_1000.pdf Graphic file (type pdf)
 <use Python/Figures/OLS/OLS_betano_scaling_1000.pdf>
-Package pdftex.def Info: Python/Figures/OLS/OLS_betano_scaling_1000.pdf  used on input line 363.
+Package pdftex.def Info: Python/Figures/OLS/OLS_betano_scaling_1000.pdf  used on input line 364.
 (pdftex.def)             Requested size: 282.8985pt x 141.44753pt.
 
-Overfull \hbox (17.61449pt too wide) in paragraph at lines 362--364
+Overfull \hbox (17.61449pt too wide) in paragraph at lines 363--365
 []  [] 
  []
 
-[5] [6 <./Python/Figures/Terrain/TerrainContourAndImage.pdf> <./Python/Figures/OLS/OLS_MSE_Unscaled.pdf> <./Python/Figures/OLS/OLS_R2_Unscaled.pdf>]
-<Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf, id=314, 722.7pt x 433.62pt>
-File: Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf Graphic file (type pdf)
-<use Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf>
-Package pdftex.def Info: Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf  used on input line 390.
+[6 <./Python/Figures/Terrain/TerrainContourAndImage.pdf> <./Python/Figures/OLS/OLS_MSE_Unscaled.pdf> <./Python/Figures/OLS/OLS_R2_Unscaled.pdf>]
+<Python/Figures/Ridge/RIDGE_MSE_Unscaled.pdf, id=307, 722.7pt x 433.62pt>
+File: Python/Figures/Ridge/RIDGE_MSE_Unscaled.pdf Graphic file (type pdf)
+<use Python/Figures/Ridge/RIDGE_MSE_Unscaled.pdf>
+Package pdftex.def Info: Python/Figures/Ridge/RIDGE_MSE_Unscaled.pdf  used on input line 391.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-<Python/Figures/Ridge/RIDGE_R2_no_scaling.pdf, id=315, 722.7pt x 433.62pt>
-File: Python/Figures/Ridge/RIDGE_R2_no_scaling.pdf Graphic file (type pdf)
-<use Python/Figures/Ridge/RIDGE_R2_no_scaling.pdf>
-Package pdftex.def Info: Python/Figures/Ridge/RIDGE_R2_no_scaling.pdf  used on input line 397.
+<Python/Figures/Ridge/RIDGE_R2_Unscaled.pdf, id=308, 722.7pt x 433.62pt>
+File: Python/Figures/Ridge/RIDGE_R2_Unscaled.pdf Graphic file (type pdf)
+<use Python/Figures/Ridge/RIDGE_R2_Unscaled.pdf>
+Package pdftex.def Info: Python/Figures/Ridge/RIDGE_R2_Unscaled.pdf  used on input line 398.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-<Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf, id=324, 722.7pt x 433.62pt>
-File: Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf Graphic file (type pdf)
-<use Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf>
-Package pdftex.def Info: Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf  used on input line 406.
+<Python/Figures/Ridge/RIDGE_logMSE_Unscaled.pdf, id=317, 722.7pt x 433.62pt>
+File: Python/Figures/Ridge/RIDGE_logMSE_Unscaled.pdf Graphic file (type pdf)
+<use Python/Figures/Ridge/RIDGE_logMSE_Unscaled.pdf>
+Package pdftex.def Info: Python/Figures/Ridge/RIDGE_logMSE_Unscaled.pdf  used on input line 407.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-<Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf, id=325, 722.7pt x 433.62pt>
-File: Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf Graphic file (type pdf)
-<use Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf>
-Package pdftex.def Info: Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf  used on input line 412.
+<Python/Figures/Ridge/RIDGE_logR2_Unscaled.pdf, id=318, 722.7pt x 433.62pt>
+File: Python/Figures/Ridge/RIDGE_logR2_Unscaled.pdf Graphic file (type pdf)
+<use Python/Figures/Ridge/RIDGE_logR2_Unscaled.pdf>
+Package pdftex.def Info: Python/Figures/Ridge/RIDGE_logR2_Unscaled.pdf  used on input line 413.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-<Python/Figures/LASSO/LASSO_MSE_no_scaling.pdf, id=328, 722.7pt x 433.62pt>
-File: Python/Figures/LASSO/LASSO_MSE_no_scaling.pdf Graphic file (type pdf)
-<use Python/Figures/LASSO/LASSO_MSE_no_scaling.pdf>
-Package pdftex.def Info: Python/Figures/LASSO/LASSO_MSE_no_scaling.pdf  used on input line 421.
+<Python/Figures/LASSO/LASSO_MSE_Unscaled.pdf, id=321, 722.7pt x 433.62pt>
+File: Python/Figures/LASSO/LASSO_MSE_Unscaled.pdf Graphic file (type pdf)
+<use Python/Figures/LASSO/LASSO_MSE_Unscaled.pdf>
+Package pdftex.def Info: Python/Figures/LASSO/LASSO_MSE_Unscaled.pdf  used on input line 422.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-<Python/Figures/LASSO/LASSO_R2_no_scaling.pdf, id=331, 722.7pt x 433.62pt>
-File: Python/Figures/LASSO/LASSO_R2_no_scaling.pdf Graphic file (type pdf)
-<use Python/Figures/LASSO/LASSO_R2_no_scaling.pdf>
-Package pdftex.def Info: Python/Figures/LASSO/LASSO_R2_no_scaling.pdf  used on input line 428.
+<Python/Figures/LASSO/LASSO_R2_Unscaled.pdf, id=324, 722.7pt x 433.62pt>
+File: Python/Figures/LASSO/LASSO_R2_Unscaled.pdf Graphic file (type pdf)
+<use Python/Figures/LASSO/LASSO_R2_Unscaled.pdf>
+Package pdftex.def Info: Python/Figures/LASSO/LASSO_R2_Unscaled.pdf  used on input line 429.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
- [7 <./Python/Figures/OLS/OLS_betano_scaling_100.pdf> <./Python/Figures/OLS/OLS_betano_scaling_1000.pdf> <./Python/Figures/Ridge/RIDGE_MSE_no_scaling.pdf> <./Python/Figures/Ridge/RIDGE_R2_no_scaling.pdf>]
+ [7 <./Python/Figures/OLS/OLS_betano_scaling_100.pdf> <./Python/Figures/OLS/OLS_betano_scaling_1000.pdf> <./Python/Figures/Ridge/RIDGE_MSE_Unscaled.pdf> <./Python/Figures/Ridge/RIDGE_R2_Unscaled.pdf>]
 
-LaTeX Warning: A float is stuck (cannot be placed); try class option [floatfix] on input line 432.
+LaTeX Warning: A float is stuck (cannot be placed); try class option [floatfix] on input line 433.
 
-<Python/Figures/LASSO/LASSO_logMSE_no_scaling.pdf, id=462, 722.7pt x 433.62pt>
-File: Python/Figures/LASSO/LASSO_logMSE_no_scaling.pdf Graphic file (type pdf)
-<use Python/Figures/LASSO/LASSO_logMSE_no_scaling.pdf>
-Package pdftex.def Info: Python/Figures/LASSO/LASSO_logMSE_no_scaling.pdf  used on input line 438.
+<Python/Figures/LASSO/LASSO_logMSE_Unscaled.pdf, id=453, 722.7pt x 433.62pt>
+File: Python/Figures/LASSO/LASSO_logMSE_Unscaled.pdf Graphic file (type pdf)
+<use Python/Figures/LASSO/LASSO_logMSE_Unscaled.pdf>
+Package pdftex.def Info: Python/Figures/LASSO/LASSO_logMSE_Unscaled.pdf  used on input line 439.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-<Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf, id=463, 722.7pt x 433.62pt>
-File: Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf Graphic file (type pdf)
-<use Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf>
-Package pdftex.def Info: Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf  used on input line 446.
+<Python/Figures/LASSO/LASSO_logR2_Unscaled.pdf, id=454, 722.7pt x 433.62pt>
+File: Python/Figures/LASSO/LASSO_logR2_Unscaled.pdf Graphic file (type pdf)
+<use Python/Figures/LASSO/LASSO_logR2_Unscaled.pdf>
+Package pdftex.def Info: Python/Figures/LASSO/LASSO_logR2_Unscaled.pdf  used on input line 446.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-[8 <./Python/Figures/Ridge/RIDGE_logMSE_no_scaling.pdf> <./Python/Figures/Ridge/RIDGE_logR2_no_scaling.pdf> <./Python/Figures/LASSO/LASSO_MSE_no_scaling.pdf> <./Python/Figures/LASSO/LASSO_R2_no_scaling.pdf>]
+[8 <./Python/Figures/Ridge/RIDGE_logMSE_Unscaled.pdf> <./Python/Figures/Ridge/RIDGE_logR2_Unscaled.pdf> <./Python/Figures/LASSO/LASSO_MSE_Unscaled.pdf> <./Python/Figures/LASSO/LASSO_R2_Unscaled.pdf> <./Python/Figures/LASSO/LASSO_logMSE_Unscaled.pdf>]
 
-LaTeX Warning: A float is stuck (cannot be placed); try class option [floatfix] on input line 455.
+LaTeX Warning: A float is stuck (cannot be placed); try class option [floatfix] on input line 453.
 
-<Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf, id=534, 722.7pt x 433.62pt>
+<Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf, id=531, 722.7pt x 433.62pt>
 File: Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf Graphic file (type pdf)
 <use Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf>
 Package pdftex.def Info: Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf  used on input line 458.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-<Python/Figures/CV/CV_no_scaling.pdf, id=538, 722.7pt x 433.62pt>
+<Python/Figures/CV/CV_no_scaling.pdf, id=535, 722.7pt x 433.62pt>
 File: Python/Figures/CV/CV_no_scaling.pdf Graphic file (type pdf)
 <use Python/Figures/CV/CV_no_scaling.pdf>
 Package pdftex.def Info: Python/Figures/CV/CV_no_scaling.pdf  used on input line 466.
 (pdftex.def)             Requested size: 246.0pt x 147.60088pt.
-[9 <./Python/Figures/LASSO/LASSO_logMSE_no_scaling.pdf> <./Python/Figures/LASSO/LASSO_logR2_no_scaling.pdf> <./Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf> <./Python/Figures/CV/CV_no_scaling.pdf>] (project1.bbl)
-Overfull \hbox (2.9844pt too wide) detected at line 508
+<Python/Figures/Terrain/MSE_GrandCanyon_StandardScaling_50.png, id=542, 722.7pt x 433.62pt>
+File: Python/Figures/Terrain/MSE_GrandCanyon_StandardScaling_50.png Graphic file (type png)
+<use Python/Figures/Terrain/MSE_GrandCanyon_StandardScaling_50.png>
+Package pdftex.def Info: Python/Figures/Terrain/MSE_GrandCanyon_StandardScaling_50.png  used on input line 481.
+(pdftex.def)             Requested size: 246.0pt x 147.60088pt.
+<Python/Figures/Terrain/MSE_MountEverest_StandardScaling_50.png, id=544, 722.7pt x 433.62pt>
+File: Python/Figures/Terrain/MSE_MountEverest_StandardScaling_50.png Graphic file (type png)
+<use Python/Figures/Terrain/MSE_MountEverest_StandardScaling_50.png>
+Package pdftex.def Info: Python/Figures/Terrain/MSE_MountEverest_StandardScaling_50.png  used on input line 488.
+(pdftex.def)             Requested size: 246.0pt x 147.60088pt.
+<Python/Figures/Terrain/logR2_GrandCanStandardScaling_35_zoomed.png, id=545, 722.7pt x 433.62pt>
+File: Python/Figures/Terrain/logR2_GrandCanStandardScaling_35_zoomed.png Graphic file (type png)
+<use Python/Figures/Terrain/logR2_GrandCanStandardScaling_35_zoomed.png>
+Package pdftex.def Info: Python/Figures/Terrain/logR2_GrandCanStandardScaling_35_zoomed.png  used on input line 495.
+(pdftex.def)             Requested size: 246.0pt x 147.60088pt.
+<Python/Figures/Terrain/logR2_MountEver_standardscaling_35_zoomed.png, id=546, 722.7pt x 433.62pt>
+File: Python/Figures/Terrain/logR2_MountEver_standardscaling_35_zoomed.png Graphic file (type png)
+<use Python/Figures/Terrain/logR2_MountEver_standardscaling_35_zoomed.png>
+Package pdftex.def Info: Python/Figures/Terrain/logR2_MountEver_standardscaling_35_zoomed.png  used on input line 502.
+(pdftex.def)             Requested size: 246.0pt x 147.60088pt.
+[9 <./Python/Figures/LASSO/LASSO_logR2_Unscaled.pdf> <./Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf> <./Python/Figures/CV/CV_no_scaling.pdf>]
+
+LaTeX Warning: A float is stuck (cannot be placed); try class option [floatfix] on input line 509.
+
+(project1.bbl) [10 <./Python/Figures/Terrain/MSE_GrandCanyon_StandardScaling_50.png> <./Python/Figures/Terrain/MSE_MountEverest_StandardScaling_50.png> <./Python/Figures/Terrain/logR2_GrandCanStandardScaling_35_zoomed.png> <./Python/Figures/Terrain/logR2_MountEver_standardscaling_35_zoomed.png>]
+Overfull \hbox (2.9844pt too wide) detected at line 537
 []
  []
 
 
-Overfull \hbox (6.02885pt too wide) detected at line 529
+Overfull \hbox (6.02885pt too wide) detected at line 558
 []
  []
 
-[10]
-Overfull \hbox (2.44194pt too wide) detected at line 556
+
+Overfull \hbox (2.44194pt too wide) detected at line 585
 []
  []
 
@@ -780,20 +800,20 @@ Package rerunfilecheck Info: File `project1.out' has not changed.
 (rerunfilecheck)             Checksum: B8D076A7A0122D6978EFC8635D30FCB1;3292.
  ) 
 Here is how much of TeX's memory you used:
- 23374 strings out of 475248
- 429648 string characters out of 5754926
- 1957791 words of memory out of 5000000
- 44424 multiletter control sequences out of 15000+600000
- 571728 words of font info for 87 fonts, out of 8000000 for 9000
+ 23410 strings out of 475248
+ 431719 string characters out of 5754926
+ 1971791 words of memory out of 5000000
+ 44457 multiletter control sequences out of 15000+600000
+ 571560 words of font info for 86 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 83i,16n,93p,1226b,520s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 83i,16n,93p,1431b,520s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
 pdfTeX warning (dest): name{Hfootnote.1} has been referenced but does not exist, replaced by a fixed one
 
-{/Users/isakonsagerrukan/Library/Application Support/MiKTeX/texmfs/install/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmbx10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmbx12.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmbx9.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmex10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmmi10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmmi12.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmmi7.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmmi9.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmmib10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr12.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr17.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr5.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr6.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr7.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr8.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr9.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmsy10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmsy6.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmsy7.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmsy9.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmti9.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmtt10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmtt8.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmtt9.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/symbols/msam10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/symbols/msbm10.pfb></Users/isakonsagerrukan/Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/cm-super/sfrm1000.pfb>
-Output written on project1.pdf (11 pages, 9100118 bytes).
+{/Users/isakonsagerrukan/Library/Application Support/MiKTeX/texmfs/install/fonts/enc/dvips/cm-super/cm-super-ts1.enc}</Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmbx10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmbx12.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmbx9.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmex10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmmi10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmmi12.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmmi7.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmmi9.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmmib10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr12.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr17.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr5.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr6.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr7.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr8.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmr9.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmsy10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmsy6.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmsy7.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmsy9.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmti9.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmtt10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/cm/cmtt9.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/symbols/msam10.pfb></Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/amsfonts/symbols/msbm10.pfb></Users/isakonsagerrukan/Library/Application Support/MiKTeX/texmfs/install/fonts/type1/public/cm-super/sfrm1000.pfb>
+Output written on project1.pdf (11 pages, 9364519 bytes).
 PDF statistics:
- 741 PDF objects out of 1000 (max. 8388607)
- 84 named destinations out of 1000 (max. 500000)
- 309 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 740 PDF objects out of 1000 (max. 8388607)
+ 88 named destinations out of 1000 (max. 500000)
+ 329 words of extra memory for PDF output out of 10000 (max. 10000000)
 

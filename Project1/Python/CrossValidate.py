@@ -82,7 +82,7 @@ for lmbda, j in zip(lmbdas, range(len(lmbdas))):
     plt.xlim(1, deg_max)
     plt.xlabel("Degree")
     plt.ylabel("MSE")
-    plt.yscale("log"); plt.ylabel(r"$\log_{10}(MSE)$")
+    plt.yscale("log"); plt.ylabel(r"$MSE$")
 
     # ymax = np.max([np.max(q) for q in [MSE_OLS_CV[5], MSE_Ridge_CV[5, j], MSE_LASSO_CV[5, j]]]) # the 6-th poly
     plt.ylim(6e-3, 2e-1)

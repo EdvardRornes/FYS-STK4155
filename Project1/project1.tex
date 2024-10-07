@@ -451,6 +451,8 @@ For the current case the only advantage that LASSO has over OLS is just insensit
 \subsection{Bootstrap and Cross Validation}
 Using the Bootstrap method with \(100\) samples, the bias, variance and error is shown in fig. \ref{fig:bootstrap} for an OLS regression of \(N=100\) data samples from the Franke function \eqref{eq:franke}. The figure shows a close-to constant variance for polynomial degrees smaller than \(p\sim7\), whereas for \(p\gtrsim 7\) the variance increases steadily. On the other hand, the bias starts out above \(\sim0.1\), gradually decreasing, reaching a minimum for \(p\) in the range \(4-9\), before rising again for \(p\gtrsim 9\). These specific values of \(p\) is dependent on the sample size \(N=100\) and the amount of samples taken by the Bootstrap method. However, the general shape of the error curve in fig. \ref{fig:bootstrap} is expected independent of these settings. The error is supposed to be proportional to the sum of the variance and the bias, as seen in \eqref{eq:MSE-bias-var}. Visually, fig. \ref{fig:bootstrap} confirms this, although the sum is not explicitly given. 
 
+
+
 \begin{figure}[ht!]
 	\centering
 	\includegraphics[width=\linewidth]{Python/Figures/OLS/OLS_Bootstrap_BiasVar_no_scaling_GOOD.pdf}
@@ -467,11 +469,40 @@ Cross validation is performed for the three regression methods OLS, Ridge and LA
 \end{figure}
 
 \subsection{Terrain Data}
-For the terrain data we opted 
+% Contourplots of Grand Canyon and Mount Everest are shown in fig. \ref{fig:GC_ME_Image_Contour}. As can be seen 
+The MSE of all the three regression models OLS, Ridge and LASSO with \(\lambda=10^{-8}\) and standard scaling is shown in \ref{fig:MSE_GrandCan_StandardScaling_50} and \ref{fig:MSE_MountEve_StandardScaling_50}, for Grand Canyon and Mount Everest, respectively. 
+% Countourplots of Grand Canyon and Mount Everest can be seen in \ref{fig:GC_ME_Image_Contour}, which suggest a greater complexity than that of the Franke function, comparing to \ref{fig:frankefunction}. 
+Both figures show Ridge and OLS outperforming LASSO. LASSO slowly decreases, seemingly reaching a constant value as \(p\) increases, relatively high above OLS and Ridge. OLS and Ridge follow each other closely all the way up to \(p\sim 40\), where OLS increases, jaggedly and with greater error bars, away from Ridge. Ridge seem to also increase past this degree, though slower, but also with greater error bars.
 
-\begin{figure*}
-	content...
-\end{figure*}
+Visually, the lowest MSE is found with Ridge and a polynomial degree in the approximate range \(p\in[28,37]\). Fig. \ref{fig:log_GrandCan_StandardScaling_35} and fig. \ref{fig:log_MountEve_StandardScaling_35} shows the \(R^2\)-score of Ridge and LASSO as a function of \(\lambda\), with \(p\) chosen as \(p=35\). The two figures shows Ridge giving a higher \(R^2\)-score than LASSO for all \(\lambda\in[10^{-10}, 10^{-2}]\). For Mount Everest, the maximum \(R^2\)-score is located at \(\lambda\sim 10^{-9}\), whilst Grand Canyon gives about the same \(R^2\)-score for \(\lambda\in[10^{-10}, 10^{-6}]\).
+
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/Terrain/MSE_GrandCanyon_StandardScaling_50.png}
+	\caption{MSE}
+	\label{fig:MSE_GrandCan_StandardScaling_50}
+\end{figure}
+
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/Terrain/MSE_MountEverest_StandardScaling_50.png}
+	\caption{MSE}
+	\label{fig:MSE_MountEve_StandardScaling_50}
+\end{figure}
+
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/Terrain/logR2_GrandCanStandardScaling_35_zoomed.png}
+	\caption{MSE}
+	\label{fig:log_GrandCan_StandardScaling_35}
+\end{figure}
+
+\begin{figure}[ht!]
+	\centering
+	\includegraphics[width=\linewidth]{Python/Figures/Terrain/logR2_MountEver_standardscaling_35_zoomed.png}
+	\caption{MSE}
+	\label{fig:log_MountEve_StandardScaling_35}
+\end{figure}
 
 \section{Conclusion}
 OLS and Ridge clearly outperform LASSO on both the Franke function and terrain data. The current hypothesis for this, following the discussion in section \ref{sec:stats}, is that LASSO performs worse due to the $\beta$ coefficients not following a Laplace distribution. If these coefficients do instead follow a Gaussian distribution and there is a low correlation between the different events $z_i$ then this is exactly what one would expect. The expected bias-variance trade-off was observed explicitly by using bootstrapping. For higher (lower) polynomial degrees we clearly see an increase in the variance (bias) and helps us choose which model complexity we should aim for. 
