@@ -114,7 +114,7 @@ if save:
     save_plt(f"{folder}/RIDGE_logMSE_{additional_description}", overwrite=overwrite)
 
 plt.figure(figsize=(10, 6))
-plt.title(rf"$Ridge R^2$ on Franke function with polynomial degree $p={deg_analysis}$")
+plt.title(rf"Ridge $R^2$ on Franke function with polynomial degree $p={deg_analysis}$")
 plt.plot(np.log10(lmbdas), R2_train_array,label=r"$R^2$ train", lw=2.5)
 plt.plot(np.log10(lmbdas), R2_test_array,label=r"$R^2$ test", lw=2.5)
 plt.xlabel(r"$\log_{10}(\lambda)$")

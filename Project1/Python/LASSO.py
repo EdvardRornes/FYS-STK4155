@@ -16,7 +16,7 @@ additional_description = "Unscaled"
 
 # Setup
 deg_max = 17
-lmbdas = [1e-20, 1e-2, 1e-1]
+lmbdas = [1e-10, 1e-3, 1e-2]
 N = 100; eps = 0.1
 franke = Franke(N, eps)
 data = [franke.x, franke.y, franke.z]
@@ -51,7 +51,7 @@ plt.legend(handles=handles,labels=labels)
 plt.xlabel(r'Degree')
 plt.ylabel(r'MSE')
 plt.xlim(1, deg_max)
-plt.title(rf"LASSO MSE")
+plt.title(rf"LASSO MSE as a function of polynomial degree (Franke)")
 plt.grid(True)
 if save:
     save_plt(f"{folder}/LASSO_MSE_{additional_description}", overwrite=overwrite)
@@ -66,7 +66,7 @@ plt.legend(handles=handles,labels=labels)
 plt.xlabel(r'Degree')
 plt.ylabel(r'$R^2$')
 plt.xlim(1, deg_max)
-plt.title(rf"LASSO $R^2$ as a function of polynomial degree")
+plt.title(rf"LASSO $R^2$ as a function of polynomial degree (Franke)")
 plt.grid(True)
 if save:
     save_plt(f"{folder}/LASSO_R2_{additional_description}", overwrite=overwrite)
@@ -74,7 +74,7 @@ if save:
 lambda_exp_start = -10
 lambda_exp_stop = -2
 lambda_num = 100
-deg = 4
+deg = 6
 
 lmbdas = np.logspace(lambda_exp_start, lambda_exp_stop, num=lambda_num)
 
@@ -93,7 +93,7 @@ for i in range(lambda_num):
     _, MSE_train_array[i], MSE_test_array[i], R2_train_array[i], R2_test_array[i] = LASSO_default(X_train, X_test, z_train, z_test, lmbdas[i])
 
 plt.figure(figsize=(10, 6))
-plt.title(rf"MSE deg {deg}")
+plt.title(rf"LASSO MSE with $p={deg}$ (Franke)")
 plt.plot(np.log10(lmbdas), MSE_train_array, label="MSE train", lw=2.5)
 plt.plot(np.log10(lmbdas), MSE_test_array, label="MSE test", lw=2.5)
 plt.xlabel(r"$\log_{10}(\lambda)$")
@@ -105,7 +105,7 @@ if save:
     save_plt(f"{folder}/LASSO_logMSE_{additional_description}", overwrite=overwrite)
 
 plt.figure(figsize=(10, 6))
-plt.title(rf"$R^2$ with deg {deg}")
+plt.title(rf"LASSO $R^2$ with $p={deg}$ (Franke)")
 plt.plot(np.log10(lmbdas), R2_train_array,label=r"$R^2$ train", lw=2.5)
 plt.plot(np.log10(lmbdas), R2_test_array,label=r"$R^2$ test", lw=2.5)
 plt.xlabel(r"$\log_{10}(\lambda)$")

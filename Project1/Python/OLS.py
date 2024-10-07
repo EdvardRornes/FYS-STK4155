@@ -14,7 +14,7 @@ folder = "Figures/OLS"
 
 ################ Scaling options ################
 additional_description = "Unscaled"
-additional_description = "MINMAX"
+# additional_description = "MINMAX"
 # additional_description = "StandardScaling"
 
 # Setup
@@ -98,7 +98,7 @@ plt.xlim(1, deg_max)
 plt.yscale("log")
 plt.ylabel(r'$\log_{10}(MSE)$')
 # plt.ylabel(r'MSE')
-plt.title(rf"OLS MSE (Franke) {additional_description}")
+plt.title(rf"OLS MSE as a function of polynomial degree (Franke)")
 plt.legend()
 plt.grid(True)
 if save:
@@ -117,7 +117,7 @@ plt.xlim(1, deg_max)
 # plt.yscale("log")
 plt.ylabel(r'$\log_{10}(R^2)$')
 plt.ylabel(r'$R^2$')
-plt.title(rf"OLS $R^2$ (Franke) {additional_description}")
+plt.title(rf"OLS $R^2$ as a function of polynomial degree (Franke)")
 plt.legend()
 plt.grid(True)
 if save:
