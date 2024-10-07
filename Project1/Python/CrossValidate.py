@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from utils import *
 
 # Plot
-save = False; overwrite = False
+save = True; overwrite = True
 latex_fonts()
 
 ################ Scaling options ################
@@ -27,10 +27,17 @@ deg_max = 17
 degrees = np.arange(1, deg_max+1)
 MSE_OLS_CV       = np.zeros(len(degrees))
 MSE_OLS_CV_STD   = np.zeros(len(degrees))
+R2_OLS_CV        = np.zeros(len(degrees))
+R2_OLS_CV_STD    = np.zeros(len(degrees))
 MSE_Ridge_CV     = np.zeros((len(degrees), len(lmbdas)))
 MSE_Ridge_CV_STD = np.zeros((len(degrees), len(lmbdas)))
+R2_Ridge_CV      = np.zeros((len(degrees), len(lmbdas)))
+R2_Ridge_CV_STD  = np.zeros((len(degrees), len(lmbdas)))
 MSE_LASSO_CV     = np.zeros((len(degrees), len(lmbdas)))
 MSE_LASSO_CV_STD = np.zeros((len(degrees), len(lmbdas)))
+R2_LASSO_CV      = np.zeros((len(degrees), len(lmbdas)))
+R2_LASSO_CV_STD  = np.zeros((len(degrees), len(lmbdas)))
+
 
 
 
@@ -41,19 +48,25 @@ start_time = time.time()
 for i in range(deg_max):
     X = PolynomialRegression.Design_Matrix(x, y, degrees[i])
 
-    MSE_train_mean, MSE_train_STD, MSE_test_mean, MSE_test_STD = OLS.Cross_Validation(X, z, k)
-    MSE_OLS_CV[i] = MSE_test_mean
+    _, _, MSE_test_mean, MSE_test_STD, _, _, R2_test_mean, R2_test_std = OLS.Cross_Validation(X, z, k)
+    MSE_OLS_CV[i]     = MSE_test_mean
     MSE_OLS_CV_STD[i] = MSE_test_STD
+    R2_OLS_CV[i]      = R2_test_mean
+    R2_OLS_CV_STD[i]  = R2_test_std
     for lmbda, j in zip(lmbdas, range(len(lmbdas))):
 
         # RIDGE
-        MSE_train_mean, MSE_train_STD, MSE_test_mean, MSE_test_STD = RIDGE.Cross_Validation(X, z, k, lmbda=lmbda)  
+        _, _, MSE_test_mean, MSE_test_STD, _, _, R2_test_mean, R2_test_std = RIDGE.Cross_Validation(X, z, k, lmbda=lmbda)  
         MSE_Ridge_CV[i,j] = MSE_test_mean
         MSE_Ridge_CV_STD[i,j] = MSE_test_STD
+        R2_Ridge_CV[i,j]      = R2_test_mean
+        R2_Ridge_CV_STD[i,j]  = R2_test_std
 
-        MSE_train_mean, MSE_train_STD, MSE_test_mean, MSE_test_STD = LASSO.Cross_Validation(X, z, k, lmbda=lmbda)  
+        _, _, MSE_test_mean, MSE_test_STD, _, _, R2_test_mean, R2_test_std = LASSO.Cross_Validation(X, z, k, lmbda=lmbda)  
         MSE_LASSO_CV[i,j] = MSE_test_mean
-        MSE_LASSO_CV_STD[i,j] = MSE_test_STD  
+        MSE_LASSO_CV_STD[i,j] = MSE_test_STD
+        R2_LASSO_CV[i,j]      = R2_test_mean
+        R2_LASSO_CV_STD[i,j]  = R2_test_std  
 
     print(f"CV: {i/deg_max*100:.1f}%, duration: {(time.time()-start_time):.2f}s", end="\r")
 
@@ -62,13 +75,10 @@ print(f"CV: 100.0%, duration: {(time.time()-start_time):.2f}s")
 method_names = ["OLS", "Ridge", "LASSO"]
 for lmbda, j in zip(lmbdas, range(len(lmbdas))):
     plt.figure(figsize=(10, 6))
-    plt.title("MSE of CV")
+    plt.title("MSE with 10-fold Cross-Validation")
     plt.errorbar(degrees, MSE_OLS_CV, MSE_OLS_CV_STD, label="OLS", lw=2.5, linestyle="--", capsize=5, elinewidth=1.5, capthick=1.5)
-
     plt.errorbar(degrees, MSE_Ridge_CV[:, j], MSE_Ridge_CV_STD[:, j], lw=2.5, linestyle="--", label=rf"Ridge with $\lambda={lmbda:.1e}$", capsize=5, elinewidth=1.5, capthick=1.5)
-
     plt.errorbar(degrees, MSE_LASSO_CV[:, j], MSE_LASSO_CV_STD[:, j], lw=2.5, linestyle="--", label=rf"LASSO with $\lambda={lmbda:.1e}$", capsize=5, elinewidth=1.5, capthick=1.5)
-
 
     # Find best
     print(f"lmbda = {lmbda}:")
@@ -82,13 +92,26 @@ for lmbda, j in zip(lmbdas, range(len(lmbdas))):
     plt.xlim(1, deg_max)
     plt.xlabel("Degree")
     plt.ylabel("MSE")
-    plt.yscale("log"); plt.ylabel(r"$\log_{10}(MSE)$")
+    plt.yscale("log")
 
     # ymax = np.max([np.max(q) for q in [MSE_OLS_CV[5], MSE_Ridge_CV[5, j], MSE_LASSO_CV[5, j]]]) # the 6-th poly
     plt.ylim(6e-3, 2e-1)
     plt.grid(True)
-    plt.legend(loc="lower left")
+    plt.legend(loc="upper left")
     if save:
-        save_plt(f"Figures/CV/CV_{additional_description}_{j}", overwrite=overwrite)
+        save_plt(f"Figures/CV/CV_MSE_{additional_description}_{j}", overwrite=overwrite)
+
+    plt.figure(figsize=(10, 6))
+    plt.title(r"$R^2$ with 10-fold Cross-Validation")
+    plt.errorbar(degrees, R2_OLS_CV, R2_OLS_CV_STD, label="OLS", lw=2.5, linestyle="--", capsize=5, elinewidth=1.5, capthick=1.5)
+    plt.errorbar(degrees, R2_Ridge_CV[:, j], R2_Ridge_CV_STD[:, j], lw=2.5, linestyle="--", label=rf"Ridge with $\lambda={lmbda:.1e}$", capsize=5, elinewidth=1.5, capthick=1.5)
+    plt.errorbar(degrees, R2_LASSO_CV[:, j], R2_LASSO_CV_STD[:, j], lw=2.5, linestyle="--", label=rf"LASSO with $\lambda={lmbda:.1e}$", capsize=5, elinewidth=1.5, capthick=1.5)
+    plt.xlim(1, deg_max)
+    plt.xlabel("Degree")
+    plt.ylabel(r"$R^2$")
+    plt.grid(True)
+    plt.legend(loc="lower right")
+    if save:
+        save_plt(f"Figures/CV/CV_R2_{additional_description}_{j}", overwrite=overwrite)
 
 plt.show()
