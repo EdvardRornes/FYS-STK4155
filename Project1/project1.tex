@@ -333,7 +333,6 @@ Once everything has been implemented, we use the programs created to run on both
 \end{figure*}
 \newpage
 \section{Results \& Discussion}
-
 \subsection{The Franke Function}
 We first consider the results obtained from the data samples generated from the Franke test function \eqref{eq:franke} using OLS, Ridge, and LASSO. In the following, unless stated otherwise, we have used $N=100$ with an added normal-distributed noise proportional to \(\varepsilon=0.1\).
 \subsubsection{OLS}
@@ -444,6 +443,8 @@ Both figures show the cross validated Ridge and OLS following each other until t
 
 Figs. \ref{fig:log_GrandCan_StandardScaling_10} and \ref{fig:log_MountEve_StandardScaling_10} show the MSE and $R^2$ of Ridge and LASSO as a function of \(\lambda\) with \(p=23\) for both Grand Canyon and Mount Everest, respectively. For both Grand Canyon and Mount Everest, Ridge seems to outperform LASSO for all \(\lambda\)'s. For Ridge, the figures suggests a slightly better MSE for lower values of \(\lambda\). 
 
+Note that there are additional contour- and 3D-plots in Appendix \ref{Appendix:Plots}.
+
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.95\linewidth]{Python/Figures/Terrain/log_MSE_R2_Grand Canyon_StandardScaling_23.pdf}
@@ -539,5 +540,36 @@ where $\mathbb{E}[(f-\tilde{\bm y})\bm\varepsilon]=0$ is justified by $\bm\varep
 	&=0
 \end{align*}
 which proves the claim. 
+
+\section{Additional Plots}
+\label{Appendix:Plots}
+We did not spend time making these plots look nice nor fix captions for them but hopefully the titles are explanatory enough. Note that for the predicted versions of the terrain data we have used StandardScaling whilst the actual terrain file is not.
+\begin{figure}[H]
+	\includegraphics[width=0.44\textwidth]{Python/Figures/Terrain/Ridge_franke_Unscaled_3D.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.44\textwidth]{Python/Figures/Terrain/Ridge_Grand Canyon_StandardScaling_actual.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.44\textwidth]{Python/Figures/Terrain/Ridge_Grand Canyon_StandardScaling.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.44\textwidth]{Python/Figures/Terrain/Ridge_Grand Canyon_StandardScaling_actual_3D.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.44\textwidth]{Python/Figures/Terrain/Ridge_Grand Canyon_StandardScaling_3D.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.44\textwidth]{Python/Figures/Terrain/Ridge_Mount Everest_StandardScaling_actual.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.44\textwidth]{Python/Figures/Terrain/Ridge_Mount Everest_StandardScaling.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.44\textwidth]{Python/Figures/Terrain/Ridge_Mount Everest_StandardScaling_actual_3D.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.44\textwidth]{Python/Figures/Terrain/Ridge_Mount Everest_StandardScaling_3D.pdf}
+\end{figure}
 	
 \end{document}

@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import imageio.v2 as imageio
 from utils import *
-import matplotlib.lines as mlines
 
 # Define terrain files
 files = {
