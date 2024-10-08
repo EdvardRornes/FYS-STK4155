@@ -34,7 +34,7 @@ N = 10
 log_lambda_start = -10
 log_lambda_stop = -1
 lambda_num = 100
-deg_analysis = 4
+deg_analysis = 10
 
 lmbdadas = np.logspace(log_lambda_start, log_lambda_stop, lambda_num)
 
@@ -64,7 +64,7 @@ for name, file in files.items():
         OLS = PolynomialRegression("OLS", deg_max_cv, [x,y,z], start_training=True, scaling=additional_description)
         RIDGE = PolynomialRegression("RIDGE", deg_max_cv, [x,y,z], lmbdas=lmbdas, start_training=True, scaling=additional_description)
         LASSO = PolynomialRegression("LASSO", deg_max_cv, [x,y,z], lmbdas=lmbdas, start_training=True, scaling=additional_description, 
-                                     tol=0.5)
+                                     tol=0.5, max_iter=int(1e6))
         
         ########## CV-storage ##########
         MSE_OLS_CV   = np.zeros(deg_max_cv);                MSE_OLS_CV_STD   = np.zeros(deg_max_cv)
@@ -138,42 +138,41 @@ for name, file in files.items():
 
         print(f"log10 lambda analysis: 100.0%, duration: {time.time()-start_time:.2f}s", end="\r")
         
-        plt.figure(figsize=(10, 6))
-        plt.title(rf"MSE with polynomial degree $p={deg_analysis}$ ({name}) {additional_description}")
-        line = plt.plot(np.log10(lmbdadas), MSE_train_array_Ridge, label="Ridge train", lw=2.5)
-        color = line[0].get_color()
-        plt.plot(np.log10(lmbdadas), MSE_test_array_Ridge, "--", label="Ridge test", color=color, lw=2.5)
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 12))
+        fig.subplots_adjust(hspace=0.5)
 
-        line = plt.plot(np.log10(lmbdadas), MSE_train_array_LASSO, label="LASSO train", lw=2.5)
+        ax1.set_title(rf"MSE with polynomial degree $p={deg_analysis}$ ({name}) {additional_description}")
+        line = ax1.plot(np.log10(lmbdadas), MSE_train_array_Ridge, label="Ridge train", lw=2.5)
         color = line[0].get_color()
-        plt.plot(np.log10(lmbdadas), MSE_test_array_LASSO, "--", label="LASSO test", color=color, lw=2.5)
+        ax1.plot(np.log10(lmbdadas), MSE_test_array_Ridge, "--", label="Ridge test", color=color, lw=2.5)
 
-        plt.xlabel(r"$\log_{10}\lambda$")
-        plt.ylabel("MSE")
-        plt.xlim(log_lambda_start, log_lambda_stop)
-        plt.legend()
-        plt.grid(True)
+        line = ax1.plot(np.log10(lmbdadas), MSE_train_array_LASSO, label="LASSO train", lw=2.5)
+        color = line[0].get_color()
+        ax1.plot(np.log10(lmbdadas), MSE_test_array_LASSO, "--", label="LASSO test", color=color, lw=2.5)
+
+        ax1.set_xlabel(r"$\log_{10}\lambda$")
+        ax1.set_ylabel("MSE")
+        ax1.set_xlim(log_lambda_start, log_lambda_stop)
+        ax1.legend()
+        ax1.grid(True)
+
+        ax2.set_title(rf"$R^2$ with polynomial degree $p={deg_analysis}$ ({name}) {additional_description}")
+        line = ax2.plot(np.log10(lmbdadas), R2_train_array_Ridge, label=r"Ridge", lw=2.5)
+        color = line[0].get_color()
+        ax2.plot(np.log10(lmbdadas), R2_test_array_Ridge, "--", color=color, lw=2.5)
+
+        line = ax2.plot(np.log10(lmbdadas), R2_train_array_LASSO, label=r"LASSO", lw=2.5)
+        color = line[0].get_color()
+        ax2.plot(np.log10(lmbdadas), R2_test_array_LASSO, "--", color=color, lw=2.5)
+
+        ax2.set_xlabel(r"$\log_{10}\lambda$")
+        ax2.set_ylabel(r"$R^2$")
+        ax2.set_xlim(log_lambda_start, log_lambda_stop)
+        ax2.set_ylim(-0.5, 1)
+        ax2.legend()
+        ax2.grid(True)
+
         if save:
-            save_plt(f"{folder}/logMSE_{name}_{additional_description}_{deg_analysis}", overwrite=overwrite)
-
-        plt.figure(figsize=(10, 6))
-        plt.title(rf"$R^2$ with polynomial degree $p={deg_analysis}$ ({name}) {additional_description}")
-        line = plt.plot(np.log10(lmbdadas), R2_train_array_Ridge, label=r"Ridge", lw=2.5)
-        color = line[0].get_color()
-        plt.plot(np.log10(lmbdadas), R2_test_array_Ridge, "--", color=color, lw=2.5)
-
-        line = plt.plot(np.log10(lmbdadas), R2_train_array_LASSO, label=r"LASSO", lw=2.5)
-        color = line[0].get_color()
-        plt.plot(np.log10(lmbdadas), R2_test_array_LASSO, "--", color=color, lw=2.5)
-
-        plt.xlabel(r"$\log_{10}\lambda$")
-        plt.ylabel(r"$R^2$")
-        plt.xlim(log_lambda_start, log_lambda_stop)
-        plt.legend()
-        plt.grid(True)
-        if save:
-            save_plt(f"{folder}/logR2_{name}_{additional_description}", overwrite=overwrite)
-
-
+            save_plt(f"{folder}/logMSE_R2_{name}_{additional_description}_{deg_analysis}", overwrite=overwrite)
 
         plt.show()
