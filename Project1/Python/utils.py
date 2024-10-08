@@ -271,8 +271,7 @@ class PolynomialRegression:
         X, X, z_flat, z_flat = self.scale_data(X, X, z_flat, z_flat, self.scaling)
 
         beta, MSE, _, R2, _ = self.regr_model(X, X, z_flat, z_flat, lmbda)
-
-        beta = PolynomialRegression.Ridge_Reg(X, z_flat, 1e-6)
+        
         z_pred = X @ beta
         z_shape = z_meshed.shape
         z_pred = np.reshape(z_pred,z_shape)
