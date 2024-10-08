@@ -32,6 +32,7 @@ degrees = LASSO.degrees
 # cmap = cm.get_cmap('tab10', len(lmbdas))
 cmap = plt.colormaps["tab10"]
 
+# Subplot, left: MSE as function of degree, right: R^2 as function of degree
 fig, axs = plt.subplots(2, 1, figsize=(10, 12))
 
 ################ MSE-plot ################
@@ -73,6 +74,7 @@ plt.subplots_adjust(hspace=0.5)
 if save:
     save_plt(f"{folder}/LASSO_MSE_R2_{additional_description}", overwrite=overwrite)
 
+################ lambda-log10 plot ################
 lambda_exp_start = -10
 lambda_exp_stop = -2
 lambda_num = 100
@@ -80,20 +82,20 @@ deg = 6
 
 lmbdas = np.logspace(lambda_exp_start, lambda_exp_stop, num=lambda_num)
 
-MSE_train_array = np.zeros(lambda_num)
-MSE_test_array = np.zeros(lambda_num)
-R2_train_array = np.zeros(lambda_num)
-R2_test_array = np.zeros(lambda_num)
+MSE_train_array = np.zeros(lambda_num); MSE_test_array = np.zeros(lambda_num)
+R2_train_array = np.zeros(lambda_num); R2_test_array = np.zeros(lambda_num)
 beta_list = [0]*lambda_num
 
-
+# Setting up design matrix:
 X = PolynomialRegression.Design_Matrix(franke.x, franke.y, deg)
-# Split into training and testing and scale
+
+# Split into training and testing and scale:
 X_train, X_test, z_train, z_test = train_test_split(X, franke.z, test_size=0.25, random_state=4)
 
 for i in range(lambda_num):
     _, MSE_train_array[i], MSE_test_array[i], R2_train_array[i], R2_test_array[i] = LASSO_default(X_train, X_test, z_train, z_test, lmbdas[i])
 
+# Subplots, left: MSE as function of log10(lambda), right R^2 as function of log10(lambda)
 fig, axs = plt.subplots(2, 1, figsize=(10, 12))
 
 axs[0].set_title(rf"LASSO MSE with $p={deg}$ (Franke)")

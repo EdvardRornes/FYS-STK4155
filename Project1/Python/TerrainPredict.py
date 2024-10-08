@@ -19,7 +19,7 @@ if __name__ == "__main__":
     additional_description_franke = "Unscaled"
     # additional_description_franke = "MINMAX"
     # additional_description_franke = "StandardScaling"
-    p_franke = 6
+    p_franke = 6 # Poly degree to train method on
 
     ################ Terrain ################
     visualize_terrain = True; regr_method_terrain = "Ridge"
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     # additional_description_terrain = "MINMAX"
     additional_description_terrain = "StandardScaling"
 
-    p_terrain = 35
+    p_terrain = 6 # Poly degree to train method on
     lmbdas = [1e-8]
 
     files = {

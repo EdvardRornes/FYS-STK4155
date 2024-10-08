@@ -23,9 +23,9 @@ if __name__ == "__main__":
 
     terrain_data = read_terrain(files)
 
-    if contour_plot:
-        # Create a figure with subplots for terrain and contour plots
-        fig, axes = plt.subplots(2, 2, figsize=(12, 12))  # 2 rows, 2 columns
+    if contour_plot: # Creates contour plot
+        # Subplots, e.q. left: Grand Canyon, right: Mount Everest
+        fig, axes = plt.subplots(2, 2, figsize=(12, 12))  
         for i, name in enumerate(terrain_data):
             plot_terrain(name, terrain_data[name]["x"], terrain_data[name]["y"], terrain_data[name]["z"], axes[i], color_map[name])
 
@@ -34,8 +34,9 @@ if __name__ == "__main__":
         plt.savefig(f'Figures/Terrain/TerrainContourAndImage.pdf')
         plt.show()
 
-    if surface_3D_plot:
+    if surface_3D_plot: # Creates 3D surface plot
         for i, name in enumerate(terrain_data):
+            # Subplots, e.q. left: Grand Canyon, right: Mount Everest
             fig = plt.figure(figsize=(10, 10), constrained_layout=True)
             ax = fig.add_subplot(111, projection='3d')  # Use add_subplot instead of gca
             x, y, z = terrain_data[name]["x"], terrain_data[name]["y"], terrain_data[name]["z"]

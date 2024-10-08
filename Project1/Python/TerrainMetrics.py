@@ -46,8 +46,10 @@ R2_test_array_Ridge = np.zeros(lambda_num); R2_test_array_LASSO = np.zeros(lambd
 # Iterate through terrain files
 for name, file in files.items():
     terrain = imageio.imread(file)
-    # Use a subset of the terrain data for analysis
-    terrain_subset = terrain[:N, :N]
+
+    # Using a subset of the terrain data:
+    terrain_subset = terrain[:N, :N] # Tested on this as well, a square of the data
+    # Better to instead skip every:
     terrain_subset = terrain[::int(terrain.shape[0]/N), ::int(terrain.shape[1]/N)]
 
     z_shape = np.shape(terrain_subset)
@@ -55,6 +57,7 @@ for name, file in files.items():
     y = np.linspace(0, 1, z_shape[1])
     x, y = np.meshgrid(x, y)
 
+    # Flattening to make the 2D problem 1D:
     z = terrain_subset.flatten()
     x = x.flatten()
     y = y.flatten()
@@ -117,15 +120,17 @@ for name, file in files.items():
         RIDGE = PolynomialRegression("RIDGE", deg_max, [x,y,z], lmbdas=lmbdadas, start_training=False)
         X_Ridge = PolynomialRegression.Design_Matrix(x, y, deg_analysis)
 
-        # Split into training and testing and scale
+        # Spliting into training and testing and scale:
         X_train_Ridge, X_test_Ridge, z_train_Ridge, z_test_Ridge = train_test_split(X_Ridge, z, test_size=0.25, random_state=4)
+        # Scaling:
         X_train_Ridge, X_test_Ridge, z_train_Ridge, z_test_Ridge = PolynomialRegression.scale_data(X_train_Ridge, X_test_Ridge, z_train_Ridge, z_test_Ridge)   
         
         LASSO = PolynomialRegression("LASSO", deg_max, [x,y,z], lmbdas=lmbdadas, start_training=False, tol=0.5)
         X_LASSO = PolynomialRegression.Design_Matrix(x, y, deg_analysis)
 
-        # Split into training and testing and scale
+        # Spliting into training and testing and scale:
         X_train_LASSO, X_test_LASSO, z_train_LASSO, z_test_LASSO = train_test_split(X_LASSO, z, test_size=0.25, random_state=4)
+        # Scaling:
         X_train_LASSO, X_test_LASSO, z_train_LASSO, z_test_LASSO = PolynomialRegression.scale_data(X_train_LASSO, X_test_LASSO, z_train_LASSO, z_test_LASSO)
         
         start_time = time.time()
@@ -138,6 +143,7 @@ for name, file in files.items():
 
         print(f"log10 lambda analysis: 100.0%, duration: {time.time()-start_time:.2f}s", end="\r")
         
+        # Subplots, left: MSE as function of log10(lambda), right: R^2 as function of log10(lambda)
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 12))
         fig.subplots_adjust(hspace=0.5)
 

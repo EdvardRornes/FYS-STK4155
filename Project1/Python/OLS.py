@@ -36,9 +36,12 @@ degrees = OLS.degrees
 
 ################ Beta-plot ################
 p_stop = 8 # Where to stop the left plot
+
 minor_ticks = np.arange(0, len(beta[-1]), 1)
 major_ticks = [math.factorial(n + 2)/(math.factorial(2)* math.factorial(n)) for n in range(deg_max)] # Poly-degree
 yticks = np.arange(-1, 6, 1)
+
+# Sublots, left: zoomed in version of right: beta-coefficients
 fig, axs = plt.subplots(1,2, figsize=(12,6))
 fig.suptitle(r'$\beta$-coefficient for various polynomial degrees $p$ (Franke)')
 
@@ -83,6 +86,7 @@ if save:
     save_plt(f"{folder}/OLS_beta_{additional_description}", overwrite=overwrite)
 
 ############### MSE & R2 plot ###############
+# Subplots, left: MSE, right: R^2
 fig, axs = plt.subplots(2, 1, figsize=(10, 12))
 
 line = axs[0].plot(degrees, MSE_train, label=r"MSE train", lw=2.5)
@@ -111,5 +115,4 @@ plt.subplots_adjust(hspace=0.5)
 if save:
     save_plt(f"{folder}/OLS_MSE_R2_{additional_description}", overwrite=overwrite)
 
-# Show the plot
 plt.show()

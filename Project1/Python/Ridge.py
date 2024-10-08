@@ -7,7 +7,7 @@ from utils import *
 # Plot
 np.random.seed(0)
 latex_fonts()
-save = True; overwrite = True
+save = False; overwrite = False
 folder = "Figures/Ridge"
 
 ################ Scaling options ################
@@ -33,7 +33,7 @@ degrees = RIDGE.degrees
 # cmap = cm.get_cmap('tab10', len(lmbdas))
 cmap = plt.colormaps["tab10"]
 
-
+# Subplot, left: MSE as function of degree, right: R^2 as function of degree
 fig, axs = plt.subplots(2, 1, figsize=(10, 12))
 
 ################ MSE-plot ################
@@ -79,6 +79,7 @@ plt.subplots_adjust(hspace=0.4)
 if save:
     save_plt(f"{folder}/RIDGE_MSE_R2_{additional_description}", overwrite=overwrite)
 
+################ lambda-log10 plot ################
 # Setup
 log_lambda_start = -10
 log_lambda_stop = -1
@@ -87,10 +88,8 @@ deg_analysis = 6
 
 lmbdas = np.logspace(log_lambda_start, log_lambda_stop, lambda_num)
 
-MSE_train_array = np.zeros(lambda_num)
-MSE_test_array = np.zeros(lambda_num)
-R2_train_array = np.zeros(lambda_num)
-R2_test_array = np.zeros(lambda_num)
+MSE_train_array = np.zeros(lambda_num); MSE_test_array = np.zeros(lambda_num)
+R2_train_array = np.zeros(lambda_num);   R2_test_array = np.zeros(lambda_num)
 beta_list = [0]*lambda_num
 
 RIDGE = PolynomialRegression("Ridge", deg_analysis, data, start_training=False)
