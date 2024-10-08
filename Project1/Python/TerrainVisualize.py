@@ -2,10 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils import *
 
+latex_fonts()
 
 if __name__ == "__main__":
     # latex_fonts()
-    contour_plot = False; surface_3D_plot = True
+    contour_plot = True; surface_3D_plot = False
 
     surface_3D_skip_every = 50
     # Filenames
