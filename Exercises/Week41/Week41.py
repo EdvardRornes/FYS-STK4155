@@ -1,136 +1,159 @@
 import numpy as np
-from numpy.random import rand
-from numpy.random import seed
-from matplotlib import pyplot
-import matplotlib.pyplot as plt 
+from autograd import grad
+import autograd.numpy as anp
 
 
 class f:
-
-    def __init__(self, a0, a1, a2, a3=None):
+    def __init__(self, a0, a1, a2, a3=0):
         self.a0 = a0; self.a1 = a1; self.a2 = a2; self.a3 = a3
-
-        if a3 is None:
-            self.a3 = 0
 
     def __call__(self, x):
         return self.a0 + self.a1 * x + self.a2 * x**2 + self.a3 * x**3
 
     def derivative(self):
         return f(self.a1, 2*self.a2, 3*self.a3)
+
+
+# Thought to handle all methods (GD, Momentum, AdaGrad, RMSprop, Adam)
+class New_theta:
+    def __init__(self, use_momentum=False, use_AdaGrad=False, use_RMSprop=False, use_Adam=False, beta1=0.9, beta2=0.999):
+        self.beta1 = beta1
+        self.beta2 = beta2
+        self.epsilon = 1e-8  # Avoid division by zero
+
+        if use_momentum and not (use_AdaGrad or use_RMSprop or use_Adam):
+            # Momentum Gradient Descent
+            def call_me(gradients, theta, eta, change, Giter, v, t):
+                new_change = eta * gradients + self.beta1 * change
+                theta -= new_change
+                return theta, new_change, Giter, v, t
+
+        elif use_AdaGrad and not (use_momentum or use_RMSprop or use_Adam):
+            # AdaGrad
+            def call_me(gradients, theta, eta, change, Giter, v, t):
+                Giter += gradients * gradients
+                update = gradients * eta / (self.epsilon + np.sqrt(Giter))
+                theta -= update
+                return theta, change, Giter, v, t
+
+        elif use_RMSprop and not (use_momentum or use_AdaGrad or use_Adam):
+            # RMSprop
+            def call_me(gradients, theta, eta, change, Giter, v, t):
+                Giter = self.beta1 * Giter + (1 - self.beta1) * (gradients ** 2)
+                update = gradients * eta / (self.epsilon + np.sqrt(Giter))
+                theta -= update
+                return theta, change, Giter, v, t
+
+        elif use_Adam:
+            # Adam
+            def call_me(gradients, theta, eta, change, Giter, v, t):
+                v = self.beta1 * v + (1 - self.beta1) * gradients  # Momentum term
+                Giter = self.beta2 * Giter + (1 - self.beta2) * (gradients ** 2)  # RMSprop term
+
+                # Bias correction for momentum and RMSprop terms
+                v_corrected = v / (1 - self.beta1 ** (t + 1))
+                Giter_corrected = Giter / (1 - self.beta2 ** (t + 1))
+
+                # Update theta
+                update = eta * v_corrected / (self.epsilon + np.sqrt(Giter_corrected))
+                theta -= update
+                return theta, change, Giter, v, t + 1
+
+        else:
+            # Standard Gradient Descent
+            def call_me(gradients, theta, eta, change, Giter, v, t):
+                theta -= eta * gradients
+                return theta, change, Giter, v, t
+
+        self.call_me = call_me
+
+    def __call__(self, gradients, theta, eta, change, Giter, v, t):
+        return self.call_me(gradients, theta, eta, change, Giter, v, t)
+
+
+# Stochastic Gradient Descent with different methods (plain, momentum, AdaGrad, RMSprop, Adam)
+def stochastic_gradient_descent(derivative_func, X, y, M, n_epochs, learning_schedule, new_theta, momentum=0.9, delta=1e-8):
+    n = len(y)
+    theta = np.random.randn(X.shape[1], 1)  # Initialize theta
+    m = int(n / M)  # Number of minibatches
+
+    change = np.zeros_like(theta)  # Initialize change for momentum
+    Giter = np.zeros_like(theta)  # Initialize Giter for AdaGrad/RMSprop/Adam
+    v = np.zeros_like(theta)  # Initialize v for Adam
+    t = 0  # Time step for Adam
     
-
-
-# gradient descent algorithm (Code from lecture notes)
-def gradient_descent(objective, derivative, bounds, n_iter, learning_rate, momentum):
-    # track all solutions
-    solutions, scores = list(), list()
-    # generate an initial point
-    solution = bounds[:, 0] + rand(len(bounds)) * (bounds[:, 1] - bounds[:, 0])
-    # keep track of the change
-    change = 0.0
-    # run the gradient descent
-    for i in range(n_iter):
-        # calculate gradient
-        gradient = derivative(solution)
-        # calculate update
-        new_change = learning_rate * gradient + momentum * change
-        # take a step
-        solution = solution - new_change
-        # save the change
-        change = new_change
-        # evaluate candidate point
-        solution_eval = objective(solution)
-        # store solution
-        solutions.append(solution)
-        scores.append(solution_eval)
-        # report progress
-        print('>%d f(%s) = %.5f' % (i, solution, solution_eval))
-    return [solutions, scores]
-
-def stochastic_gradient_descent(x:np.ndarray, y:np.ndarray, m:int, M:int, n_epochs:int, learning_schedule:callable):
-    n = len(x)
-
-    if isinstance(learning_schedule, int) or isinstance(learning_schedule, float):
-        tmp = learning_schedule
-        def learning_schedule(t):
-            return tmp
-        
-    X = np.c_[np.ones((n,1)), x]
-
-    theta = np.random.randn(2,1)
-
-
     for epoch in range(n_epochs):
         for i in range(m):
-            random_index = M*np.random.randint(m)
-            xi = X[random_index:random_index+M]
-            yi = y[random_index:random_index+M]
-            gradients = (2.0/M)* xi.T @ ((xi @ theta)-yi)
-            eta = learning_schedule(epoch*m+i)
-            theta = theta - eta*gradients
+            # Minibatch generation
+            random_index = M * np.random.randint(m)
+            xi = X[random_index:random_index + M]
+            yi = y[random_index:random_index + M]
+
+            # Calculate gradients
+            gradients = (1.0 / M) * derivative_func(yi, xi, theta)
+
+            # Learning rate adjustment
+            eta = learning_schedule(epoch * m + i)
+
+            # Update theta using chosen method (momentum, AdaGrad, RMSprop, Adam)
+            theta, change, Giter, v, t = new_theta(gradients, theta, eta, change, Giter, v, t)
 
     return theta
 
-# seed the pseudo random number generator
-seed(4)
-# define range for input
-bounds = np.asarray([[-1.0, 1.0]])
-# define the total iterations
-n_iter = 30
-# define the step size
-learning_rate = 0.1
-# define momentum
-momentum = 0.3
 
-a0 = 1; a1 = -1/2; a2 = 1/18; a3 = 1/2
-objective = f(a0, a1, a2, a3); derivative = objective.derivative()
-x = np.linspace(-10, 10, 100_000)
-plt.plot(x, objective(x), label="f(x)")
-plt.plot(x, derivative(x), label="f'(x)")
-plt.legend()
-plt.show()
+# Inspired by code given in excercise
 
-# perform the gradient descent search with momentum
-solutions, scores = gradient_descent(objective, derivative, bounds, n_iter, learning_rate, momentum)
-# sample input range uniformly at 0.1 increments
-inputs = np.arange(bounds[0,0], bounds[0,1]+0.1, 0.1)
-# compute targets
-results = objective(inputs)
-# create a line plot of input vs result
-plt.plot(inputs, results)
-# plot the solutions found
-plt.plot(solutions, scores, '.-', color='red')
-# show the plot
-plt.show()
+# Cost function for OLS
+def CostOLS(y, X, theta):
+    return anp.sum((y - X @ theta) ** 2)
 
-
-
-########## Stochastic gradient descent ###########
+# Generate random data
 n = 100
-n_epochs = 50
-M = 5   #size of each minibatch
-m = int(n/M) #number of minibatches
-t0, t1 = 5, 50
+x = 2 * np.random.rand(n, 1)
+theta = [1, 1/2, -3/4, 5/18]
+y = f(theta[0], theta[1], theta[2], theta[3])
+y = y(x)
 
-def learning_schedule(t):
-    return t0/(t+t1)
+# Design matrix
+X = np.c_[np.ones((n, 1)), x, x**2, x**3]  # This will give theta 4 components
 
-n = 100
-x = 2*np.random.rand(n,1)
-x = np.linspace(-10,10, 100)
-y = objective(x)
+# Gradient of the cost function
+training_gradient = grad(CostOLS, 2)
 
-theta = stochastic_gradient_descent(x, y, m, M, n_epochs, learning_schedule)
+# Learning schedule
+def learning_schedule(t, t0=5, t1=50):
+    return t0 / (t + t1)
 
-xnew = np.array([[x[0]],[x[-1]]])
-Xnew = np.c_[np.ones((2,1)), xnew]
-ypredict = Xnew.dot(theta)
+averageN_times = 10
+theta_rmsprop_array, theta_AdaGrad_array, theta_momentum_array, theta_adam_array = (
+    np.zeros((4, averageN_times)),
+    np.zeros((4, averageN_times)),
+    np.zeros((4, averageN_times)),
+    np.zeros((4, averageN_times)),
+)
 
-plt.plot(xnew, ypredict, "r-")
-plt.plot(x, y ,'ro')
-# plt.axis([0,2.0,0, 15.0])
-plt.xlabel(r'$x$')
-plt.ylabel(r'$y$')
-# plt.title(r'Random numbers ')
-plt.show()
+momentum = 1e-1
+
+# Initializing the different optimizers
+optimizer_RMS = New_theta(use_RMSprop=True)
+optimizer_AdaGrad = New_theta(use_AdaGrad=True)
+optimizer_momentum = New_theta(use_momentum=True)
+optimizer_Adam = New_theta(use_Adam=True)
+for n in range(averageN_times):
+
+    # Running stochastic gradient descent for each optimizer
+    theta_rmsprop_array[:,n] = stochastic_gradient_descent(training_gradient, X, y, M=5, n_epochs=50, 
+                                                learning_schedule=learning_schedule, new_theta=optimizer_RMS)[0]
+    theta_AdaGrad_array[:,n] = stochastic_gradient_descent(training_gradient, X, y, M=5, n_epochs=50, 
+                                                learning_schedule=learning_schedule, new_theta=optimizer_AdaGrad)[0]
+    theta_momentum_array[:,n] = stochastic_gradient_descent(training_gradient, X, y, M=5, n_epochs=50, 
+                                                learning_schedule=learning_schedule, new_theta=optimizer_momentum)[0]
+    theta_adam_array[:,n] = stochastic_gradient_descent(training_gradient, X, y, M=5, n_epochs=50, 
+                                                learning_schedule=learning_schedule, new_theta=optimizer_Adam)[0]
+
+# Printing mean of coefficients
+print("Theta: Original:", theta)
+print("Theta from RMSprop:", [np.mean(theta_rmsprop_array[i,:]) for i in range(4)])
+print("Theta from AdaGrad:", [np.mean(theta_AdaGrad_array[i,:]) for i in range(4)])
+print("Theta w/ momentum:", [np.mean(theta_momentum_array[i,:]) for i in range(4)])
+print("Theta from Adam:", [np.mean(theta_adam_array[i,:]) for i in range(4)])
