@@ -1,8 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
-from matplotlib import cm
-from matplotlib.ticker import LinearLocator, FormatStrFormatter
 from utils import *
 
 def FrankeFunction(x, y):

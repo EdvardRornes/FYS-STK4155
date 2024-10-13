@@ -100,7 +100,7 @@ floatfix,
 \date{\today}
 
 \begin{abstract}
-	Regression models are widely used for analyzing and predicting data in many fields. We investigate and compare three regression models\footnote{\href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project1}{Github}}: Ordinary Least Squares, Ridge, and Least Absolute Shrinkage and Selection Operator. These were applied and analyzed on a two-dimensional Franke function and later tested on real terrain data from the US Geological Survey Earth Explorer \cite{USGS_EarthExplorer}. The models' performances are evaluated using metrics such as the Mean Squared Error and the coefficient of determination $R^2$. The bias-variance trade-off for OLS is studied where it was found that the optimal polynomial degree for the Franke function was $p=4$. We used resampling techniques such as bootstrapping and cross-validation to probe the quality of the evaluations and determine the predictiveness and generalizability of the models. The analysis of the terrain data suggests that there is a slightly larger complexity the best fits were found around $p\sim7$. In our analysis of both the Franke function and the terrain data the best performing method was Ridge regression with OLS following shortly after. LASSO performed worse than the other regression methods by a small margin for lower polynomial degrees, likely stemming from the polynomial coefficients not following a Laplace distribution.
+	Regression models are widely used for analyzing and predicting data in many fields. We investigate and compare three regression models\footnote{\href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project1}{Github}}: Ordinary Least Squares, Ridge, and Least Absolute Shrinkage and Selection Operator. These were applied and analyzed on a two-dimensional Franke function and later tested on real terrain data from the US Geological Survey Earth Explorer \cite{USGS_EarthExplorer}. The models' performances are evaluated using metrics such as the Mean Squared Error and the coefficient of determination $R^2$. The bias-variance trade-off for OLS is studied where it was found that the optimal polynomial degree for the Franke function was $p=4$. We used resampling techniques such as bootstrapping and cross-validation to probe the quality of the evaluations and determine the predictiveness and generalizability of the models. The analysis of the terrain data suggests a greater complexity and that the best fits were found around $p\sim23$. In our analysis of both the Franke function and the terrain data the best performing method was Ridge regression with OLS following shortly after. LASSO performed worse than the other regression methods by a noticable margin, likely stemming from the polynomial coefficients not following a Laplace distribution.
 \end{abstract}
 
 \maketitle
@@ -245,15 +245,15 @@ where the bias is defined as $\mathbb E[(f(\bm x)-\mathbb E[\tilde{\bm y}])^2]$.
 The idea is to minimize the LHS of (\ref{eq:MSE-bias-var}), so clearly we want to minimize both the bias and variance at the same time. However these are correlated to one another, so lowering e.g. the bias can in general increase the variance and vice-versa. So bias-variance trade-off is essentially trying to optimize the complexity of the model such that we neither overfit nor underfit the model such that it can be generalized to other cases whilst not being too simplistic. These quantities can then be used as means to fine tune a model.
 
 \subsection{Resampling}
-Resampling techniques are critical in understanding the performance and robustness of a model. They tend to better show how well a model will do on data it has not seen before, and are thus useful for diagnosing problems like over- and underfitting. In this report focus on two resampling methods: bootstrapping and cross-validation.
+Resampling techniques are critical in understanding the performance and robustness of a model. They tend to better show how well a model will do on data it has not seen before, and are thus useful for diagnosing problems like over- and underfitting. In this report focus on two resampling methods: bootstrapping and cross validation.
 
 \subsubsection{Bootstrap} 
 Bootstrapping is a statistical method that involves taking random samples with replacement from the original dataset to create several new datasets. These datasets are the same size as the original dataset, but since our sampling was done with replacement, some observations are presented more than once whilst others are eliminated. Here we train and evaluate a model over each of these resampled datasets allowing us to estimate how the performance varies across different datasets. This method is particularly important when the datasets are small as it heavily increases the amount information that can be extracted from a given data set. Averaging across all the performance metrics from the bootstrap samples can provide a clearer description of how well our model performs. 
 
-\subsubsection{Cross-Validation} 
-$k$-fold cross-validation is the other resampling method which we considered in this project. In $k$-fold cross-validation, the dataset is divided into $k$ subsets (or folds). The model is trained on $k-1$ of these folds and tested on the remaining fold. This process is repeated $k$ times, with each fold being used as the test set exactly once. The performance metrics, MSE and $R^2$, are averaged over the $k$ iterations to provide a more reliable estimate of how the model performs on unseen data.
+\subsubsection{Cross Validation} 
+$k$-fold cross validation is the other resampling method which we considered in this project. In $k$-fold cross validation, the dataset is divided into $k$ subsets (or folds). The model is trained on $k-1$ of these folds and tested on the remaining fold. This process is repeated $k$ times, with each fold being used as the test set exactly once. The performance metrics, MSE and $R^2$, are averaged over the $k$ iterations to provide a more reliable estimate of how the model performs on unseen data.
 
-Cross-validation is particularly advantageous for its ability to reduce the variance of performance estimates by using different portions of the data for both training and validation. In our analysis, we used 5-fold cross-validation to evaluate the stability and predictive power of each regression method. This method gave us a clearer picture of how each model generalizes, helping us tune the hyperparameters, such as the regularization parameter $\lambda$ for Ridge and LASSO.
+Cross validation is particularly advantageous for its ability to reduce the variance of performance estimates by using different portions of the data for both training and validation. In our analysis, we used 10-fold cross validation to evaluate the stability and predictive power of each regression method. This method gave us a clearer picture of how each model generalizes, helping us tune the hyperparameters, such as the regularization parameter $\lambda$ for Ridge and LASSO.
 
 Both resampling techniques are used to gain insight into the models performance and helps us ensure that the conclusions drawn from our analysis are not overly dependent on a particular division of the dataset.
 
@@ -333,7 +333,6 @@ Once everything has been implemented, we use the programs created to run on both
 \end{figure*}
 \newpage
 \section{Results \& Discussion}
-
 \subsection{The Franke Function}
 We first consider the results obtained from the data samples generated from the Franke test function \eqref{eq:franke} using OLS, Ridge, and LASSO. In the following, unless stated otherwise, we have used $N=100$ with an added normal-distributed noise proportional to \(\varepsilon=0.1\).
 \subsubsection{OLS}
@@ -424,45 +423,46 @@ The MSE and $R^2$ for the three regression methods using $k$-fold Cross validati
 
 \subsection{Terrain Data}
 % Contourplots of Grand Canyon and Mount Everest are shown in fig. \ref{fig:GC_ME_Image_Contour}. As can be seen 
-The MSE of all the three regression methods OLS, Ridge and LASSO with \(\lambda=10^{-2}\) and standard scaling is shown in \ref{fig:MSE_GrandCan_StandardScaling_17} and \ref{fig:MSE_MountEve_StandardScaling_17} using cross validation, for Grand Canyon and Mount Everest, respectively. As mentioned prior, due to computational purposes we have chosen to work with only a small subsection of the full data. In particular we only work with $N=11$ points as the program already begins to slow down heavily due to the high polynomial degree required. 
+The MSE of all the three regression methods OLS, Ridge and LASSO with \(\lambda=10^{-9}\) and standard scaling is shown in \ref{fig:MSE_GrandCan_StandardScaling_17} and \ref{fig:MSE_MountEve_StandardScaling_17} using cross validation, for Grand Canyon and Mount Everest, respectively. As mentioned prior, due to computational purposes we have chosen to work with only a small subsection of the full data. In particular we only work with $N=31$ points as the program already begins to slow down for large \(N\) and \(p\).
 % Countourplots of Grand Canyon and Mount Everest can be seen in \ref{fig:GC_ME_Image_Contour}, which suggest a greater complexity than that of the Franke function, comparing to \ref{fig:frankefunction}. 
-Both figures show the cross validated Ridge and OLS following each other until OLS increases, jaggedly and with greater error bars, away from Ridge. LASSO on the other hand, slowly decreases, seemingly reaching a constant value as \(p\) increases, above Ridge. The MSE of Mount Everest is greater for low order polynomials, while Grand Canyon seem to favor higher order polynomials. Visually, the lowest MSE is found with Ridge and a polynomial degree in the approximate range \(p\in[11, 15]\), \(p\in[4,6]\) for Grand Canyon and Mount Everest, respectively. 
+Both figures show the cross validated Ridge and OLS following each other until they both increase, with greater error bars. OLS seems to increase slightly faster for large \(p\). LASSO on the other hand, slowly decreases, seemingly reaching a constant value as \(p\) increases, above Ridge and OLS. Visually, the lowest MSE is found with Ridge and a polynomial degree in the approximate range \(p\in[20, 25]\) for both terrains. 
 % In Grand Canyon we do not map the parts with large cliffs but instead mostly flatland. Thus one may expect a lower order polynomial regression performs relatively good here.
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/Terrain/MSE_GrandCanyon_StandardScaling_17.pdf}
+	\includegraphics[width=\linewidth]{Python/Figures/Terrain/Terrain_CV_Regression_Grand Canyon_StandardScaling_30.pdf}
 	\caption{MSE of Grand Canyon terrain data from \cite{USGS_EarthExplorer} with 10-fold cross-validation as a function of polynomial degree $p$ for all three regression methods. The error-bars show the standard deviation resulting from the 10 folds.}
 	\label{fig:MSE_GrandCan_StandardScaling_17}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=\linewidth]{Python/Figures/Terrain/MSE_MountEverest_StandardScaling_17.pdf}
+	\includegraphics[width=\linewidth]{Python/Figures/Terrain/Terrain_CV_Regression_Mount Everest_StandardScaling_30.pdf}
 	\caption{MSE of Mount Everest terrain data from \cite{USGS_EarthExplorer} with 10-fold cross-validation as a function of polynomial degree $p$ for all three regression methods. The error-bars show the standard deviation resulting from the 10 folds.}
 	\label{fig:MSE_MountEve_StandardScaling_17}
 \end{figure}
 
-Figs. \ref{fig:log_GrandCan_StandardScaling_10} and \ref{fig:log_MountEve_StandardScaling_10} show the MSE and $R^2$ of Ridge and LASSO as a function of \(\lambda\) with \(p=10\), \(p=4\) for the Grand Canyon and Mount Everest respectively. In the case of Grand Canyon, Fig. \ref{fig:log_GrandCan_StandardScaling_10} suggests that Ridge, with an \(\lambda\)-value of \(\sim 1e-7\), gives the best MSE. For Mount Everest, it seems both Ridge and LASSO are constant for \(\lambda\in[10^{-10}, 10^{-3}]\), with Ridge outperforming LASSO.
+Figs. \ref{fig:log_GrandCan_StandardScaling_10} and \ref{fig:log_MountEve_StandardScaling_10} show the MSE and $R^2$ of Ridge and LASSO as a function of \(\lambda\) with \(p=23\) for both Grand Canyon and Mount Everest, respectively. For both Grand Canyon and Mount Everest, Ridge seems to outperform LASSO for all \(\lambda\)'s. For Ridge, the figures suggests a slightly better MSE for lower values of \(\lambda\). 
+
+Note that there are additional contour- and 3D-plots in Appendix \ref{Appendix:Plots}.
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.95\linewidth]{Python/Figures/Terrain/log_MSE_R2_GrandCanyon_StandardScaling_10.pdf}
-	\caption{MSE and $R^2$ of Grand Canyon terrain data with $p=10$ for Ridge and LASSO as a function of the hyperparameter $\lambda$.}
+	\includegraphics[width=0.95\linewidth]{Python/Figures/Terrain/log_MSE_R2_Grand Canyon_StandardScaling_23.pdf}
+	\caption{MSE and $R^2$ of Grand Canyon terrain data with $p=23$ for Ridge and LASSO as a function of the hyperparameter $\lambda$.}
 	\label{fig:log_GrandCan_StandardScaling_10}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.95\linewidth]{Python/Figures/Terrain/log_MSE_R2_MountEverest_StandardScaling_10.pdf}
-	\caption{MSE of Mount Everest terrain data with $p=10$ for Ridge and LASSO as a function of the hyperparameter $\lambda$.}
+	\includegraphics[width=0.95\linewidth]{Python/Figures/Terrain/log_MSE_R2_Mount Everest_StandardScaling_23.pdf}
+	\caption{MSE of Mount Everest terrain data with $p=23$ for Ridge and LASSO as a function of the hyperparameter $\lambda$.}
 	\label{fig:log_MountEve_StandardScaling_10}
 \end{figure}
 
 \section{Conclusion}
-OLS and Ridge clearly outperform LASSO on both the Franke function and terrain data. The current hypothesis for this, following the discussion in section \ref{sec:stats}, is that LASSO performs worse due to the $\beta$ coefficients not following a Laplace distribution. If these coefficients do instead follow a Gaussian distribution and there is a low correlation between the different events $z_i$ then this is exactly what one would expect. The expected bias-variance trade-off was observed explicitly by using bootstrapping. For higher (lower) polynomial degrees we clearly see an increase in the variance (bias) and helps us choose which model complexity we should aim for. 
+In conclusion we find that the terrain data is much more complicated than the Franke function, as one would expect, and thus requiring a much larger polynomial degree to optimize the MSE and \(R^2\)-score. OLS and Ridge outperformed LASSO on both the Franke function and terrain data. In fact, OLS and Ridge performed roughly equal throughout all the data sets, but with the latter method taking a slight edge. The current hypothesis for this, following the discussion in section \ref{sec:stats}, is that LASSO performs worse due to the $\beta$ coefficients not following a Laplace distribution. If these coefficients do instead follow a Gaussian distribution and that there is a low correlation between the different events, then this is exactly what one would expect. One positive performance for the LASSO method was its insensitivity to overfitting, as it flattened out when the polynomial degree increased. 
 
-
-
+The expected bias-variance trade-off was observed explicitly by using bootstrapping, for the OLS method. For higher (lower) polynomial degrees we clearly see an increase in the variance (bias), which helped us choose which model complexity we should aim for. The cross validation algorithm provided error bars for the MSE, which helped us assess the stability of the three regression methods. Whilst the stability of LASSO remained consistent throughout, Ridge and OLS both had their error bars increase as $p$ increased.
 
 
 
@@ -540,5 +540,72 @@ where $\mathbb{E}[(f-\tilde{\bm y})\bm\varepsilon]=0$ is justified by $\bm\varep
 	&=0
 \end{align*}
 which proves the claim. 
+
+\section{Additional Plots}
+\label{Appendix:Plots}
+We did not spend time making these plots look nice nor fix captions for them but hopefully the titles are explanatory enough. Note that for the predicted versions of the terrain data we have used StandardScaling whilst the actual terrain file is not. $\lambda=10^{-9}$ is used throughout.
+\subsection{Franke}
+\begin{figure}[H]
+	\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/OLS_franke_Unscaled_3D.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/Ridge_franke_Unscaled_3D.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/LASSO_franke_Unscaled_3D.pdf}
+\end{figure}
+\subsection{Grand Canyon}
+\begin{figure}[H]
+	\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/Grand Canyon_actual.pdf}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/OLS_Grand Canyon_StandardScaling.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/Ridge_Grand Canyon_StandardScaling.pdf}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/LASSO_Grand Canyon_StandardScaling.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/Grand Canyon_actual_3D.pdf}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/OLS_Grand Canyon_StandardScaling_3D.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/Ridge_Grand Canyon_StandardScaling_3D.pdf}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/LASSO_Grand Canyon_StandardScaling_3D.pdf}
+\end{figure}
+\subsection{Mount Everest}
+\begin{figure}[H]
+	\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/Mount Everest_actual.pdf}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/OLS_Mount Everest_StandardScaling.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/Ridge_Mount Everest_StandardScaling.pdf}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/LASSO_Mount Everest_StandardScaling.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/Mount Everest_actual_3D.pdf}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/OLS_Mount Everest_StandardScaling_3D.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/Ridge_Mount Everest_StandardScaling_3D.pdf}
+\end{figure}
+\begin{figure}[H]
+	\includegraphics[width=0.4\textwidth]{Python/Figures/Terrain/LASSO_Mount Everest_StandardScaling_3D.pdf}
+\end{figure}
+
+
+
 	
 \end{document}

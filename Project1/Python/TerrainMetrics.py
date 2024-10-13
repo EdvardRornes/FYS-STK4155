@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import imageio.v2 as imageio
 from utils import *
-import matplotlib.lines as mlines
 
 # Define terrain files
 files = {
@@ -12,8 +11,8 @@ files = {
 # Plot
 np.random.seed(42)
 latex_fonts()
-save = False; overwrite = False
-run_CV = True; run_log = True 
+save = True; overwrite = True
+run_CV = False; run_log = True 
 
 folder = "Figures/Terrain"
 
@@ -23,18 +22,18 @@ additional_description = "Unscaled"
 additional_description = "StandardScaling"
 
 # Setup
-deg_max = 17; deg_max_cv = 17
+deg_max = 30; deg_max_cv = 30
 degrees = np.arange(1, deg_max + 1); degrees_cv = np.arange(1, deg_max_cv + 1)
-lmbdas = [1e-2]
+lmbdas = [1e-9]
 k = 10
 
-N = 10
+N = 30
 
 # For lmbda-log plot:
 log_lambda_start = -10
 log_lambda_stop = -1
 lambda_num = 100
-deg_analysis = 10
+deg_analysis = 23
 
 lmbdadas = np.logspace(log_lambda_start, log_lambda_stop, lambda_num)
 
@@ -114,7 +113,7 @@ for name, file in files.items():
         plt.legend()
         # plt.legend(handles=handles, labels=labels)
         if save:
-            save_plt(f"{folder}/Terrain_CV_Regression_{name}_{additional_description}", overwrite=overwrite)
+            save_plt(f"{folder}/Terrain_CV_Regression_{name}_{additional_description}_{deg_max}", overwrite=overwrite)
 
     if run_log:
         RIDGE = PolynomialRegression("RIDGE", deg_max, [x,y,z], lmbdas=lmbdadas, start_training=False)
@@ -137,7 +136,7 @@ for name, file in files.items():
         for i in range(lambda_num):
             _, MSE_train_array_Ridge[i], MSE_test_array_Ridge[i], R2_train_array_Ridge[i], R2_test_array_Ridge[i] = RIDGE.Ridge_fit(X_train_Ridge, X_test_Ridge, z_train_Ridge, z_test_Ridge, lmbdadas[i])
 
-            _, MSE_train_array_LASSO[i], MSE_test_array_LASSO[i], R2_train_array_LASSO[i], R2_test_array_LASSO[i] = LASSO_default(X_train_LASSO, X_test_LASSO, z_train_LASSO, z_test_LASSO, lmbdadas[i])
+            _, MSE_train_array_LASSO[i], MSE_test_array_LASSO[i], R2_train_array_LASSO[i], R2_test_array_LASSO[i] = LASSO.regr_model(X_train_LASSO, X_test_LASSO, z_train_LASSO, z_test_LASSO, lmbdadas[i])
 
             print(f"log10 lambda analysis: {i/lambda_num*100:.1f}%, duration: {time.time()-start_time:.2f}s", end="\r")
 
@@ -174,11 +173,11 @@ for name, file in files.items():
         ax2.set_xlabel(r"$\log_{10}\lambda$")
         ax2.set_ylabel(r"$R^2$")
         ax2.set_xlim(log_lambda_start, log_lambda_stop)
-        ax2.set_ylim(-0.5, 1)
+        # ax2.set_ylim(-0.5, 1)
         ax2.legend()
         ax2.grid(True)
 
         if save:
-            save_plt(f"{folder}/logMSE_R2_{name}_{additional_description}_{deg_analysis}", overwrite=overwrite)
+            save_plt(f"{folder}/log_MSE_R2_{name}_{additional_description}_{deg_analysis}", overwrite=overwrite)
 
-        plt.show()
+    plt.show()

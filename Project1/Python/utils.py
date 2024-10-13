@@ -1,19 +1,17 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
-from matplotlib.ticker import LinearLocator, FormatStrFormatter
-
 import rasterio
 import time
-from pathlib import Path
+import imageio.v2 as imageio
 
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
+from pathlib import Path
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.utils import resample
-
-import imageio.v2 as imageio
 
 np.random.seed(4) # As every file imports this file, if we need to test a seed, we do it from here       
 
@@ -273,8 +271,7 @@ class PolynomialRegression:
         X, X, z_flat, z_flat = self.scale_data(X, X, z_flat, z_flat, self.scaling)
 
         beta, MSE, _, R2, _ = self.regr_model(X, X, z_flat, z_flat, lmbda)
-
-        beta = PolynomialRegression.Ridge_Reg(X, z_flat, 1e-6)
+        
         z_pred = X @ beta
         z_shape = z_meshed.shape
         z_pred = np.reshape(z_pred,z_shape)
