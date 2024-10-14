@@ -2,6 +2,16 @@ import numpy as np
 import jax.numpy as jnp
 from jax import grad, jit
 
+class f:
+    def __init__(self, a0, a1, a2, a3=0):
+        self.a0 = a0; self.a1 = a1; self.a2 = a2; self.a3 = a3
+
+    def __call__(self, x):
+        return self.a0 + self.a1 * x + self.a2 * x**2 + self.a3 * x**3
+
+    def derivative(self):
+        return f(self.a1, 2*self.a2, 3*self.a3)
+
 class Optimizer:
     def __init__(self, learning_rate=0.01, momentum=0.9, epsilon=1e-8, beta1=0.9, beta2=0.999, decay_rate=0.9):
         self.learning_rate = learning_rate
