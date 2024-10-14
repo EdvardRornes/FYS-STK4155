@@ -138,7 +138,7 @@ def create_layers_batch(network_input_size, layer_output_sizes):
     layers = []
     i_size = network_input_size
     for layer_output_size in layer_output_sizes:
-        W = np.random.randn(layer_output_size, i_size)  # Change to np.random.randn for weights
+        W = np.random.randn(layer_output_size, i_size)
         b = np.random.randn(layer_output_size)
         layers.append((W, b))
         i_size = layer_output_size
@@ -270,8 +270,6 @@ def train_network(
 # e) Train the network using gradient descent
 epochs = 101
 layers, training_accuracies = train_network(inputs, layers, activations, targets, epochs=epochs)
-
-# Optionally, plot the training accuracy over epochs
 plt.figure(figsize=(10, 8))
 plt.plot(range(0, epochs), training_accuracies, marker='o')
 plt.title('Training Accuracy over Epochs')
