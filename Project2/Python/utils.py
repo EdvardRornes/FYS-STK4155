@@ -1,6 +1,9 @@
 import numpy as np
 import jax.numpy as jnp
 from jax import grad, jit
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+import seaborn as sns
 
 class f:
     def __init__(self, a0, a1, a2, a3=0):
@@ -175,61 +178,40 @@ def sigmoid_derivative(z):
 
 def relu(z):
     """ReLU activation function."""
-    return np.maximum(0, z)
+    return np.where(z > 0, z, 0)
 
 def relu_derivative(z):
     """Derivative of ReLU activation function."""
     return np.where(z > 0, 1, 0)
 
-def ffnn_forward(X, weights, activation='sigmoid'):
-    """Forward pass for a FFNN with multiple hidden layers."""
-    layer_inputs = {}
-    layer_outputs = {}
-    
-    # Input layer
-    layer_outputs[0] = X
-    for i in range(len(weights) // 2):  # Since weights contain both W and b
-        layer_inputs[i + 1] = layer_outputs[i] @ weights[f'W{i + 1}'] + weights[f'b{i + 1}']
-        if i < (len(weights) // 2 - 1):
-            # Use activation function for hidden layers
-            layer_outputs[i + 1] = sigmoid(layer_inputs[i + 1]) if activation == 'sigmoid' else relu(layer_inputs[i + 1])
-        else:
-            # Linear output for the final layer
-            layer_outputs[i + 1] = layer_inputs[i + 1]
-    
-    return layer_outputs[len(weights) // 2], layer_outputs  # Return output and all layer outputs for backward pass
+def feed_forward_batch(inputs, layers, activations):
+    a = inputs
+    for (W, b), activations in zip(layers, activations):
+        z = a @ W.T + b
+        a = activations(z)
+    return a
 
-def ffnn_backward(X, y, layer_outputs, weights, learning_rate, activation='sigmoid'):
-    """Backward pass for updating weights using gradient descent."""
-    m = len(y)
-    gradients = {}
+def create_layers_batch(network_input_size, layer_output_sizes):
+    layers = []
 
-    # Output layer error (linear output for regression)
-    dz = layer_outputs[len(weights) // 2] - y
-    gradients[f'dW{len(weights) // 2}'] = (1 / m) * layer_outputs[len(weights) // 2 - 1].T @ dz
-    gradients[f'db{len(weights) // 2}'] = (1 / m) * np.sum(dz, axis=0)
+    i_size = network_input_size
+    for layer_output_size in layer_output_sizes:
+        W = np.random.randn(layer_output_size, i_size)
+        b = np.random.rand(layer_output_size) # Use uniform dist on bias
+        layers.append((W,b))
 
-    # Backpropagation through hidden layers
-    for i in range(len(weights) // 2 - 1, 0, -1):
-        if activation == 'sigmoid':
-            dz = dz @ weights[f'W{i + 1}'].T * sigmoid_derivative(layer_outputs[i])
-        else:
-            dz = dz @ weights[f'W{i + 1}'].T * relu_derivative(layer_outputs[i])
-        
-        gradients[f'dW{i}'] = (1 / m) * layer_outputs[i - 1].T @ dz
-        gradients[f'db{i}'] = (1 / m) * np.sum(dz, axis=0)
+        i_size = layer_output_size
+    return layers
 
-    # Update weights
-    for i in range(len(weights) // 2):
-        weights[f'W{i + 1}'] -= learning_rate * gradients[f'dW{i + 1}']
-        weights[f'b{i + 1}'] -= learning_rate * gradients[f'db{i + 1}']
-
-    return weights
-
-# Initialize weights for a FFNN with a flexible number of hidden layers
-def initialize_weights(layer_sizes):
-    weights = {}
-    for i in range(len(layer_sizes) - 1):
-        weights[f'W{i + 1}'] = np.random.randn(layer_sizes[i], layer_sizes[i + 1]) * np.sqrt(2. / layer_sizes[i])  # He initialization
-        weights[f'b{i + 1}'] = np.zeros(layer_sizes[i + 1])
-    return weights
+def plot_2D_parameter(lambdas, etas, MSE, savefig = False, filename=''):
+    fig, ax = plt.subplots(figsize = (10, 12))
+    tick = ticker.ScalarFormatter(useOffset=False, useMathText=True)
+    tick.set_powerlimits((0, 0))
+    t_x = [u'${}$'.format(tick.format_data(lambd)) for lambd in lambdas]
+    t_y = [u'${}$'.format(tick.format_data(eta)) for eta in etas]
+    sns.heatmap(data = MSE, ax = ax, cmap = 'plasma')
+    plt.xlim(0, len(lambdas))
+    plt.ylim(0, len(etas))
+    plt.tight_layout()
+    if savefig:
+        plt.savefig('Figures/{filename}.pdf')
