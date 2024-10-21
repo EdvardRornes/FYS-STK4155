@@ -98,20 +98,96 @@ aps,
 \date{\today}
 
 \begin{abstract}
-	Abstracting very cool
+	We build a simple neural network to identify malignant tumors using breast cancer data. Different activation functions such as: Sigmoid, $\tanh$, ReLU and LeakyReLU were used. The number of epochs and hidden nodes along with values for the hyper-parameter $\lambda$ and the learning rate $\eta$ were analyzed and tuned to optimal values. The best performing activation function was ... and ...
 \end{abstract}
 
 \maketitle
-\tableofcontents
 
 \section{Introduction}
+Over the last few years, machine learning and neural networks have become an increasingly important part of data analysis, with a large range of applications. From image recognition to predictive analytics and scientific simulations, these techniques are reshaping the way the scientific community tackles complicated problems. As such, we wish to investigate and gain an understanding of the fundamental principles behind neural networks and how to apply them. 
 
+In this project in particular, we investigate how these techniques can be applied to the healthcare system, specifically in diagnosing malignant breast cancer tumors based on the tumor's several features. We do this by testing the performance of a neural network with logistic regression as we are working with discrete data. The various parameters are optimized using Stochastic Gradient Decent (SGD).
 
 \section{Theory}
+In this section we derive and discuss the relevant theory behind the methods used. 
+
+\subsection{Linear Regression}
+As discussed in a previous project (cite project 1), linear regression is the simplest method for fitting a continuous given a data set. The data set is approximated by
+\begin{align}
+	\bm y=\bm X\bm\beta
+\end{align}
+and the $\beta$ coefficients are found by minimizing the cost function. For this project we consider the two regression methods
+\begin{align}
+	C_\text{OLS}(\bm\beta)&=\frac{2}{n}(\bm y-\bm X\bm\beta)\\
+	C_\text{Ridge}(\bm\beta)&=C_\text{OLS}(\bm\beta)+\lambda||\bm\beta||_2^2
+\end{align}
+in which one insists that the derivative of these w.r.t. $\bm\beta$ is $0$ and one arrives at
+\begin{align}
+	\bm\beta_\text{OLS}&=(\bm X^T\bm X)^{-1}\bm X^T\bm y\\
+	\bm\beta_\text{Ridge}&=(\bm X^T\bm X+\lambda \bm I)^{-1}\bm X^T\bm y
+\end{align}
+which is what we will use to compute the coefficients $\beta_i$.
+
+\subsection{Logistic Regression}
+Whilst linear regression is quite successful in fitting continuous data such as terrain data, when the output is supposed to be discrete it fails massively. Linear regression predicts values across a continuous spectrum, resulting in predictions outside the range of valid class labels, such as giving negative probabilities. Logistic regression on the other hand is specifically designed for binary classification problems, and is thus ideal when dealing with discrete outcomes. 
+
+Logistic regression models the probability that a given input belongs to a particular class. It does this by applying a activation function to a linear combination of the input features. For example the sigmoid function 
+\begin{align}
+	p(z)&=\frac{1}{1+e^{-z}}
+\end{align}
+maps any $z\in\mathbb{R}$ to a real number in the interval $(0,1)$. Mathematically, logistic regression is
+\begin{align}
+	P(Y=1|\bm X)&=\frac{1}{1+\exp(\bm X\bm\beta)}
+\end{align}
+where $P(Y=1|\bm X)$ is the probability that the output $Y$ is $1$ given the input features $\bm X$ and coefficients $\bm \beta$ which describe the model. We then insert a decision boundary for classification, which in case of the sigmoid function is $1/2$. This implies that if $P(Y=1|\bm X)\geq 1/2$ then we say that this instance belongs to class $1$, and otherwise it belongs to class $0$.
+
+The model is then trained on using the Maximum Likelihood Estimation (MLE), which finds the parameters $\bm\beta$ that maximize the likelihood of the observed data. The cost function is logistic regression is then the negative of the log-MLE, i.e.
+\begin{align}
+	C(\bm\beta)&=-\frac{1}{n}\sum_{i=1}^n[y_i\ln(P(Y=1|\bm X_i))]\\
+	&+(1-y_i)\ln(1-P(Y=1|\bm X_i))
+\end{align}
+The particular activation functions we will use are sigmoid, tanh, ReLU and LeakyReLU shown in (\ref{eq:sigmoid}-\ref{eq:LeakyReLU}) respectively:
+\begin{align}
+	\label{eq:sigmoid}
+	\sigma(z)&=\frac{1}{1+e^{-z}}\\
+	\label{eq:tanh}
+	\tanh(z)&=\frac{e^z-e^{-z}}{e^z+e^{-z}}\\
+	\label{eq:ReLU}
+	R(z)&=\begin{cases}
+		0 &\qquad\text{if }x\leq0\\
+		z &\qquad\text{if }x>0\\
+	\end{cases}\\
+	\label{eq:LeakyReLU}
+	LR(z)&=\begin{cases}
+		10^{-2}z&\text{if }x\leq0\\
+		z &\text{if }x>0
+	\end{cases}
+\end{align}
+
+\subsection{Regularization terms}
+
+\subsection{Resampling Methods}
+
+\subsection{Gradient Decent}
+
+\subsection{Stochastic Gradient Decent}
+
+\subsection{Neural Networks}
+
+\subsubsection{Feed Forward Neural Networks}
+
+\subsubsection{Back Propagation}
 
 \section{Implementation}
 
-\section{Discussion}
+\section{Results \& Discussion}
+
+\subsection{Linear Regression}
+
+\subsection{Non-Linear Regression}
+
+\subsection{Logistic Regression}
+
 
 \section{Conclusion}
 Test bib \cite{Planck:2018vyg}
