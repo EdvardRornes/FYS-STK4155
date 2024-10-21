@@ -4,16 +4,21 @@ from jax import grad, jit
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import seaborn as sns
+import time 
 
 class f:
-    def __init__(self, a0, a1, a2, a3=0):
-        self.a0 = a0; self.a1 = a1; self.a2 = a2; self.a3 = a3
 
+    def __init__(self, *coeffs):    
+        self.coeffs = np.array(coeffs)
+    
     def __call__(self, x):
-        return self.a0 + self.a1 * x + self.a2 * x**2 + self.a3 * x**3
+        return np.polyval(np.flip(self.coeffs), x)
 
     def derivative(self):
-        return f(self.a1, 2*self.a2, 3*self.a3)
+        new_coeffs = np.zeros(len(self.coeffs))
+        for i in range(len(new_coeffs)-1):
+            new_coeffs[i] = self.coeffs[i+1] * (i+1)
+        return f(*new_coeffs)
 
 class Optimizer:
     def __init__(self, learning_rate=0.01, momentum=0.9, epsilon=1e-8, beta1=0.9, beta2=0.999, decay_rate=0.9):
@@ -29,24 +34,42 @@ class Optimizer:
         if self.velocity is None:
             self.velocity = np.zeros_like(theta)
 
-    def update(self, theta, gradient):
+    def __call__(self, args):
         raise NotImplementedError("This method should be implemented by subclasses")
+    
+    def __str__(self):
+        return "Not defined"
 
 
 class GradientDescent(Optimizer):
     def __init__(self, learning_rate=0.01, momentum=0.9):
         super().__init__(learning_rate, momentum)
     
-    def update(self, theta, gradient):
+    def __call__(self, *args):
+
+        theta, gradient = args[0], args[1]
         self.initialize_velocity(theta)
         # Apply momentum
-        self.velocity = self.momentum * self.velocity + self.learning_rate * gradient
+        self.velocity = self.momentum + self.learning_rate * gradient
         theta -= self.velocity
         return theta
 
-
+    def __str__(self):
+        return f"Plane Gradient descent: eta: {self.learning_rate}, momentum: {self.momentum}"
+    
 class Adagrad(Optimizer):
     def __init__(self, learning_rate=0.01, epsilon=1e-8):
+        if isinstance(learning_rate, int) or isinstance(learning_rate, float):
+            tmp = learning_rate
+            def learning_rate(epochs, i):
+                return tmp 
+            
+            self._str_learning_rate = str(tmp)
+        else:
+            self._str_learning_rate = "callable"
+
+        self.learning_rate = learning_rate
+
         super().__init__(learning_rate, epsilon=epsilon)
         self.G = None  # Accumulated squared gradients
     
@@ -54,15 +77,31 @@ class Adagrad(Optimizer):
         if self.G is None:
             self.G = np.zeros_like(theta)
 
-    def update(self, theta, gradient):
+    def __call__(self, *args):
+        theta, gradient, epochs, i = args[0], args[1], args[2], args[3]
+
         self.initialize_accumulation(theta)
         self.G += gradient**2
-        theta -= (self.learning_rate / (np.sqrt(self.G + self.epsilon))) * gradient
+        theta -= (self.learning_rate(epochs, i) / (np.sqrt(self.G + self.epsilon))) * gradient
         return theta
+    
+    def __str__(self):
+        return f"Adagrad: eta: {self._str_learning_rate}, eps: {self.momentum}"
 
 
 class RMSprop(Optimizer):
     def __init__(self, learning_rate=0.01, decay_rate=0.9, epsilon=1e-8):
+        if isinstance(learning_rate, int) or isinstance(learning_rate, float):
+            tmp = learning_rate
+            def learning_rate(epochs, i):
+                return tmp 
+
+            self._str_learning_rate = str(tmp)
+        else:
+            self._str_learning_rate = "callable"
+
+        self.learning_rate = learning_rate
+
         super().__init__(learning_rate, epsilon=epsilon, decay_rate=decay_rate)
         self.G = None
 
@@ -70,15 +109,32 @@ class RMSprop(Optimizer):
         if self.G is None:
             self.G = np.zeros_like(theta)
 
-    def update(self, theta, gradient):
+    def __call__(self, *args):
+        theta, gradient, epochs, i = args[0], args[1], args[2], args[3]
+
         self.initialize_accumulation(theta)
         self.G = self.decay_rate * self.G + (1 - self.decay_rate) * gradient**2
-        theta -= (self.learning_rate / (np.sqrt(self.G + self.epsilon))) * gradient
+        theta -= (self.learning_rate(epochs, i) / (np.sqrt(self.G + self.epsilon))) * gradient
         return theta
 
+    def __str__(self):
+        return f"RMSprop: eta: {self._str_learning_rate}, eps: {self.momentum}, decay_rate = {self.decay_rate}"
 
 class Adam(Optimizer):
     def __init__(self, learning_rate=0.001, beta1=0.9, beta2=0.999, epsilon=1e-8):
+        if isinstance(learning_rate, int) or isinstance(learning_rate, float):
+            tmp = learning_rate
+            def learning_rate(epochs, i):
+                return tmp 
+            
+            self._str_learning_rate = str(tmp)
+        else:
+            self._str_learning_rate = "callable"
+
+        self.learning_rate = learning_rate
+
+        self.learning_rate = learning_rate
+
         super().__init__(learning_rate, epsilon=epsilon, beta1=beta1, beta2=beta2)
         self.m = None  # First moment vector
         self.v = None  # Second moment vector
@@ -90,7 +146,9 @@ class Adam(Optimizer):
         if self.v is None:
             self.v = np.zeros_like(theta)
 
-    def update(self, theta, gradient):
+    def __call__(self, *args):
+        theta, gradient, epochs, i = args[0], args[1], args[2], args[3]
+
         self.t += 1
         self.initialize_moments(theta)
 
@@ -103,8 +161,125 @@ class Adam(Optimizer):
         v_hat = self.v / (1 - self.beta2**self.t)
 
         # Update parameters
-        theta -= (self.learning_rate / (np.sqrt(v_hat) + self.epsilon)) * m_hat
+        theta -= (self.learning_rate(epochs, i) / (np.sqrt(v_hat) + self.epsilon)) * m_hat
         return theta
+    
+    def __str__(self):
+        return f"Adam: eta: {self._str_learning_rate}, eps: {self.momentum}, beta1 = {self.beta1}, beta2 = {self.beta2}"
+
+class beta_giver:
+
+    def __init__(self, optimization_methods:list|Optimizer, mode="GD"):
+        
+        if isinstance(optimization_methods, Optimizer):
+            optimization_methods = [optimization_methods]
+        
+        self._optimization_methods = optimization_methods; self._N = len(self._optimization_methods)
+
+        self._thetas_method = [0]*self._N
+
+        def update(gradient, epochs, i):
+            for i in range(self._N):
+                self._thetas_method[i] = self._optimization_methods[i](self._thetas_method[i], gradient[i], epochs, i)
+        
+        self.update = update 
+        self.gradients = [None]*self._N 
+
+        self._message = [str(i) for i in self._optimization_methods]
+        
+        if mode.upper() == "GD":
+            self._descent_method_call = self._GD  
+        elif mode.upper() == "SGD":
+            self._descent_method_call = self._SGD  
+    
+    @property
+    def gradient(self):
+        return self.gradient
+    
+    @gradient.setter 
+    def gradient(self, gradient_methods, index=None):
+        if index is None:
+            if not isinstance(gradient_methods, list):
+                self.gradients = [gradient_methods]*self._N
+            else:
+                for i in range(len(gradient_methods)):
+                    self.gradients[i] = gradient_methods[i]
+        else:
+            self.gradients[index] = gradient_methods
+
+    def _gradients_call(self, X, y):
+        return [self.gradients[i](X, y, self._thetas_method[i]) for i in range(self._N)]
+            
+    def _GD(self, *args, theta="RANDOM"):
+        start_time = time.time()
+
+        if len(args) != 3:
+            raise ValueError(f"Gradient descent needs three arguments: X, y, N")
+        
+        X, y, N = args[0], args[1], args[2]
+
+        if isinstance(theta, str):
+            if theta.upper() == "RANDOM":
+                self._thetas_method = [np.random.randn(X.shape[1], 1)]*self._N
+        else:
+            self._thetas_method = [theta] * self._N
+        for iter in range(N):
+            gradients = self._gradients_call(X, y)
+            self.update(gradients, None, None)
+
+            current_time = time.time()
+            print(f"{iter/N*100:.1f}%, time elapsed: {current_time-start_time:.1f}s", end="\r")
+
+        print(f"100.0%, time elapsed: {current_time-start_time:.1f}s         ")
+    
+    def _SGD(self, *args, theta="RANDOM"):
+        start_time = time.time()
+        if len(args) != 5:
+            raise ValueError(f"Gradient descent needs three arguments: X, y, epochs, m, M")
+        
+        X, y, epochs, m, M = args[0], args[1], args[2], args[3], args[4]
+
+        if isinstance(theta, str):
+            if theta.upper() == "RANDOM":
+                self._thetas_method = [np.random.randn(X.shape[1], 1)]*self._N
+
+        N = epochs * m*M
+        for epoch in range(epochs):
+            indices = np.arange(m)
+            np.random.shuffle(indices)
+            X_shuffled = X[indices]
+            y_shuffled = y[indices]
+
+            for i in range(0, m, M):
+                X_i = X_shuffled[i: i + m]
+                y_i = y_shuffled[i: i + m]
+
+                gradients = self._gradients_call(X_i, y_i)
+                self.update(gradients, epoch, i)
+
+                current_time = time.time()
+                print(f"{epoch * i /N:.1f}%, time elapsed: {current_time-start_time:.1f}s", end="\r")
+
+        print(f"100.0%, time elapsed: {current_time-start_time:.1f}s         ")
+
+    def __call__(self, *args, theta="RANDOM") -> list:
+        for i in range(self._N):
+            if self.gradients[i] is None:
+                raise ValueError(f"No gradient is given for {i}-method: {str(self._optimization_methods[i])}")
+        
+        print("Starting training w/")
+        for i in range(self._N):
+            print(self._optimization_methods[i])
+        
+        self._descent_method_call(*args, theta=theta)
+        return self._thetas_method
+        
+        
+
+
+    
+
+
 
 
 def optimize(X, y, theta, epochs, optimizer, batch_size=None, mode='GD', use_jax=False):
