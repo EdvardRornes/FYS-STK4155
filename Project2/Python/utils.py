@@ -385,108 +385,117 @@ class Franke:
         term4 = -0.2*np.exp(-(9*x - 4)**2 - (9*y - 7)**2)
         return term1 + term2 + term3 + term4
 
-# Taken from week42 lecture slides
-class NeuralNetwork:
-    def __init__(
-            self,
-            X_data,
-            Y_data,
-            n_hidden_neurons=50,
-            n_categories=10,
-            epochs=10,
-            batch_size=100,
-            eta=0.1,
-            lmbd=0.0):
+class FFNN:
+    def __init__(self, input_size, hidden_layers, output_size, activation='relu', alpha=0.01, lambda_reg=0.0):
+        self.layers = [input_size] + hidden_layers + [output_size]
+        self.weights = []
+        self.biases = []
+        self.activation_func = activation
+        self.alpha = alpha
+        self.lambda_reg = lambda_reg
 
-        self.X_data_full = X_data
-        self.Y_data_full = Y_data
+        for i in range(len(self.layers) - 1):
+            weight_matrix = np.random.randn(self.layers[i], self.layers[i + 1]) * np.sqrt(2. / self.layers[i])
+            self.weights.append(weight_matrix)
+            bias_vector = np.zeros((1, self.layers[i + 1]))
+            self.biases.append(bias_vector)
 
-        self.n_inputs = X_data.shape[0]
-        self.n_features = X_data.shape[1]
-        self.n_hidden_neurons = n_hidden_neurons
-        self.n_categories = n_categories
+    def relu(self, z):
+        return np.where(z > 0, z, 0)
 
-        self.epochs = epochs
-        self.batch_size = batch_size
-        self.iterations = self.n_inputs // self.batch_size
-        self.eta = eta
-        self.lmbd = lmbd
+    def relu_derivative(self, z):
+        return np.where(z > 0, 1, 0)
 
-        self.create_biases_and_weights()
+    def Lrelu(self, z):
+        return np.where(z > 0, z, self.alpha * z)
 
-    def create_biases_and_weights(self):
-        self.hidden_weights = np.random.randn(self.n_features, self.n_hidden_neurons)
-        self.hidden_bias = np.zeros(self.n_hidden_neurons) + 0.01
+    def Lrelu_derivative(self, z):
+        return np.where(z > 0, 1, self.alpha)
 
-        self.output_weights = np.random.randn(self.n_hidden_neurons, self.n_categories)
-        self.output_bias = np.zeros(self.n_categories) + 0.01
+    def sigmoid(self, z):
+        return 1 / (1 + np.exp(-z))
 
-    def feed_forward(self, activation):
-        # feed-forward for training
-        self.z_h = np.matmul(self.X_data, self.hidden_weights) + self.hidden_bias
-        self.a_h = activation(self.z_h)
+    def sigmoid_derivative(self, z):
+        sig = self.sigmoid(z)
+        return sig * (1 - sig)
 
-        self.z_o = np.matmul(self.a_h, self.output_weights) + self.output_bias
+    def forward(self, X):
+        self.activations = [X]
+        self.z_values = []
+        A = X
+        for i in range(len(self.weights) - 1):
+            Z = A @ self.weights[i] + self.biases[i]
+            self.z_values.append(Z)
+            A = self.relu(Z) if self.activation_func.lower() == 'relu' else self.sigmoid(Z) if self.activation_func.lower() == 'sigmoid' else self.Lrelu(Z)
+            self.activations.append(A)
 
-        exp_term = np.exp(self.z_o)
-        self.probabilities = exp_term / np.sum(exp_term, axis=1, keepdims=True)
+        Z = A @ self.weights[-1] + self.biases[-1]
+        self.z_values.append(Z)
+        self.activations.append(Z)
+        return Z
 
-    def feed_forward_out(self, X, activation):
-        # feed-forward for output
-        z_h = np.matmul(X, self.hidden_weights) + self.hidden_bias
-        a_h = activation(z_h)
+    def backward(self, X, y, learning_rate):
+        m = X.shape[0]
+        y = y.reshape(-1, 1)
 
-        z_o = np.matmul(a_h, self.output_weights) + self.output_bias
+        delta = self.activations[-1] - y
+        for i in reversed(range(len(self.weights))):
+            # Calculate gradients
+            dw = (self.activations[i].T @ delta) / m
+            db = np.sum(delta, axis=0, keepdims=True) / m
+
+            # Add L2 regularization term
+            dw += (self.lambda_reg / m) * self.weights[i]  # Regularization term
+
+            self.weights[i] -= learning_rate * dw
+            self.biases[i] -= learning_rate * db
+            
+            if i > 0:
+                delta = (delta @ self.weights[i].T) * (self.relu_derivative(self.z_values[i - 1]) if self.activation_func.lower() == 'relu' else self.sigmoid_derivative(self.z_values[i - 1]) if self.activation_func.lower() == 'sigmoid' else self.Lrelu_derivative(self.z_values[i - 1]))
+
+    def train(self, X, y, learning_rate=0.01, epochs=1000, batch_size=None, shuffle=True, lambda_reg=0.0):
+        self.lambda_reg = lambda_reg  # Update regularization parameter
+        mse_history = []
+        m = X.shape[0]
+
+        if batch_size is None:  # Default to full-batch (i.e., all data at once)
+            batch_size = m
+
+        for epoch in range(epochs):
+            if shuffle:
+                indices = np.random.permutation(m)
+                X, y = X[indices], y[indices]
+
+            for i in range(0, m, batch_size):
+                X_batch = X[i:i + batch_size]
+                y_batch = y[i:i + batch_size]
+
+                self.forward(X_batch)
+                self.backward(X_batch, y_batch, learning_rate)
+
+            mse = np.mean((self.activations[-1] - y_batch) ** 2)
+
+            if np.isnan(mse) or mse > 100:
+                mse = 1e10
+                print(f'Epoch {epoch}, MSE ({self.activation_func}): {mse} (Issue encountered, breaking)')
+                break
+            
+            mse_history.append(mse)
+
+            # Print MSE every 100 epochs
+            if epoch % 100 == 0:
+                print(f'Epoch {epoch}, MSE ({self.activation_func}): {mse}')
         
-        exp_term = np.exp(z_o)
-        probabilities = exp_term / np.sum(exp_term, axis=1, keepdims=True)
-        return probabilities
-
-    def backpropagation(self):
-        error_output = self.probabilities - self.Y_data
-        error_hidden = np.matmul(error_output, self.output_weights.T) * self.a_h * (1 - self.a_h)
-
-        self.output_weights_gradient = np.matmul(self.a_h.T, error_output)
-        self.output_bias_gradient = np.sum(error_output, axis=0)
-
-        self.hidden_weights_gradient = np.matmul(self.X_data.T, error_hidden)
-        self.hidden_bias_gradient = np.sum(error_hidden, axis=0)
-
-        if self.lmbd > 0.0:
-            self.output_weights_gradient += self.lmbd * self.output_weights
-            self.hidden_weights_gradient += self.lmbd * self.hidden_weights
-
-        self.output_weights -= self.eta * self.output_weights_gradient
-        self.output_bias -= self.eta * self.output_bias_gradient
-        self.hidden_weights -= self.eta * self.hidden_weights_gradient
-        self.hidden_bias -= self.eta * self.hidden_bias_gradient
+        return mse_history
 
     def predict(self, X):
-        probabilities = self.feed_forward_out(X)
-        return np.argmax(probabilities, axis=1)
+        return self.forward(X)
 
-    def predict_probabilities(self, X):
-        probabilities = self.feed_forward_out(X)
-        return probabilities
 
-    def train(self):
-        data_indices = np.arange(self.n_inputs)
-
-        for i in range(self.epochs):
-            for j in range(self.iterations):
-                # pick datapoints with replacement
-                chosen_datapoints = np.random.choice(
-                    data_indices, size=self.batch_size, replace=False
-                )
-
-                # minibatch training data
-                self.X_data = self.X_data_full[chosen_datapoints]
-                self.Y_data = self.Y_data_full[chosen_datapoints]
-
-                self.feed_forward()
-                self.backpropagation()
-
-def plot_2D_parameter_lambda_eta(lambdas, etas, MSE, title=None, x_log=False, y_log=False, savefig=False, filename=''):
+def plot_2D_parameter_lambda_eta(lambdas, etas, MSE, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False):
+    cmap = 'plasma'
+    if Reverse_cmap == True:
+        cmap = 'plasma_r'
     fig, ax = plt.subplots(figsize = (12, 10))
     tick = ticker.ScalarFormatter(useOffset=False, useMathText=True)
     tick.set_powerlimits((0, 0))
@@ -498,7 +507,7 @@ def plot_2D_parameter_lambda_eta(lambdas, etas, MSE, title=None, x_log=False, y_
         t_y = [u'${}$'.format(tick.format_data(eta)) for eta in etas]
     else:
         t_y = [fr'${eta}$' for eta in etas]
-    sns.heatmap(data = MSE, ax = ax, cmap = 'plasma', annot=True,  xticklabels=t_x, yticklabels=t_y)
+    sns.heatmap(data = MSE, ax = ax, cmap = cmap, annot=True, fmt=".3f",  xticklabels=t_x, yticklabels=t_y)
     if title is not None:
         plt.title(title)
     plt.xlim(0, len(lambdas))
