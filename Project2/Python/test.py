@@ -1,78 +1,173 @@
 from utils import *
-# from autograd import grad
+import sys, os
 
-def gradientOLS(X, y, beta):
-    n=len(y)
-    return 2.0/n*X.T @ (X @ (beta)-y)
+# Disable print
+def blockPrint():
+    sys.stdout = open(os.devnull, 'w')
 
-def create_X(x, y, n):
-    if len(x.shape) > 1:
-        x = np.ravel(x)
-        y = np.ravel(y)
+# Restore print
+def enablePrint():
+    sys.stdout = sys.__stdout__
 
-    N = len(x)
-    l = int((n+1)*(n+2)/2) # Number of elements in beta
-    X = np.ones((N,l))
+def test_GD(eps=3):
+    blockPrint()
 
-    for i in range(1,n+1):
-        q = int((i)*(i+1)/2)
-        for k in range(i+1):
-            X[:,q+k] = (x**(i-k))*(y**k)
+    N = 1000
+    x = np.random.rand(N,1)
+    beta_true = np.array([[1, -8, 16],]).T
+    func = Polynomial(*beta_true)
+    y = func(x)
 
-    return X
+    X = create_Design_Matrix(x.flatten(), len(beta_true))
 
-planeGD = GradientDescent(momentum=0)
-test = beta_giver(planeGD)
+    planeGD = PlaneGD(momentum=0, learning_rate=0.3590565341426001)
+    test = DescentSolver(planeGD)
 
+    X = create_Design_Matrix(x.flatten(), 3)
+    beta_test = np.random.randn(np.shape(X)[1],1)
 
-N = 1000
-x = 10*np.random.rand(N,1)
-# x = np.linspace(-10,10,N)
-beta_true = np.array([[1, 1/2, -1/18, 3, 1, 1],]).T
-func = f(*beta_true)
-y = func(x)
-X = np.c_[np.ones((N,len(beta_true)-1)), x]
-beta = np.random.randn(np.shape(X)[1],1)
+    test.gradient = gradientOLS
+    beta_test = test(X, y, N, theta=beta_test)
 
-test.gradient = gradientOLS
-beta = test(X, y, 100, theta=beta)
+    enablePrint()
+    assert np.linalg.norm(beta_true - beta_test) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test)}"
 
-print(beta)
+def test_SGD(eps=3):
+    blockPrint()
 
-f_train = f(*beta[0])
-x_test = np.linspace(0,10, 10_000)
+    N = 1000; batch_size = 5
+    x = np.random.rand(N,1)
+    beta_true = np.array([[1, -8, 16],]).T
+    func = Polynomial(*beta_true)
+    y = func(x)
 
-plt.plot(x_test, func(x_test), label="analytic")
-plt.plot(x_test, f_train(x_test), label="train")
-plt.legend()
-plt.show()
+    planeSGD = PlaneGD(momentum=0, learning_rate=0.3590565341426001)
+    test = DescentSolver(planeSGD, 3, mode="SGD")
 
+    beta_test = np.random.randn(N,1)
 
-n = 1000
-X = np.c_[np.ones((n,4)), x]
-# Hessian matrix
-H = (2.0/n)* X.T @ X
-# Get the eigenvalues
-EigValues, EigVectors = np.linalg.eig(H)
-print(f"Eigenvalues of Hessian Matrix:{EigValues}")
+    test.gradient = gradientOLS
+    beta_test = test(x, y, N, batch_size, theta=beta_test)
 
-# beta_linreg = np.linalg.inv(X.T @ X + 1e-3*np.identity(np.shape(X))) @ X.T @ y
-# print(beta_linreg)
-beta = np.random.randn(5,1)
+    enablePrint()
+    assert np.linalg.norm(beta_true - beta_test) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test)}"
 
-eta = 1.0/np.max(EigValues)
-Niterations = 1000
+def test_AdaGrad(eps=5):
+    blockPrint()
 
-for iter in range(Niterations):
-    gradient = (2.0/n)*X.T @ (X @ beta-y)
-    beta -= eta*gradient
+    N = 10_000; batch_size = 5
+    x = np.random.rand(N,1)
+    beta_true = np.array([[1, -8, 16],]).T
+    func = Polynomial(*beta_true)
+    y = func(x)
 
-print(beta)
-f_train = f(*beta)
-print(f_train.coeffs)
-x_test = np.linspace(0,10, 10_000)
+    adagraddiradd = Adagrad(learning_rate=0.3590565341426001)
+    test1 = DescentSolver(adagraddiradd, 3)
+    test2 = DescentSolver(adagraddiradd, 3, mode="SGD")
 
-plt.plot(x_test, func(x_test), label="analytic")
-plt.plot(x_test, f_train(x_test), label="train")
-plt.legend()
-plt.show()
+    beta_test = np.random.randn(N,1)
+
+    test1.gradient = gradientOLS; test2.gradient = gradientOLS
+    beta_test1 = test1(x, y, N, theta=beta_test); beta_test2 = test2(x, y, N, batch_size, theta=beta_test)
+
+    enablePrint()
+
+    assert np.linalg.norm(beta_true - beta_test1) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test1)}"
+    assert np.linalg.norm(beta_true - beta_test2) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test2)}"
+
+def test_RMSprop(eps=3):
+    blockPrint()
+    
+
+    N = 10_000; batch_size = 5
+    x = np.random.rand(N,1)
+    beta_true = np.array([[1, -8, 16],]).T
+    func = Polynomial(*beta_true)
+    y = func(x)
+
+    # t0, t1 = 5, 50
+    # def learning_schedule(epoch, i):
+    #     t = epoch*m + i 
+    #     return t0/(t+t1)
+
+    RMS_propproppapp = RMSprop(learning_rate=0.3590565341426001)
+    test1 = DescentSolver(RMS_propproppapp, 3)
+    test2 = DescentSolver(RMS_propproppapp, 3, mode="SGD")
+
+    beta_test = np.random.randn(N,1)
+
+    test1.gradient = gradientOLS; test2.gradient = gradientOLS
+    beta_test1 = test1(x, y, N, theta=beta_test)
+    beta_test2 = test2(x, y, N, batch_size, theta=beta_test)
+
+    enablePrint()
+    print(beta_test1)
+    print(beta_test2)
+    assert np.linalg.norm(beta_true - beta_test1) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test1)}"
+    assert np.linalg.norm(beta_true - beta_test2) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test2)}"
+
+def test_Adam(eps=3):
+    # blockPrint()
+
+    N = 10_0; batch_size = 5
+    x = np.random.rand(N,1)
+    beta_true = np.array([[1, -8, 16],]).T
+    func = Polynomial(*beta_true)
+    y = func(x)
+
+    adamramdampadamkada = Adam(learning_rate=0.3590565341426001)
+    test1 = DescentSolver(adamramdampadamkada, 3)
+    test2 = DescentSolver(adamramdampadamkada, 3, mode="SGD")
+
+    # X = create_Design_Matrix(x.flatten(), 3)
+    beta_test = np.random.randn(N,1)
+
+    test1.gradient = gradientOLS; test2.gradient = gradientOLS
+    beta_test1 = test1(x, y, N, theta=beta_test); beta_test2 = test2(x, y, N, batch_size, theta=beta_test)
+
+    enablePrint()
+
+    print(beta_test1)
+    print(beta_test2)
+    assert np.linalg.norm(beta_true - beta_test1) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test1)}"
+    assert np.linalg.norm(beta_true - beta_test2) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test2)}"
+
+if __name__ == "__main__":
+    test_GD()
+    test_SGD()
+    test_AdaGrad()
+    test_RMSprop()
+    test_Adam()
+
+    exit()
+    import autograd.numpy as np
+    N = 10_000
+    x = np.random.rand(N,1)
+    beta_true = np.array([[1, -8, 16],]).T
+    func = Polynomial(*beta_true)
+    y = func(x)
+
+    def gradient_me(X, y, beta):
+        return y - X @ beta 
+    
+    def CostOLS(X,y,theta):
+        return np.sum((y-X @ theta)**2)
+
+    
+    g_gradient = grad(CostOLS, 2)
+
+    adagraddiradd = Adagrad(learning_rate=0.3590565341426001)
+    test = DescentSolver(adagraddiradd, 3, mode="SGD")
+    beta_test = np.random.randn(np.shape(X)[1],1)
+
+    test.gradient = g_gradient
+    # X = np.c_[np.ones((N,2)), x]
+    # y = func(x)
+    # print(CostOLS(X,y, np.random.randn(3,1)))
+    # print(g_gradient(X, y, np.random.randn(3,1)))
+    # exit()
+    beta_test = test(X, y, N, 20, 5, theta=beta_test)
+
+    enablePrint()
+
+    assert np.linalg.norm(beta_true - beta_test) < 1, f"Test failed with error {np.linalg.norm(beta_true - beta_test)}"
