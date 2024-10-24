@@ -8,31 +8,12 @@ from autograd import grad
 import seaborn as sns
 from sklearn.metrics import mean_squared_error
 
-import sys, os
 import time 
-import pickle
-
-# Disable print
-def blockPrint():
-    sys.stdout = open(os.devnull, 'w')
-
-# Restore print
-def enablePrint():
-    sys.stdout = sys.__stdout__
 
 def gradientOLS(X, y, beta):
     n=len(y)
 
     return 2.0/n*X.T @ (X @ (beta)-y)
-
-class CostRidge:
-
-    def __init__(self, lmbda:float):
-        self.lmbda = lmbda 
-
-    def __call__(self, X, y, beta):
-        n=len(y)
-        return 2.0/n*X.T @ (X @ (beta)-y) + self.lmbda * beta @ beta
 
 class AutoGradCostFunction:
 
@@ -63,6 +44,7 @@ class AutoGradCostFunction:
         Returns gradient of current cost function.
         """
         return self._gradient(X, y, theta)
+
 
 def create_Design_Matrix(*args):
     """
@@ -156,6 +138,7 @@ class Optimizer:
     
     def __str__(self):
         return "Not defined"
+
 
 class PlaneGD(Optimizer):
 
@@ -394,11 +377,11 @@ class DescentSolver:
         if len(args) != 4:
             raise ValueError(f"Gradient descent needs 4 arguments: X, y, epochs, m, M, not {len(args)}")
         
-        x, y, epochs, batch_size = args[0], args[1], args[2], args[3]
+        x, y, epochs, M = args[0], args[1], args[2], args[3]
 
         X = create_Design_Matrix(x, y, self.degree)
 
-        m = int(X.shape[0]/batch_size)
+        m = int(X.shape[0]/M)
         if isinstance(theta, str):
             if theta.upper() == "RANDOM":
                 self._thetas_method = [np.random.randn(X.shape[1], 1)]*self._N
@@ -411,7 +394,7 @@ class DescentSolver:
             X_shuffled = X[indices]
             y_shuffled = y[indices]
 
-            for i in range(0, m, batch_size):
+            for i in range(0, m, M):
                 X_i = X_shuffled[i: i + m]
                 y_i = y_shuffled[i: i + m]
 
@@ -439,380 +422,82 @@ class DescentSolver:
         self._descent_method_call(*args, theta=theta)
         return self._thetas_method
 
-def create_list_of_it(item):
-    """Utility function to ensure the item is a list."""
-    if not isinstance(item, list):
-        return [item]
-    return item
-
-class DescentAnalyzer:
-
-    def __init__(self, x: np.ndarray, y: np.ndarray, optimizer: str, gradient: callable,
-                 degree: int, epochs, learning_rates, batch_size=None, GD_SGD="GD",
-                 momentum=0.9, epsilon=1e-8, beta1=0.9, beta2=0.999, decay_rate=0.9, princt_percentage=True):
-        self.x = x
-        self.y = y
-        self.optimizer_name = optimizer
-        self.gradient = gradient
-        self.degree = degree
-        self.epochs = epochs
-        self.learning_rates = learning_rates
-        self.batch_size = batch_size
-        self.GD_SGD = GD_SGD
-        self.momentum = momentum
-        self.epsilon = epsilon
-        self.beta1 = beta1
-        self.beta2 = beta2
-        self.decay_rate = decay_rate
-
-        self._print_percentage = princt_percentage
-
-        # Placeholder for results
-        self.thetas = []
-
-        self.data = {
-            'thetas': self.thetas,
-            'optimizer_name': self.optimizer_name,
-            'degree': self.degree,
-            'epochs': self.epochs,
-            'learning_rates': self.learning_rates,
-            'batch_size': self.batch_size ,
-            'GD_SGD': self.GD_SGD,
-            'momentum': self.momentum,
-            'epsilon': self.epsilon,
-            'beta1': self.beta1,
-            'beta2': self.beta2,
-            'decay_rate': self.decay_rate
-        }
-
-    def run_analysis(self):
-        """Runs the descent analysis and stores the results."""
-
-        if not self._print_percentage:
-            blockPrint()
-
-        epochs = create_list_of_it(self.epochs)
-        learning_rates = create_list_of_it(self.learning_rates)
-        Ms = create_list_of_it(self.batch_size) if self.batch_size is not None else [None]*len(learning_rates)
-
-        # Testing that len(epochs) == len(learning_rates) == len(Ms), the last one only for SGD
-        args_length = [len(epochs), len(learning_rates), len(Ms)]
-        arg_names = ["epochs", "learning_rates", "M"]
-
-        if self.GD_SGD == "GD":
-            args_length = args_length[:-1]
-            arg_names = arg_names[:-1]
-
-        if len(set(args_length)) != 1:
-            for i in range(len(args_length)):
-                for j in range(len(args_length)):
-                    if args_length[i] != args_length[j]:
-                        raise ValueError(f"Size of {arg_names[i]} is not the same as {arg_names[j]}; {args_length[i]} != {args_length[j]}")
-
-        self.thetas = []
-        if self.optimizer_name.upper() == "PLANEGD":  # Can use GD or SGD
-            if self.GD_SGD == "GD":
-                for i in range(len(learning_rates)):
-                    planeGD = PlaneGD(learning_rate=learning_rates[i], momentum=self.momentum)
-                    descentSolver = DescentSolver(planeGD, self.degree, mode=self.GD_SGD)
-                    descentSolver.gradient = self.gradient
-
-                    theta = descentSolver(self.x, self.y, epochs[i])
-                    self.thetas.append(theta)
-
-            elif self.GD_SGD == "SGD":
-                for i in range(len(learning_rates)):
-                    planeGD = PlaneGD(learning_rate=learning_rates[i], momentum=self.momentum)
-                    descentSolver = DescentSolver(planeGD, self.degree, mode=self.GD_SGD)
-                    descentSolver.gradient = self.gradient
-
-                    theta = descentSolver(self.x, self.y, epochs[i], Ms[i])
-                    self.thetas.append(theta)
-
-        elif self.optimizer_name.upper() in ["ADAGRAD", "RMSPROP", "ADAM"]:
-            optimizers = [Adagrad, RMSprop, Adam]
-            optimizers_name = ["ADAGRAD", "RMSPROP", "ADAM"]
-            optimizer_index = optimizers_name.index(self.optimizer_name.upper())
-
-            for i in range(len(learning_rates)):
-                optimizer_class = optimizers[optimizer_index]
-                optimizer = optimizer_class(learning_rate=learning_rates[i], momentum=self.momentum,
-                                            epsilon=self.epsilon, beta1=self.beta1, beta2=self.beta2, decay_rate=self.decay_rate)
-
-                descentSolver = DescentSolver(optimizer, self.degree, mode=self.GD_SGD)
-                descentSolver.gradient = self.gradient
-
-                theta = descentSolver(self.x, self.y, epochs[i], Ms[i])
-                self.thetas.append(theta)
-        else:
-            raise ValueError(f"Unknown optimizer '{self.optimizer_name}'.")
-        
-        self._update_data()
-
-        enablePrint()
-
-    def save_data(self, filename, overwrite=False):
-        """Saves the analysis data to a file.
-
-        Args:
-            filename (str): The name of the file to save the data to.
-            overwrite (bool): Whether to overwrite the file if it exists.
-        """
-        if os.path.exists(filename) and not overwrite:
-            raise FileExistsError(f"The file '{filename}' already exists. Use overwrite=True to overwrite it.")
-
-        with open(filename, 'wb') as f:
-            pickle.dump(self.data, f)
-
-    def load_data(self, filename):
-        """Loads analysis data from a file.
-
-        Args:
-            filename (str): The name of the file to load the data from.
-        """
-        with open(filename, 'rb') as f:
-            data = pickle.load(f)
-
-        self.thetas = data['thetas']
-        self.optimizer_name = data['optimizer_name']
-        self.degree = data['degree']
-        self.epochs = data['epochs']
-        self.learning_rates = data['learning_rates']
-        self.batch_size  = data['batch_size']
-        self.GD_SGD = data['GD_SGD']
-        self.momentum = data['momentum']
-        self.epsilon = data['epsilon']
-        self.beta1 = data['beta1']
-        self.beta2 = data['beta2']
-        self.decay_rate = data['decay_rate']
-
-        self._update_data()
-
-    def get_data(self):
-        return self.data
-
-    def _update_data(self):
-        self.data = {
-            'thetas': self.thetas,
-            'optimizer_name': self.optimizer_name,
-            'degree': self.degree,
-            'epochs': self.epochs,
-            'learning_rates': self.learning_rates,
-            'batch_size': self.batch_size,
-            'GD_SGD': self.GD_SGD,
-            'momentum': self.momentum,
-            'epsilon': self.epsilon,
-            'beta1': self.beta1,
-            'beta2': self.beta2,
-            'decay_rate': self.decay_rate
-        }
-
-def plot_2D_parameter_lambda_eta(lambdas, etas, MSE, title=None, x_log=False, y_log=False, savefig=False, filename=''):
-    fig, ax = plt.subplots(figsize = (12, 10))
-    tick = ticker.ScalarFormatter(useOffset=False, useMathText=True)
-    tick.set_powerlimits((0, 0))
-    if x_log:
-        t_x = [u'${}$'.format(tick.format_data(lambd)) for lambd in lambdas]
-    else:
-        t_x = [fr'${lambd}$' for lambd in lambdas]
-    if y_log:
-        t_y = [u'${}$'.format(tick.format_data(eta)) for eta in etas]
-    else:
-        t_y = [fr'${eta}$' for eta in etas]
-    sns.heatmap(data = MSE, ax = ax, cmap = 'plasma', annot=True,  xticklabels=t_x, yticklabels=t_y)
-    if title is not None:
-        plt.title(title)
-    plt.xlim(0, len(lambdas))
-    plt.ylim(0, len(etas))
-    plt.tight_layout()
-    if savefig:
-        plt.savefig(f'Figures/{filename}.pdf')
-
-
-def sigmoid(z):
-    """Sigmoid activation function."""
-    return 1 / (1 + np.exp(-z))
-
-def sigmoid_derivative(z):
-    """Derivative of the Sigmoid activation function."""
-    return sigmoid(z) * (1 - sigmoid(z))
-
-def relu(z):
-    """ReLU activation function."""
-    return np.where(z > 0, z, 0)
-
-def relu_derivative(z):
-    """Derivative of ReLU activation function."""
-    return np.where(z > 0, 1, 0)
-
-class Franke:
-
-    def __init__(self, N:int, eps:float):
-        """
-        Parameters
-            * N:    number of data points 
-            * eps:  noise-coefficient         
-        """
-        self.N = N; self.eps = eps
-        self.x = np.random.rand(N)
-        self.y = np.random.rand(N)
-
-        self.z_without_noise = self.franke(self.x, self.y)
-        self.z = self.z_without_noise + self.eps * np.random.normal(0, 1, self.z_without_noise.shape)
-
-    def franke(self, x:np.ndarray, y:np.ndarray) -> np.ndarray:
-        """
-        Parameters
-            * x:    x-values
-            * y:    y-values
-
-        Returns
-            - franke function evaluated at (x,y) 
-        """
+# def create_list_of_it(arg):
+#     if isinstance(arg, list):
+#         return arg 
     
-        term1 = 0.75*np.exp(-(0.25*(9*x - 2)**2) - 0.25*((9*y - 2)**2))
-        term2 = 0.75*np.exp(-((9*x + 1)**2)/49.0 - 0.1*(9*y + 1))
-        term3 = 0.5*np.exp(-(9*x - 7)**2/4.0 - 0.25*((9*y - 3)**2))
-        term4 = -0.2*np.exp(-(9*x - 4)**2 - (9*y - 7)**2)
-        return term1 + term2 + term3 + term4
+#     return [arg]
 
-# Taken from week42 lecture slides
-class NeuralNetwork:
-    def __init__(
-            self,
-            X_data,
-            Y_data,
-            n_hidden_neurons=50,
-            n_categories=10,
-            epochs=10,
-            batch_size=100,
-            eta=0.1,
-            lmbd=0.0):
 
-        self.X_data_full = X_data
-        self.Y_data_full = Y_data
+def analyze_descent(filename:str, x:np.ndarray, y:np.ndarray, optimizer:str, gradient:callable, 
+                    degree:int, epochs:list, learing_rates:list, M:list, 
+                    GD_SGD="GD", momentum=0.9, epsilon=1e-8, beta1=0.9, beta2=0.999, decay_rate=0.9, overwrite=False) -> list:
+    
+    epochs = create_list_of_it(epochs); learing_rates = create_list_of_it(learing_rates)
+    Ms = create_list_of_it(M)
 
-        self.n_inputs = X_data.shape[0]
-        self.n_features = X_data.shape[1]
-        self.n_hidden_neurons = n_hidden_neurons
-        self.n_categories = n_categories
+    # Testing that len(epochs) == len(learning_rates) == len(Ms), the last one only for SGD
+    args_length = [len(epochs), len(learing_rates), len(Ms)]; arg_names = ["epochs", "learning_rates", "M"]
+    if GD_SGD == "GD":
+        args_length = args_length[:-1]; arg_names = arg_names[:-1]
 
-        self.epochs = epochs
-        self.batch_size = batch_size
-        self.iterations = self.n_inputs // self.batch_size
-        self.eta = eta
-        self.lmbd = lmbd
+    if len(set(args_length)) != 1:
+        for i in range(len(args_length)):
+            for j in range(len(args_length)):
+                if args_length[i] != args_length[j]:
+                    raise ValueError(f"Size of {arg_names[i]} is not the same as {arg_names[j]}; {args_length[i]} != {args_length[j]}")
+    
+    thetas = []
+    if optimizer.upper() == "PLANEGD": # Can use GD or SGD
+        if GD_SGD == "GD":
+            for i in range(len(learing_rates)):
+                planeGD = PlaneGD(learning_rate=learing_rates[i], momentum=momentum)
+                descentSolver = DescentSolver(planeGD, degree, mode=GD_SGD)
+                descentSolver.gradient = gradient
 
-        self.create_biases_and_weights()
+                thetas.append(descentSolver(x, y, epochs[i]))
 
-    def create_biases_and_weights(self):
-        self.hidden_weights = np.random.randn(self.n_features, self.n_hidden_neurons)
-        self.hidden_bias = np.zeros(self.n_hidden_neurons) + 0.01
+        elif GD_SGD == "SGD":
+            for i in range(len(learing_rates)):
+                planeGD = PlaneGD(learning_rate=learing_rates[i], momentum=momentum)
+                descentSolver = DescentSolver(planeGD, degree, mode=GD_SGD)
+                descentSolver.gradient = gradient
 
-        self.output_weights = np.random.randn(self.n_hidden_neurons, self.n_categories)
-        self.output_bias = np.zeros(self.n_categories) + 0.01
+                thetas.append(descentSolver(x, y, epochs[i], Ms[i]))
 
-    def feed_forward(self, activation):
-        # feed-forward for training
-        self.z_h = np.matmul(self.X_data, self.hidden_weights) + self.hidden_bias
-        self.a_h = activation(self.z_h)
+    elif optimizer.upper() in ["ADAGRAD", "RMSPROP", "ADAM"]:
+        optimizers = [Adagrad, RMSprop, Adam]; optimizers_name = ["ADAGRAD", "RMSPROP", "ADAM"]
+        optimizer_index = optimizers_name.index(optimizer.upper())
 
-        self.z_o = np.matmul(self.a_h, self.output_weights) + self.output_bias
+        for i in range(len(learing_rates)):
+            optimizer = optimizers[optimizer_index]
+            optimizer = optimizer(learning_rate=learing_rates[i], momentum=momentum, 
+                                epsilon=epsilon, beta1=beta1, beta2=beta2, decay_rate=decay_rate)
+            
+            descentSolver = DescentSolver(optimizer, degree, mode=GD_SGD)
+            descentSolver.gradient = gradient
 
-        exp_term = np.exp(self.z_o)
-        self.probabilities = exp_term / np.sum(exp_term, axis=1, keepdims=True)
+            thetas.append(descentSolver(x, y, epochs[i], Ms[i]))
 
-    def feed_forward_out(self, X, activation):
-        # feed-forward for output
-        z_h = np.matmul(X, self.hidden_weights) + self.hidden_bias
-        a_h = activation(z_h)
-
-        z_o = np.matmul(a_h, self.output_weights) + self.output_bias
-        
-        exp_term = np.exp(z_o)
-        probabilities = exp_term / np.sum(exp_term, axis=1, keepdims=True)
-        return probabilities
-
-    def backpropagation(self):
-        error_output = self.probabilities - self.Y_data
-        error_hidden = np.matmul(error_output, self.output_weights.T) * self.a_h * (1 - self.a_h)
-
-        self.output_weights_gradient = np.matmul(self.a_h.T, error_output)
-        self.output_bias_gradient = np.sum(error_output, axis=0)
-
-        self.hidden_weights_gradient = np.matmul(self.X_data.T, error_hidden)
-        self.hidden_bias_gradient = np.sum(error_hidden, axis=0)
-
-        if self.lmbd > 0.0:
-            self.output_weights_gradient += self.lmbd * self.output_weights
-            self.hidden_weights_gradient += self.lmbd * self.hidden_weights
-
-        self.output_weights -= self.eta * self.output_weights_gradient
-        self.output_bias -= self.eta * self.output_bias_gradient
-        self.hidden_weights -= self.eta * self.hidden_weights_gradient
-        self.hidden_bias -= self.eta * self.hidden_bias_gradient
-
-    def predict(self, X):
-        probabilities = self.feed_forward_out(X)
-        return np.argmax(probabilities, axis=1)
-
-    def predict_probabilities(self, X):
-        probabilities = self.feed_forward_out(X)
-        return probabilities
-
-    def train(self):
-        data_indices = np.arange(self.n_inputs)
-
-        for i in range(self.epochs):
-            for j in range(self.iterations):
-                # pick datapoints with replacement
-                chosen_datapoints = np.random.choice(
-                    data_indices, size=self.batch_size, replace=False
-                )
-
-                # minibatch training data
-                self.X_data = self.X_data_full[chosen_datapoints]
-                self.Y_data = self.Y_data_full[chosen_datapoints]
-
-                self.feed_forward()
-                self.backpropagation()
-
-def plot_2D_parameter_lambda_eta(lambdas, etas, MSE, title=None, x_log=False, y_log=False, savefig=False, filename=''):
-    fig, ax = plt.subplots(figsize = (12, 10))
-    tick = ticker.ScalarFormatter(useOffset=False, useMathText=True)
-    tick.set_powerlimits((0, 0))
-    if x_log:
-        t_x = [u'${}$'.format(tick.format_data(lambd)) for lambd in lambdas]
     else:
-        t_x = [fr'${lambd}$' for lambd in lambdas]
-    if y_log:
-        t_y = [u'${}$'.format(tick.format_data(eta)) for eta in etas]
-    else:
-        t_y = [fr'${eta}$' for eta in etas]
-    sns.heatmap(data = MSE, ax = ax, cmap = 'plasma', annot=True,  xticklabels=t_x, yticklabels=t_y)
-    if title is not None:
-        plt.title(title)
-    plt.xlim(0, len(lambdas))
-    plt.ylim(0, len(etas))
-    plt.xlabel(r'$\lambda$')
-    plt.ylabel(r'$\eta$')
-    plt.tight_layout()
-    if savefig is not None:
-        plt.savefig(f'Figures/{filename}.pdf')
+        raise ValueError(f"What is '{optimizer}'?")
 
-# Latex fonts
-def latex_fonts():
-    plt.rcParams['text.usetex'] = True
-    plt.rcParams['axes.titlepad'] = 25 
+    with open(filename, "w") as file:
+        if overwrite:
+            for i in range(len(thetas)):
+                pass 
 
-    plt.rcParams.update({
-        'font.family': 'euclid',
-        'font.weight': 'bold',
-        'font.size': 17,       # General font size
-        'axes.labelsize': 17,  # Axis label font size
-        'axes.titlesize': 22,  # Title font size
-        'xtick.labelsize': 22, # X-axis tick label font size
-        'ytick.labelsize': 22, # Y-axis tick label font size
-        'legend.fontsize': 17, # Legend font size
-        'figure.titlesize': 25 # Figure title font size
-    })
+    return thetas 
+
+
+import autograd.numpy as np
+x = np.random.rand(1000,1)
+beta_true = np.array([[1, -8, 16],]).T
+func = Polynomial(*beta_true)
+y = func(x)
+
+def CostOLS(X,y,theta):
+        return np.sum((y-X @ theta)**2)
+
+    
+gradient = grad(CostOLS, 2)
