@@ -272,12 +272,7 @@ class beta_giver:
             print(self._optimization_methods[i])
         
         self._descent_method_call(*args, theta=theta)
-        return self._thetas_method
-        
-        
-
-
-    
+        return self._thetas_method 
 
 
 
@@ -358,6 +353,37 @@ def relu(z):
 def relu_derivative(z):
     """Derivative of ReLU activation function."""
     return np.where(z > 0, 1, 0)
+
+class Franke:
+
+    def __init__(self, N:int, eps:float):
+        """
+        Parameters
+            * N:    number of data points 
+            * eps:  noise-coefficient         
+        """
+        self.N = N; self.eps = eps
+        self.x = np.random.rand(N)
+        self.y = np.random.rand(N)
+
+        self.z_without_noise = self.franke(self.x, self.y)
+        self.z = self.z_without_noise + self.eps * np.random.normal(0, 1, self.z_without_noise.shape)
+
+    def franke(self, x:np.ndarray, y:np.ndarray) -> np.ndarray:
+        """
+        Parameters
+            * x:    x-values
+            * y:    y-values
+
+        Returns
+            - franke function evaluated at (x,y) 
+        """
+    
+        term1 = 0.75*np.exp(-(0.25*(9*x - 2)**2) - 0.25*((9*y - 2)**2))
+        term2 = 0.75*np.exp(-((9*x + 1)**2)/49.0 - 0.1*(9*y + 1))
+        term3 = 0.5*np.exp(-(9*x - 7)**2/4.0 - 0.25*((9*y - 3)**2))
+        term4 = -0.2*np.exp(-(9*x - 4)**2 - (9*y - 7)**2)
+        return term1 + term2 + term3 + term4
 
 # Taken from week42 lecture slides
 class NeuralNetwork:
@@ -477,10 +503,11 @@ def plot_2D_parameter_lambda_eta(lambdas, etas, MSE, title=None, x_log=False, y_
         plt.title(title)
     plt.xlim(0, len(lambdas))
     plt.ylim(0, len(etas))
+    plt.xlabel(r'$\lambda$')
+    plt.ylabel(r'$\eta$')
     plt.tight_layout()
-    if savefig:
+    if savefig is not None:
         plt.savefig(f'Figures/{filename}.pdf')
-
 
 # Latex fonts
 def latex_fonts():
