@@ -1,100 +1,70 @@
 
-from utils import *
+from new_utils import *
 import autograd.numpy as anp 
 
 
 if __name__ == "__main__":
+
+    # Data setup
     x = anp.random.rand(1000,1)
     beta_true = np.array([[1, -8, 16],]).T
     func = Polynomial(*beta_true)
     y = func(x)
 
-    def CostOLS(X,y,theta):
-            return anp.sum((y-X @ theta)**2)
-
-        
-    gradient1 = AutoGradCostFunction(CostOLS)
-    lmbdas = [1e-1, 1e-5, 1e-10]
-    lmbdas = np.linspace(1e-10, 1, 25)
-
-    methods = ["PLANEGD", "ADAGRAD", "RMSPROP", "ADAM"]
     # Choose method:
-    method = methods[0]
-    epochs = [1000]*len(lmbdas); batch_size = [50] * len(lmbdas)
-    learning_rates = [1, 0.5, 1e-1]
-    learning_rates = np.linspace(1e-10, 1, 25)
+    methods = ["PlaneGD", "AdaGrad", "RMSProp", "Adam"]
+    method = methods[0]; GD_SGD = "GD"
 
-    counter = 0
+    # Parameters:
+    epochs = 1000; batch_size = 50
+    lmbdas = np.logspace(-10, 1, 10)
+    learning_rates = np.logspace(np.log10(7.5e-2), np.log10(0.5), 10)
 
+    learning_rates = np.logspace(-10, 1, 10)
+    # Saving parameters:
+    file_path = f"../Data/Regression/{method}"
+    os.makedirs(file_path, exist_ok=True)
+    size = len(lmbdas)
+    filename_OLS = file_path + f"/OLS{size}x{size}"
+    filename_Ridge = file_path + f"/Ridge{size}x{size}"
+    overwrite = False
+
+    # Just making sure 
+    assert len(lmbdas) == len(learning_rates), f"The length og 'lmbdas' need to be the same as 'learning_rates'."
+
+    # Analyzer setup
+    analyzer_OLS = DescentAnalyzer(x, y, method, 3, epochs,
+        batch_size=batch_size,
+        GD_SGD=GD_SGD, princt_percentage=False)
+    
+    analyzer_Ridge = DescentAnalyzer(x, y, method, 3, epochs,
+        batch_size=batch_size,
+        GD_SGD=GD_SGD, princt_percentage=False)
+    
+    # Ols gradient:
+    gradient_OLS = AutoGradCostFunction(CostOLS)
+
+    # To store lambda values for saving
+    analyzer_Ridge["lambda"] = []
     start_time = time.time()
 
-    batch_number = 1
-    os.makedirs(f"../Data/Batch{batch_number}_{method}", exist_ok=True)
-    for i in range(len(lmbdas)):
-        for j in range(len(learning_rates)):
-            cost_function_ridge = CostRidge(lmbdas[i])
-            gradient2 = AutoGradCostFunction(cost_function_ridge)
+    counter = 0
+    for i in range(len(learning_rates)):
+        analyzer_OLS.run_analysis(gradient_OLS, learning_rates[i])
+        analyzer_Ridge["lambda"].append(lmbdas[i])
+        analyzer_Ridge["learning_rates"].append(learning_rates[i])
 
-            analyzer1 = DescentAnalyzer(x=x, y=y,
-                optimizer=method,
-                gradient=gradient1,
-                degree=2,
-                epochs=epochs,
-                learning_rates=[learning_rates[j]]*len(lmbdas),
-                batch_size=batch_size,
-                GD_SGD='SGD', princt_percentage=False)
-            
+        for j in range(len(lmbdas)):
+            cost_function_ridge = CostRidge(lmbdas[j])
+            gradient_Ridge = AutoGradCostFunction(cost_function_ridge)
 
-            analyzer2 = DescentAnalyzer(x=x, y=y,
-                optimizer=method,
-                gradient=gradient2,
-                degree=2,
-                epochs=epochs,
-                learning_rates=[learning_rates[j]]*len(lmbdas),
-                batch_size=batch_size,
-                GD_SGD='SGD', princt_percentage=False)
-            
+            analyzer_Ridge.run_analysis(gradient_Ridge, learning_rates[i], save_learning_rate=False)
 
-
-            # Run the analysis
-            analyzer1.run_analysis(); analyzer2.run_analysis
-
-            # Save the data to a file, with overwrite option
-            analyzer1.data["lambda"] = lmbdas[i]
-            analyzer2.data["lambda"] = lmbdas[i]
-
-            analyzer1.save_data(f"../Data/Batch{batch_number}_{method}/analysis_results{int(counter)}OLS.pkl", overwrite=True)
-            analyzer2.save_data(f"../Data/Batch{batch_number}_{method}/analysis_results{int(counter)}Ridge.pkl", overwrite=True)
             counter += 1
 
             print(f"Analyzing, {counter/(len(lmbdas) * len(learning_rates))*100:.1f}%, duration: {time.time() - start_time:.1f}s", end="\r")
 
+    
+    analyzer_OLS.save_data(filename_OLS, overwrite=overwrite)
+    analyzer_Ridge.save_data(filename_Ridge, overwrite=overwrite)
     print(f"Analyzing, 100%, duration: {time.time() - start_time:.1f}s            ")
-
-    data_OLS = {}; data_Ridge= {}
-
-    for i in range(counter):
-
-        with open(f"../Data/Batch{batch_number}_{method}/analysis_results{i}Ridge.pkl", 'rb') as f:
-            data_Ridge_tmp = pickle.load(f)
-            data_Ridge_tmp = [data_Ridge_tmp["thetas"], data_Ridge_tmp["learning_rates"], data_Ridge_tmp["lambda"]]
-            data_Ridge["str{i}"] = data_Ridge_tmp
-
-        with open(f"../Data/Batch{batch_number}_{method}/analysis_results{i}OLS.pkl", 'rb') as f:
-            data_OLS_tmp = pickle.load(f)
-            data_OLS_tmp = [data_OLS_tmp["thetas"], data_OLS_tmp["learning_rates"], data_OLS_tmp["lambda"]]
-            data_OLS["str{i}"] = data_OLS_tmp
-    
-    data = {"OLS": data_OLS,
-            "Ridge": data_Ridge}
-    
-    with open(f"../Data/{method}_Batch{batch_number}.pkl", 'wb') as f:
-        pickle.dump(data, f)
-    analyzer = DescentAnalyzer(x=x, y=y,
-                optimizer=method,
-                gradient=gradient1,
-                degree=2,
-                epochs=epochs,
-                learning_rates=[learning_rates[j]]*len(lmbdas),
-                batch_size=batch_size,
-                GD_SGD='SGD')

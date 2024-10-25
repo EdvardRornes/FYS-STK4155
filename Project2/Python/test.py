@@ -1,4 +1,4 @@
-from utils import *
+from new_utils import *
 import sys, os
 
 # Disable print
@@ -10,7 +10,7 @@ def enablePrint():
     sys.stdout = sys.__stdout__
 
 def test_GD(eps=3):
-    blockPrint()
+    # blockPrint()
 
     N = 1000
     x = np.random.rand(N,1)
@@ -18,16 +18,21 @@ def test_GD(eps=3):
     func = Polynomial(*beta_true)
     y = func(x)
 
-    X = create_Design_Matrix(x.flatten(), len(beta_true))
-
     planeGD = PlaneGD(momentum=0, learning_rate=0.3590565341426001)
-    test = DescentSolver(planeGD)
+    test = DescentSolver(planeGD, 3)
 
-    X = create_Design_Matrix(x.flatten(), 3)
-    beta_test = np.random.randn(np.shape(X)[1],1)
+    beta_test = np.random.randn(3, 1)
 
     test.gradient = gradientOLS
-    beta_test = test(X, y, N, theta=beta_test)
+    beta_test = test(x, y, N)
+
+    test_analyzer = DescentAnalyzer(x, y, "planeGD", 3, N)
+
+    test_analyzer.run_analysis(gradientOLS, 0.3590565341426001)
+    beta_test_analyzer = test_analyzer["thetas"]
+
+    print(beta_test)
+    print(beta_test_analyzer)
 
     enablePrint()
     assert np.linalg.norm(beta_true - beta_test) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test)}"
@@ -134,10 +139,10 @@ def test_Adam(eps=3):
 
 if __name__ == "__main__":
     test_GD()
-    test_SGD()
-    test_AdaGrad()
-    test_RMSprop()
-    test_Adam()
+    # test_SGD()
+    # test_AdaGrad()
+    # test_RMSprop()
+    # test_Adam()
 
     exit()
     import autograd.numpy as np
