@@ -21,6 +21,78 @@ def blockPrint():
 def enablePrint():
     sys.stdout = sys.__stdout__
 
+# Latex fonts
+def latex_fonts():
+    plt.rcParams['text.usetex'] = True
+    plt.rcParams['axes.titlepad'] = 25 
+
+    plt.rcParams.update({
+        'font.family': 'euclid',
+        'font.weight': 'bold',
+        'font.size': 17,       # General font size
+        'axes.labelsize': 17,  # Axis label font size
+        'axes.titlesize': 22,  # Title font size
+        'xtick.labelsize': 22, # X-axis tick label font size
+        'ytick.labelsize': 22, # Y-axis tick label font size
+        'legend.fontsize': 17, # Legend font size
+        'figure.titlesize': 25 # Figure title font size
+    })
+
+def create_list_of_it(item):
+    """Utility function to ensure the item is a list."""
+    if not isinstance(item, list):
+        return [item]
+    return item
+
+def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False):
+    """
+    Plots a 2D heatmap with lambda and eta as inputs.
+
+    Arguments:
+        lambdas: array-like
+            Values for the regularization parameter (lambda) on the x-axis.
+        etas: array-like
+            Values for the learning rate (eta) on the y-axis.
+        value: 2D array-like
+            Values for each combination of lambda and eta.
+        title: str
+            Title of the plot.
+        x_log: bool
+            If True, x-axis is logarithmic.
+        y_log: bool
+            If True, y-axis is logarithmic.
+        savefig: bool
+            If True, saves the plot as a PDF.
+        filename: str
+            Name for the saved file if savefig is True.
+        Reverse_cmap: bool
+            If True, reverses the color map. Useful for comparison between MSE (low = good) and accuracy (high = good).
+    """
+    cmap = 'plasma'
+    if Reverse_cmap == True:
+        cmap = 'plasma_r'
+    fig, ax = plt.subplots(figsize = (12, 10))
+    tick = ticker.ScalarFormatter(useOffset=False, useMathText=True)
+    tick.set_powerlimits((0, 0))
+    if x_log:
+        t_x = [u'${}$'.format(tick.format_data(lambd)) for lambd in lambdas]
+    else:
+        t_x = [fr'${lambd}$' for lambd in lambdas]
+    if y_log:
+        t_y = [u'${}$'.format(tick.format_data(eta)) for eta in etas]
+    else:
+        t_y = [fr'${eta}$' for eta in etas]
+    sns.heatmap(data = value, ax = ax, cmap = cmap, annot=True, fmt=".3f",  xticklabels=t_x, yticklabels=t_y)
+    if title is not None:
+        plt.title(title)
+    plt.xlim(0, len(lambdas))
+    plt.ylim(0, len(etas))
+    plt.xlabel(r'$\lambda$')
+    plt.ylabel(r'$\eta$')
+    plt.tight_layout()
+    if savefig is not None:
+        plt.savefig(f'Figures/{filename}.pdf')
+
 def gradientOLS(X, y, beta):
     n=len(y)
 
@@ -131,6 +203,37 @@ class Polynomial:
         for i in range(len(new_coeffs)-1):
             new_coeffs[i] = self.coeffs[i+1] * (i+1)
         return Polynomial(*new_coeffs)
+    
+class Franke:
+
+    def __init__(self, N:int, eps:float):
+        """
+        Parameters
+            * N:    number of data points 
+            * eps:  noise-coefficient         
+        """
+        self.N = N; self.eps = eps
+        self.x = np.random.rand(N)
+        self.y = np.random.rand(N)
+
+        self.z_without_noise = self.franke(self.x, self.y)
+        self.z = self.z_without_noise + self.eps * np.random.normal(0, 1, self.z_without_noise.shape)
+
+    def franke(self, x:np.ndarray, y:np.ndarray) -> np.ndarray:
+        """
+        Parameters
+            * x:    x-values
+            * y:    y-values
+
+        Returns
+            - franke function evaluated at (x,y) 
+        """
+    
+        term1 = 0.75*np.exp(-(0.25*(9*x - 2)**2) - 0.25*((9*y - 2)**2))
+        term2 = 0.75*np.exp(-((9*x + 1)**2)/49.0 - 0.1*(9*y + 1))
+        term3 = 0.5*np.exp(-(9*x - 7)**2/4.0 - 0.25*((9*y - 3)**2))
+        term4 = -0.2*np.exp(-(9*x - 4)**2 - (9*y - 7)**2)
+        return term1 + term2 + term3 + term4
 
 class Optimizer:
     """
@@ -447,12 +550,6 @@ class DescentSolver:
         self._descent_method_call(*args, theta=theta)
         return self._thetas_method
 
-def create_list_of_it(item):
-    """Utility function to ensure the item is a list."""
-    if not isinstance(item, list):
-        return [item]
-    return item
-
 class DescentAnalyzer:
 
     def __init__(self, x: np.ndarray, y: np.ndarray, optimizer: str,
@@ -610,74 +707,40 @@ class DescentAnalyzer:
         self.data["epsilon"] =  self.epsilon; self.data["beta1"] =  self.beta1
         self.data["beta2"] =  self.beta2; self.data["decay_rate"] =  self.decay_rate
 
-def plot_2D_parameter_lambda_eta(lambdas, etas, MSE, title=None, x_log=False, y_log=False, savefig=False, filename=''):
-    fig, ax = plt.subplots(figsize = (12, 10))
-    tick = ticker.ScalarFormatter(useOffset=False, useMathText=True)
-    tick.set_powerlimits((0, 0))
-    if x_log:
-        t_x = [u'${}$'.format(tick.format_data(lambd)) for lambd in lambdas]
-    else:
-        t_x = [fr'${lambd}$' for lambd in lambdas]
-    if y_log:
-        t_y = [u'${}$'.format(tick.format_data(eta)) for eta in etas]
-    else:
-        t_y = [fr'${eta}$' for eta in etas]
-    sns.heatmap(data = MSE, ax = ax, cmap = 'plasma', annot=True,  xticklabels=t_x, yticklabels=t_y)
-    if title is not None:
-        plt.title(title)
-    plt.xlim(0, len(lambdas))
-    plt.ylim(0, len(etas))
-    plt.tight_layout()
-    if savefig:
-        plt.savefig(f'Figures/{filename}.pdf')
+class Activation:
+    @staticmethod
+    def sigmoid(z):
+        """Sigmoid activation function."""
+        return 1 / (1 + np.exp(-z))
+
+    @staticmethod
+    def sigmoid_derivative(z):
+        """Derivative of the Sigmoid activation function."""
+        sigmoid_z = Activation.sigmoid(z)
+        return sigmoid_z * (1 - sigmoid_z)
+
+    @staticmethod
+    def relu(z):
+        """ReLU activation function."""
+        return np.where(z > 0, z, 0)
+
+    @staticmethod
+    def relu_derivative(z):
+        """Derivative of ReLU activation function."""
+        return np.where(z > 0, 1, 0)
+
+    @staticmethod
+    def Lrelu(z, alpha=0.01):
+        """Leaky ReLU activation function."""
+        return np.where(z > 0, z, alpha * z)
+
+    @staticmethod
+    def Lrelu_derivative(z, alpha=0.01):
+        """Derivative of Leaky ReLU activation function."""
+        return np.where(z > 0, 1, alpha)
 
 
-def sigmoid(z):
-    """Sigmoid activation function."""
-    return 1 / (1 + np.exp(-z))
-
-def sigmoid_derivative(z):
-    """Derivative of the Sigmoid activation function."""
-    return sigmoid(z) * (1 - sigmoid(z))
-
-def relu(z):
-    """ReLU activation function."""
-    return np.where(z > 0, z, 0)
-
-def relu_derivative(z):
-    """Derivative of ReLU activation function."""
-    return np.where(z > 0, 1, 0)
-
-class Franke:
-
-    def __init__(self, N:int, eps:float):
-        """
-        Parameters
-            * N:    number of data points 
-            * eps:  noise-coefficient         
-        """
-        self.N = N; self.eps = eps
-        self.x = np.random.rand(N)
-        self.y = np.random.rand(N)
-
-        self.z_without_noise = self.franke(self.x, self.y)
-        self.z = self.z_without_noise + self.eps * np.random.normal(0, 1, self.z_without_noise.shape)
-
-    def franke(self, x:np.ndarray, y:np.ndarray) -> np.ndarray:
-        """
-        Parameters
-            * x:    x-values
-            * y:    y-values
-
-        Returns
-            - franke function evaluated at (x,y) 
-        """
-    
-        term1 = 0.75*np.exp(-(0.25*(9*x - 2)**2) - 0.25*((9*y - 2)**2))
-        term2 = 0.75*np.exp(-((9*x + 1)**2)/49.0 - 0.1*(9*y + 1))
-        term3 = 0.5*np.exp(-(9*x - 7)**2/4.0 - 0.25*((9*y - 3)**2))
-        term4 = -0.2*np.exp(-(9*x - 4)**2 - (9*y - 7)**2)
-        return term1 + term2 + term3 + term4
+import numpy as np
 
 class FFNN:
     def __init__(self, input_size, hidden_layers, output_size, activation='relu', alpha=0.01, lambda_reg=0.0):
@@ -688,71 +751,68 @@ class FFNN:
         self.alpha = alpha
         self.lambda_reg = lambda_reg
 
+        # Mapping for activation functions
+        self.activation_map = {
+            'relu': (Activation.relu, Activation.relu_derivative),
+            'sigmoid': (Activation.sigmoid, Activation.sigmoid_derivative),
+            'lrelu': (lambda z: Activation.Lrelu(z, self.alpha), lambda z: Activation.Lrelu_derivative(z, self.alpha))
+        }
+        
+        self.activation, self.activation_derivative = self.activation_map.get(self.activation_func.lower(), (Activation.relu, Activation.relu_derivative))
+
+        # Initialize weights and biases
         for i in range(len(self.layers) - 1):
             weight_matrix = np.random.randn(self.layers[i], self.layers[i + 1]) * np.sqrt(2. / self.layers[i])
             self.weights.append(weight_matrix)
             bias_vector = np.zeros((1, self.layers[i + 1]))
             self.biases.append(bias_vector)
 
-    def relu(self, z):
-        return np.where(z > 0, z, 0)
-
-    def relu_derivative(self, z):
-        return np.where(z > 0, 1, 0)
-
-    def Lrelu(self, z):
-        return np.where(z > 0, z, self.alpha * z)
-
-    def Lrelu_derivative(self, z):
-        return np.where(z > 0, 1, self.alpha)
-
-    def sigmoid(self, z):
-        return 1 / (1 + np.exp(-z))
-
-    def sigmoid_derivative(self, z):
-        sig = self.sigmoid(z)
-        return sig * (1 - sig)
-
     def forward(self, X):
         self.activations = [X]
         self.z_values = []
         A = X
+
+        # Hidden layers
         for i in range(len(self.weights) - 1):
             Z = A @ self.weights[i] + self.biases[i]
             self.z_values.append(Z)
-            A = self.relu(Z) if self.activation_func.lower() == 'relu' else self.sigmoid(Z) if self.activation_func.lower() == 'sigmoid' else self.Lrelu(Z)
+            A = self.activation(Z)
             self.activations.append(A)
 
+        # Output layer (applying sigmoid activation for binary classification)
         Z = A @ self.weights[-1] + self.biases[-1]
         self.z_values.append(Z)
-        self.activations.append(Z)
-        return Z
+        A_output = Activation.sigmoid(Z)  # Apply sigmoid to output for binary classification
+        self.activations.append(A_output)
+        return A_output
 
     def backward(self, X, y, learning_rate):
         m = X.shape[0]
         y = y.reshape(-1, 1)
 
-        delta = self.activations[-1] - y
+        # Calculate delta for output layer using binary cross-entropy loss
+        output = self.activations[-1]
+        delta = output - y  # Gradient of the binary cross-entropy loss
+
         for i in reversed(range(len(self.weights))):
             # Calculate gradients
             dw = (self.activations[i].T @ delta) / m
             db = np.sum(delta, axis=0, keepdims=True) / m
-
-            # Add L2 regularization term
             dw += (self.lambda_reg / m) * self.weights[i]  # Regularization term
 
+            # Update weights and biases
             self.weights[i] -= learning_rate * dw
             self.biases[i] -= learning_rate * db
-            
+
+            # Update delta for next layer
             if i > 0:
-                delta = (delta @ self.weights[i].T) * (self.relu_derivative(self.z_values[i - 1]) if self.activation_func.lower() == 'relu' else self.sigmoid_derivative(self.z_values[i - 1]) if self.activation_func.lower() == 'sigmoid' else self.Lrelu_derivative(self.z_values[i - 1]))
+                delta = (delta @ self.weights[i].T) * self.activation_derivative(self.z_values[i - 1])
 
     def train(self, X, y, learning_rate=0.01, epochs=1000, batch_size=None, shuffle=True, lambda_reg=0.0):
         self.lambda_reg = lambda_reg  # Update regularization parameter
         mse_history = []
         m = X.shape[0]
-
-        if batch_size is None:  # Default to full-batch (i.e., all data at once)
+        if batch_size is None:
             batch_size = m
 
         for epoch in range(epochs):
@@ -768,63 +828,24 @@ class FFNN:
                 self.backward(X_batch, y_batch, learning_rate)
 
             mse = np.mean((self.activations[-1] - y_batch) ** 2)
-
-            if np.isnan(mse) or mse > 100:
-                mse = 1e10
-                print(f'Epoch {epoch}, MSE ({self.activation_func}): {mse} (Issue encountered, breaking)')
-                break
-            
             mse_history.append(mse)
 
-            # Print MSE every 100 epochs
-            if epoch % 100 == 0:
+            if epoch % (epochs//5) == 0:
                 print(f'Epoch {epoch}, MSE ({self.activation_func}): {mse}')
         
         return mse_history
 
+
     def predict(self, X):
         return self.forward(X)
 
+    def accuracy(self, X, y):
+        predictions = self.predict(X)
+        predicted_classes = (predictions > 0.5).astype(int)
+        return np.mean(predicted_classes.flatten() == y.flatten())
 
-def plot_2D_parameter_lambda_eta(lambdas, etas, MSE, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False):
-    cmap = 'plasma'
-    if Reverse_cmap == True:
-        cmap = 'plasma_r'
-    fig, ax = plt.subplots(figsize = (12, 10))
-    tick = ticker.ScalarFormatter(useOffset=False, useMathText=True)
-    tick.set_powerlimits((0, 0))
-    if x_log:
-        t_x = [u'${}$'.format(tick.format_data(lambd)) for lambd in lambdas]
-    else:
-        t_x = [fr'${lambd}$' for lambd in lambdas]
-    if y_log:
-        t_y = [u'${}$'.format(tick.format_data(eta)) for eta in etas]
-    else:
-        t_y = [fr'${eta}$' for eta in etas]
-    sns.heatmap(data = MSE, ax = ax, cmap = cmap, annot=True, fmt=".3f",  xticklabels=t_x, yticklabels=t_y)
-    if title is not None:
-        plt.title(title)
-    plt.xlim(0, len(lambdas))
-    plt.ylim(0, len(etas))
-    plt.xlabel(r'$\lambda$')
-    plt.ylabel(r'$\eta$')
-    plt.tight_layout()
-    if savefig is not None:
-        plt.savefig(f'Figures/{filename}.pdf')
 
-# Latex fonts
-def latex_fonts():
-    plt.rcParams['text.usetex'] = True
-    plt.rcParams['axes.titlepad'] = 25 
 
-    plt.rcParams.update({
-        'font.family': 'euclid',
-        'font.weight': 'bold',
-        'font.size': 17,       # General font size
-        'axes.labelsize': 17,  # Axis label font size
-        'axes.titlesize': 22,  # Title font size
-        'xtick.labelsize': 22, # X-axis tick label font size
-        'ytick.labelsize': 22, # Y-axis tick label font size
-        'legend.fontsize': 17, # Legend font size
-        'figure.titlesize': 25 # Figure title font size
-    })
+
+
+
