@@ -6,23 +6,37 @@ import autograd.numpy as anp
 if __name__ == "__main__":
 
     # Data setup
-    x = anp.random.rand(1000,1)
-    beta_true = np.array([[1, -8, 16],]).T
-    func = Polynomial(*beta_true)
-    y = func(x)
+    N = 20
+    x = anp.random.rand(N,1)
+    y = Franke(N, 0.1)
+    
+    x = [y.x, y.y]
+    y = y.z_without_noise
+    # print(len(y))
+    # exit()
+    # beta_true = np.array([[1, -3.5, -5, 0.5, 1.2],]).T
+    
+    # # beta_true = np.random.randint(-1,1, size=(4,1))
+    
+    # x = anp.random.rand(N,1)
+    # x = np.linspace(-2,2,N)
+    # func = Polynomial(*beta_true)
+    # y = func(x)
 
     # Choose method:
-    methods = ["PlaneGD", "AdaGrad", "RMSProp", "Adam"]
-    method = methods[0]; GD_SGD = "GD"
+    methods = [PlaneGradient, Adagrad, RMSprop, Adam]
+    methods_name = ["PlaneGradient", "Adagrad", "RMSprop", "Adam"]
+    method_index = 0
+    method = methods[method_index]; GD_SGD = "SGD"
 
     # Parameters:
-    epochs = 1000; batch_size = 50
-    lmbdas = np.logspace(-10, 1, 10)
-    learning_rates = np.logspace(np.log10(7.5e-2), np.log10(0.5), 10)
+    epochs = 100; batch_size = 10
+    lmbdas = np.logspace(-4, 1, 10)
+    learning_rates = np.logspace(-4, -1, 10)
+    N_bootstraps = 2
 
-    learning_rates = np.logspace(-10, 1, 10)
     # Saving parameters:
-    file_path = f"../Data/Regression/{method}"
+    file_path = f"../Data/Regression/{methods_name[method_index]}"
     os.makedirs(file_path, exist_ok=True)
     size = len(lmbdas)
     filename_OLS = file_path + f"/OLS{size}x{size}"
@@ -32,39 +46,30 @@ if __name__ == "__main__":
     # Just making sure 
     assert len(lmbdas) == len(learning_rates), f"The length og 'lmbdas' need to be the same as 'learning_rates'."
 
+    # Setting up optimizer:
+    method = method()
+
     # Analyzer setup
-    analyzer_OLS = DescentAnalyzer(x, y, method, 3, epochs,
+    analyzer_OLS = DescentAnalyzer(x, y, methods_name[method_index], 5, epochs,
         batch_size=batch_size,
-        GD_SGD=GD_SGD, princt_percentage=False)
+        GD_SGD=GD_SGD, princt_percentage=True)
     
-    analyzer_Ridge = DescentAnalyzer(x, y, method, 3, epochs,
+    analyzer_Ridge = DescentAnalyzer(x, y, methods_name[method_index], 5, epochs,
         batch_size=batch_size,
-        GD_SGD=GD_SGD, princt_percentage=False)
+        GD_SGD=GD_SGD, princt_percentage=True)
     
-    # Ols gradient:
-    gradient_OLS = AutoGradCostFunction(CostOLS)
+    # OLS gradient:
+    gradient_OLS = AutoGradCostFunction(CostRidge, 2)
+    # X = create_Design_Matrix(x, y, 4)
+    # print(gradient_OLS(X, y, np.linspace(0,1,10), 0), "her") 
+    analyzer_OLS.run_analysis(method, gradient_OLS, learning_rates, 0, N_bootstraps)
 
-    # To store lambda values for saving
-    analyzer_Ridge["lambda"] = []
-    start_time = time.time()
+    # Ridge gradient:
+    gradient_Rdige = AutoGradCostFunction(CostRidge, 2)
+    # X_test = create_Design_Matrix(x, y, 5)
+    # gradient_Rdige(X_test, y, np.linspace(0,1,5), )
+    analyzer_Ridge.run_analysis(method, gradient_Rdige, learning_rates, lmbdas, N_bootstraps)
 
-    counter = 0
-    for i in range(len(learning_rates)):
-        analyzer_OLS.run_analysis(gradient_OLS, learning_rates[i])
-        analyzer_Ridge["lambda"].append(lmbdas[i])
-        analyzer_Ridge["learning_rates"].append(learning_rates[i])
-
-        for j in range(len(lmbdas)):
-            cost_function_ridge = CostRidge(lmbdas[j])
-            gradient_Ridge = AutoGradCostFunction(cost_function_ridge)
-
-            analyzer_Ridge.run_analysis(gradient_Ridge, learning_rates[i], save_learning_rate=False)
-
-            counter += 1
-
-            print(f"Analyzing, {counter/(len(lmbdas) * len(learning_rates))*100:.1f}%, duration: {time.time() - start_time:.1f}s", end="\r")
-
-    
     analyzer_OLS.save_data(filename_OLS, overwrite=overwrite)
     analyzer_Ridge.save_data(filename_Ridge, overwrite=overwrite)
-    print(f"Analyzing, 100%, duration: {time.time() - start_time:.1f}s            ")
+    
