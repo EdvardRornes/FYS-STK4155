@@ -108,6 +108,8 @@ Over the last few years, machine learning and neural networks have become an inc
 
 In this project in particular, we investigate how these techniques can be applied to the healthcare system, specifically in diagnosing malignant breast cancer tumors based on the tumor's several features. We do this by testing the performance of a neural network with logistic regression as we are working with discrete data. The various parameters are optimized using Stochastic Gradient Decent (SGD).
 
+Before dealing with the cancer data, we first start off with comparing X and OLS on the Franke function. Later we attempt to model the Franke function with our own neural network. This is done to ensure that the neural network is correctly implemented.
+
 \section{Theory}
 In this section we derive and discuss the relevant theory behind the methods used. 
 
@@ -118,7 +120,7 @@ As discussed in a previous project (cite project 1), linear regression is the si
 \end{align}
 and the $\beta$ coefficients are found by minimizing the cost function. For this project we consider the two regression methods
 \begin{align}
-	C_\text{OLS}(\bm\beta)&=\frac{2}{n}(\bm y-\bm X\bm\beta)\\
+	C_\text{OLS}(\bm\beta)&=\frac{2}{n}(\bm y-\bm X\bm\beta)^2\\
 	C_\text{Ridge}(\bm\beta)&=C_\text{OLS}(\bm\beta)+\lambda||\bm\beta||_2^2
 \end{align}
 in which one insists that the derivative of these w.r.t. $\bm\beta$ is $0$ and one arrives at
@@ -129,7 +131,7 @@ in which one insists that the derivative of these w.r.t. $\bm\beta$ is $0$ and o
 which is what we will use to compute the coefficients $\beta_i$.
 
 \subsection{Logistic Regression}
-Whilst linear regression is quite successful in fitting continuous data such as terrain data, when the output is supposed to be discrete it fails massively. Linear regression predicts values across a continuous spectrum, resulting in predictions outside the range of valid class labels, such as giving negative probabilities. Logistic regression on the other hand is specifically designed for binary classification problems, and is thus ideal when dealing with discrete outcomes. 
+Whilst linear regression is quite successful in fitting continuous data such as terrain data, when the output is supposed to be discrete it fails. Linear regression predicts values across a continuous spectrum, resulting in predictions outside the range of valid class labels, such as giving negative probabilities. Logistic regression on the other hand is specifically designed for binary classification problems, and is thus ideal when dealing with discrete outcomes. 
 
 Logistic regression models the probability that a given input belongs to a particular class. It does this by applying a activation function to a linear combination of the input features. For example the sigmoid function 
 \begin{align}
@@ -169,6 +171,14 @@ The particular activation functions we will use are sigmoid, tanh, ReLU and Leak
 \subsection{Resampling Methods}
 
 \subsection{Gradient Decent}
+Gradient decent (GD) is an essential optimization algorithm in machines learning, and is commonly used to minimize cost functions by adjusting model parameters iteratively. Given model parameters $\theta$ and a cost function $C(\theta)$ the GD algorithm is as follows:
+\begin{align}
+	\theta_i^{(j+1)}=\theta_i^{(j)}-\eta\pdv{C}{\theta_i}
+\end{align}
+Taking it a step further we can perform batch gradient decent (BGD)
+\begin{align}
+	\theta^{(j+1)}&=\theta^{(j)}-\eta\nabla_\theta C
+\end{align}
 
 \subsection{Stochastic Gradient Decent}
 

@@ -4,7 +4,7 @@ import seaborn as sns
 
 N = 10
 method = "PlaneGD"
-file_path = f"../Data/Regression/{method}"; index = 2
+file_path = f"../Data/Regression/{method}"; index = 0
 
 with open(f"{file_path}/OLS{N}x{N}_{index}.pkl", 'rb') as f:
     data_OLS = pickle.load(f)
