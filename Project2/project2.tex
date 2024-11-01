@@ -116,24 +116,23 @@ We begin by introducing the relevant background necessary to understand the impl
 In this section we derive and discuss the relevant theory behind the methods used. 
 
 \subsection{Linear Regression}
-As discussed in a previous project (cite project 1), linear regression is the simplest method for fitting a continuous given a data set. The data set is approximated by $\bm y=\bm X\bm\beta$ and the $\beta$ coefficients are found by minimizing the cost function. For this project we consider the two regression methods
+As discussed in a previous project \cite{project1}, linear regression is the simplest method for fitting a continuous given a data set. The data set is approximated by $\bm y=\bm X\bm\beta$ and the $\beta$ coefficients are found by minimizing the cost function. For this project we consider the two regression methods:
 \begin{align}
-	C_\text{OLS}(\bm\beta)&=\frac{2}{n}(\bm y-\bm X\bm\beta)^2\\
-	C_\text{Ridge}(\bm\beta)&=C_\text{OLS}(\bm\beta)+\lambda||\bm\beta||_2^2
+	C_\text{OLS}(\bm\beta)&=\frac{2}{n}(\bm y-\bm X\bm\beta)^2,\\
+	C_\text{Ridge}(\bm\beta)&=C_\text{OLS}(\bm\beta)+\lambda||\bm\beta||_2^2.
 \end{align}
-in which one insists that the derivative of these w.r.t. $\bm\beta$ is $0$ and one arrives at
+We then insist that the derivative of these w.r.t. $\bm\beta$ is $0$, and choose the resulting $\beta$ coefficients as out model. Doing this we arrive at:
 \begin{align}
-	\bm\beta_\text{OLS}&=(\bm X^T\bm X)^{-1}\bm X^T\bm y\\
-	\bm\beta_\text{Ridge}&=(\bm X^T\bm X+\lambda \bm I)^{-1}\bm X^T\bm y
+	\bm\beta_\text{OLS}&=(\bm X^T\bm X)^{-1}\bm X^T\bm y,\\
+	\bm\beta_\text{Ridge}&=(\bm X^T\bm X+\lambda \bm I)^{-1}\bm X^T\bm y.
 \end{align}
-which is what we will use to compute the coefficients $\beta_i$.
 
 \subsection{Regularization Terms}
 Regularization is a technique to prevent overfitting by adding a penalty to the cost function that discourages complex models. The two common regularization methods that we inspected previously are Ridge (L2) and Lasso (L1) regularization. In this project we will only be considering Ridge, where the cost function is given by
 \begin{align}
-	C_\text{Ridge}(\bm \beta) = C_\text{OLS}(\bm \beta) + \lambda \|\bm \beta\|_2^2
+	C_\text{Ridge}(\bm \beta) = C_\text{OLS}(\bm \beta) + \lambda \|\bm \beta\|_2^2,
 \end{align}
-where the hyperparameter $\lambda$ controls the amount of regularization. For more details see (cite project 1).
+where the hyperparameter $\lambda$ controls the magnitude of the penalty to large coefficients. For more details see \cite{project1}.
 
 \subsection{Logistic Regression}
 Whilst linear regression is quite successful in fitting continuous data such as terrain data, when the output is supposed to be discrete it fails. Linear regression predicts values across a continuous spectrum, resulting in predictions outside the range of valid class labels, such as giving negative probabilities. Logistic regression on the other hand is specifically designed for binary classification problems, and is thus ideal when dealing with discrete outcomes. 
