@@ -44,12 +44,7 @@ def MSE(y,ytilde):
     n = len(y)
     return 1/n * np.sum(np.abs(y-ytilde)**2)
 
-def create_list_of_it(item):
-    """Utility function to ensure the item is a list."""
-    if not isinstance(item, list):
-        return [item]
-    return item
-
+############ Cost/gradient functions ############
 def gradientOLS(X, y, beta):
     n=len(y)
 
@@ -62,14 +57,19 @@ def CostOLS(X, y, theta):
 def CostRidge(X, y, theta, lmbda):
     n = len(y)
     return (1.0 / n) * anp.sum((y-X @ theta) ** 2) + lmbda / n * anp.sum(theta**2)
-# class CostRidge:
 
-#     def __init__(self, lmbda:float):
-#         self.lmbda = lmbda 
+def sigmoid(x):
+    return 1/(1+np.exp(-x))
 
-#     def __call__(self, X, y, theta):
-#         n = len(y)
-#         return (1.0 / n) * anp.sum((y-X @ theta) ** 2) + self.lmbda / n * anp.sum(theta**2)
+def logistic_reg(x,w):
+    return sigmoid(np.dot(x,w))
+
+def logistic_cost(x,w,t,_lambda = 0):
+    pred = logistic_reg(x,w)
+    cost_inner = np.log(pred) * t + np.log(1 - pred) * (1 - t)
+    
+    #return -(np.sum(np.log(cost_inner)) + _lambda*np.sum(w**2))
+    return -np.sum((cost_inner)) + _lambda*np.sum(w**2)
         
 class AutoGradCostFunction:
 
@@ -101,6 +101,7 @@ class AutoGradCostFunction:
         """
         return self._gradient(X, y, theta, lmbda)
 
+############ Design Matrix ############
 def create_Design_Matrix(*args):
     """
     Creates design matrix. Can handle 1D and 2D.
@@ -146,6 +147,7 @@ def create_Design_Matrix(*args):
         X = np.vander(x, N=l, increasing=True)
         return X
     
+############ Data generators ############
 class Polynomial:
 
     def __init__(self, *coeffs):    
@@ -182,8 +184,8 @@ class Franke:
 
         self.z_without_noise = self.franke(self.x, self.y)
         self.z = self.z_without_noise + self.eps * np.random.normal(0, 1, self.z_without_noise.shape)
-
-    def franke(self, x:np.ndarray, y:np.ndarray) -> np.ndarray:
+    @staticmethod
+    def franke(x:np.ndarray, y:np.ndarray) -> np.ndarray:
         """
         Parameters
             * x:    x-values
@@ -199,14 +201,35 @@ class Franke:
         term4 = -0.2*np.exp(-(9*x - 4)**2 - (9*y - 7)**2)
         return term1 + term2 + term3 + term4
 
+############ Optimization methods (and related) ############
 class LearningRate:
 
-    def __init__(self, learning_rate:callable, name:str):
+    def __init__(self, t0:float, t1:float, N:int, batch_size:int, name=None, const=None):
+        
         self.name = name 
-        self.learning_rate = learning_rate
+        if name is None:
+            if const is None:
+                self.name = f"callable({t0}, {t1})"
+            else:
+                self.name = str(const)
 
-    def __call__(self, epochs, i):
-        return self.learning_rate(epochs, i)
+        self.t0 = t0; self.t1 = t1
+        self.N = N; self.batch_size = batch_size
+        self.const = const 
+
+        self._call = self._varying_learning_rate
+        if not (const is None):
+            self._call = self._const_learning_rate
+
+    def _varying_learning_rate(self, epoch, i):
+        t = epoch * int(self.N / self.batch_size) + i 
+        return self.t0 / (t + self.t1)
+    
+    def _const_learning_rate(self, epoch, i):
+        return self.const
+    
+    def __call__(self, epoch, i):
+        return self._call(epoch, i)
     
     def __str__(self):
         return self.name 
@@ -243,17 +266,15 @@ class Optimizer:
     @learning_rate.setter
     def learning_rate(self, new_learning_rate):
         # Makes sure learning_rate is a callable
-        if not (new_learning_rate is callable):
+        if not isinstance(new_learning_rate, LearningRate):
             tmp = new_learning_rate
-            def new_learning_rate(epochs, i):
-                return tmp 
             
             self._str_learning_rate = str(tmp)
+            new_learning_rate = LearningRate(0, 0, 0, 0, self._str_learning_rate, const=new_learning_rate)
+            self._learning_rate = new_learning_rate
         else:
+            self._learning_rate = new_learning_rate
             self._str_learning_rate = "callable"
-        
-        new_learning_rate = LearningRate(new_learning_rate, f"{self._str_learning_rate}")
-        self._learning_rate = new_learning_rate
 
     def initialize_velocity(self, theta):
         if self.velocity is None:
@@ -279,7 +300,7 @@ class PlaneGradient(Optimizer):
         theta, gradient = args[0], args[1]; epochs = None; i = None 
 
         if len(args) == 4:
-            theta, gradient, epochs, i = args[0], args[1], args[2], args[3]
+            epochs, i = args[2], args[3]
         self.initialize_velocity(theta)
 
         self.velocity = self.momentum * self.velocity - self._learning_rate(epochs, i) * gradient
@@ -306,7 +327,7 @@ class Adagrad(Optimizer):
     def initialize_accumulation(self, theta):
         # Initializes accumulation matrix G if not already initialized
         if self.G is None:
-            self.G = np.zeros_like(theta)
+            self.G = 0
 
     def __call__(self, *args):
         theta, gradient, epochs, i = args[0], args[1], args[2], args[3]
@@ -314,10 +335,11 @@ class Adagrad(Optimizer):
         self.initialize_accumulation(theta)
 
         # Accumulating squared gradients
-        self.G += gradient**2
+        self.G += gradient*gradient
 
         #Updating theta
-        theta -= (self._learning_rate(epochs, i) / (np.sqrt(self.G + self.epsilon))) * gradient
+        theta -= (self._learning_rate(epochs, i) / (np.sqrt(self.G) + self.epsilon)) * gradient
+        
         return theta
     
     def __str__(self):
@@ -325,7 +347,7 @@ class Adagrad(Optimizer):
 
 class RMSprop(Optimizer):
     __doc__ = Optimizer.__doc__
-    def __init__(self, learning_rate=0.01, decay_rate=0.9, epsilon=1e-8, momentum=None, beta1=None, beta2=None):
+    def __init__(self, learning_rate=0.01, decay_rate=0.99, epsilon=1e-8, momentum=None, beta1=None, beta2=None):
         """
         Class implementing the RMSprop optimization algorithm.
         RMSprop maintains a moving average of the squared gradients to normalize the gradient.
@@ -345,10 +367,10 @@ class RMSprop(Optimizer):
         self.initialize_accumulation(theta)
 
         # Updating moving average of the squared gradients
-        self.G = self.decay_rate * self.G + (1 - self.decay_rate) * gradient**2
+        self.G = self.decay_rate * self.G + (1 - self.decay_rate) * gradient*gradient
 
         # Update theta
-        theta -= (self._learning_rate(epochs, i) / (np.sqrt(self.G + self.epsilon))) * gradient
+        theta -= (self._learning_rate(epochs, i) / (np.sqrt(self.G) + self.epsilon)) * gradient
         return theta
 
     def __str__(self):
@@ -395,14 +417,29 @@ class Adam(Optimizer):
     def __str__(self):
         return f"Adam: eta: {self._str_learning_rate}, eps: {self.momentum}, beta1 = {self.beta1}, beta2 = {self.beta2}"
 
+############ Descent ############
 class DescentSolver:
 
-    def __init__(self, optimization_method:Optimizer, degree:int, mode="GD"):
-        
+    def __init__(self, optimization_method:Optimizer, degree:int, mode="GD", cost_function=None):
+        """
+        This class uses an 'optimization method' (PlaneGD/SGD, AdaGrad, RMSprop, Adam) to create a callable on the form: 
+                descentSovler(X, y, epochs, lmbda, batch_size=None).
+
+        Arguments 
+            * optimization_method:          represents algorithm for computing next theta
+            * degree:                       polynomial or 'feature' degree
+            * mode (GD):                    either gradient descent (GD) or stochastic GD (SGD)
+            * cost_function (None):         cost function of choice, on the form (X, y, theta, lmbda)
+        """
+
+        # Storing callables
+        self._cost_function = cost_function
+        self._gradient = AutoGradCostFunction(cost_function) 
         self._optimization_method = optimization_method
 
+        # Storing parameters
         self._theta = None; self.degree = degree
-        self._gradient = None; self.lmbda = 0 # (corresponding to OLS)
+        self.lmbda = 0 # (corresponding to OLS) still needs to be given when calling
 
         self._message = str(optimization_method)
         
@@ -411,32 +448,49 @@ class DescentSolver:
         elif mode.upper() == "SGD":
             self._descent_method_call = self._SGD  
     
-    def update(self, gradient:np.ndarray, epochs:int, i:int):
+    def __call__(self, *args, theta="RANDOM") -> list:
         """
-        Updates the previous theta-value
         Arguments
-            * gradient:         
-        """
-        self._theta = self._optimization_method(self._theta, gradient, epochs, i) 
+            * X:                        design matrix 
+            * y:                        (given) output data
+            * epochs:                   number of itterations
+            * lmbda:                    for gradient, set to zero for OLS gradient
+            * batch_size (optional):    batch size
         
-    @property
-    def gradient(self):
-        return self._gradient
-    
-    @gradient.setter 
-    def gradient(self, new_gradient, index=None):
-        self._gradient = new_gradient 
+        Returns
+            * self._theta:              polynomial coefficient
+        """
 
-    def _gradients_call(self, X, y):
-        return self._gradient(X, y, self._theta, self.lmbda)
-            
+        if self._gradient is None:
+            raise ValueError(f"No gradient is given for {str(self._optimization_method)}-method.")
+        
+        print(f"Starting training w/ {self._optimization_method}")
+        
+        self._descent_method_call(*args, theta=theta)
+        return self._theta
+    
+    @property
+    def cost_function(self):
+        return self._cost_function
+    
+    @cost_function.setter 
+    def cost_function(self, new_cost_function):
+        self._cost_function = new_cost_function
+        self._gradient = AutoGradCostFunction(new_cost_function)
+
+    ######## Private methods ########
     def _GD(self, *args, theta="RANDOM"):
+        """
+        Gradient Descent(X, y, epochs, lmbda)
+        """
+
         start_time = time.time()
 
         if len(args) != 4:
-            raise ValueError(f"Gradient descent needs 4 arguments: X, y, N, lmbda, not {len(args)}")
+            if not (len(args) == 5 and args[-1] is None):
+                raise ValueError(f"Gradient descent needs 4 arguments: X, y, N, lmbda, not {len(args)}")
         
-        X, y, N, lmbda = args[0], args[1], args[2], args[3]
+        X, y, epochs, lmbda = args[0], args[1], args[2], args[3]
 
         self.lmbda = lmbda # passed into self._gradients_call method 
 
@@ -445,16 +499,20 @@ class DescentSolver:
                 self._theta = np.random.randn(X.shape[1], 1)
         else:
             self._theta = copy.deepcopy(theta)
-        for iter in range(N):
+        for iter in range(epochs):
             gradient = self._gradients_call(X, y)
-            self.update(gradient, None, None)
+            self._update(gradient, None, None)
 
             current_time = time.time()
-            print(f"GD: {iter/N*100:.1f}%, time elapsed: {current_time-start_time:.1f}s", end="\r")
+            print(f"GD: {iter/epochs*100:.1f}%, time elapsed: {current_time-start_time:.1f}s", end="\r")
 
         print(f"GD: 100.0%, time elapsed: {current_time-start_time:.1f}s         ")
     
     def _SGD(self, *args, theta="RANDOM"):
+        """
+        Stochastic Gradient Descent(X, y, epochs, lmbda, batch_size)
+        """
+
         start_time = time.time()
         if len(args) != 5:
             raise ValueError(f"Gradient descent needs 5 arguments: X, y, epochs, lmbda, batch_size, not {len(args)}")
@@ -480,65 +538,36 @@ class DescentSolver:
                 X_i = X[miniBachMin: miniBachMax]; y_i = y[miniBachMin:miniBachMax]
 
                 gradient = self._gradients_call(X_i, y_i)
-                self.update(gradient, epoch, i)
+                self._update(gradient, epoch, i)
 
                 current_time = time.time()
 
             tmp = epoch * m /N * 100
             print(f"SGD: {tmp:.1f}%, time elapsed: {current_time-start_time:.1f}s", end="\r")
 
-        # for epoch in range(epochs):
-        #     indices = np.arange(m)
-        #     np.random.shuffle(indices)
-        #     X_shuffled = X[indices]
-        #     y_shuffled = y[indices]
-
-        #     for i in range(0, m, batch_size):
-        #         # random_index = batch_size*np.random.randint(m)
-        #         X_i = X_shuffled[i: i + m]
-        #         y_i = y_shuffled[i: i + m]
-
-        #         # print(np.shape(X_i))
-        #         # print(np.shape(y_i))
-        #         gradients = self._gradients_call(X_i, y_i)
-        #         self.update(gradients, epoch, i)
-
-        #         current_time = time.time()
-
-        #     tmp = epoch * m /N * 100
-        #     print(f"SGD: {tmp:.1f}%, time elapsed: {current_time-start_time:.1f}s", end="\r")
-
         print(f"SGD: 100.0%, time elapsed: {current_time-start_time:.1f}s         ")
 
-    def __call__(self, *args, theta="RANDOM") -> list:
+    def _update(self, gradient:np.ndarray, epochs:int, i:int):
         """
+        Updates the previous theta-value
         Arguments
-            * X:                        design matrix 
-            * y:                        (given) output data
-            * epochs:                   number of itterations
-            * lmbda:                    for gradient, set to zero for OLS gradient
-            * batch_size (optional):    batch size
-        
-        Returns
+            * gradient:         
         """
-        if self._gradient is None:
-            raise ValueError(f"No gradient is given for {str(self._optimization_method)}-method.")
-        
-        print(f"Starting training w/ {self._optimization_method}")
-        
-        self._descent_method_call(*args, theta=theta)
-        return self._theta
+        self._theta = self._optimization_method(self._theta, gradient, epochs, i) 
+
+    def _gradients_call(self, X, y):
+        return self._gradient(X, y, self._theta, self.lmbda)
 
 class DescentAnalyzer:
 
-    def __init__(self, x: np.ndarray, y: np.ndarray, optimizer: str,
+    def __init__(self, x: np.ndarray, y: np.ndarray,
                  degree: int, epochs:int, batch_size=None, GD_SGD="GD",
-                 momentum=0, epsilon=1e-8, beta1=0.9, beta2=0.999, decay_rate=0.9, princt_percentage=False,
+                 momentum=0, epsilon=1e-8, beta1=0.9, beta2=0.999, decay_rate=0.9, print_percentage=True,
                  test_size=0.2):
         
         self.x = x
         self.y = y
-        self.optimizer_name = optimizer
+        self.optimizer_name = None
         self.degree = degree
         self.epochs = epochs
         self.batch_size = batch_size
@@ -551,7 +580,7 @@ class DescentAnalyzer:
         
         self.test_size = 0.2
 
-        self._print_percentage = princt_percentage
+        self._print_percentage = print_percentage
 
         self.lambdas = None
         # Placeholder for results
@@ -584,17 +613,18 @@ class DescentAnalyzer:
             "lambdas": self.lambdas
         }
 
-    def _analyze(self, optimization_method:Optimizer, gradient:callable, learning_rate:list, lmbdas:list, N_bootstraps:int):
+    def _analyze(self, optimization_method:Optimizer, cost_function:callable, learning_rate:list, lmbdas:list, N_bootstraps:int):
         """
         ...
         """
-        descentSolver = DescentSolver(optimization_method, self.degree, mode=self.GD_SGD)
-        descentSolver.gradient = gradient
+        self.data["optimizer_name"] = str(optimization_method)
 
-        X = create_Design_Matrix(self.x, self.y, self.degree)
+        descentSolver = DescentSolver(optimization_method, self.degree, mode=self.GD_SGD)
+        descentSolver.cost_function = cost_function
+
+        X = create_Design_Matrix(self.x, self.degree)
         X_train, X_test, z_train, z_test = train_test_split(X, self.y.reshape(-1,1), test_size=0.2)
-        
-        theta = np.random.randn(X.shape[1], 1)
+    
         self.MSE_test = np.zeros((len(learning_rate), len(lmbdas))); self.MSE_train = np.zeros((len(learning_rate), len(lmbdas)))
         self.R2_test = np.zeros((len(learning_rate), len(lmbdas))); self.R2_train = np.zeros((len(learning_rate), len(lmbdas)))
 
@@ -608,11 +638,13 @@ class DescentAnalyzer:
             for j in range(len(lmbdas)):
                 MSE_test_tmp = np.zeros(N_bootstraps); R2_test_tmp = np.zeros(N_bootstraps)
                 MSE_train_tmp = np.zeros(N_bootstraps); R2_train_tmp = np.zeros(N_bootstraps)
-
+                
                 for k in range(N_bootstraps):
                     blockPrint()
 
-                    theta = descentSolver(X_train, self.y, self.epochs, lmbdas[j], self.batch_size, theta=theta)
+                    theta = np.random.randn(X.shape[1], 1)
+                    
+                    theta = descentSolver(X_train, z_train, self.epochs, lmbdas[j], self.batch_size, theta=theta)
                     enablePrint()
 
                     z_predict_test = X_test @ theta 
@@ -627,18 +659,19 @@ class DescentAnalyzer:
                     R2_test_tmp[k] = r2_score(z_test, z_predict_test)
                     R2_train_tmp[k] = r2_score(z_train, z_predict_train)
 
-            print(f"Analyzing, {(i+1)/(len(learning_rate))*100:.1f}%, duration: {time.time() - start_time:.1f}s", end="\r")
-                  
-            self.MSE_test[i,j] = np.mean(MSE_test_tmp); self.MSE_train[i,j] = np.mean(MSE_train_tmp)
-            self.R2_test[i,j] = np.mean(R2_test_tmp); self.R2_train[i,j] = np.mean(R2_train_tmp)
+                self.MSE_test[i,j] = np.mean(MSE_test_tmp); self.MSE_train[i,j] = np.mean(MSE_train_tmp)
+                self.R2_test[i,j] = np.mean(R2_test_tmp); self.R2_train[i,j] = np.mean(R2_train_tmp)
+
+            if self._print_percentage:
+                print(f"Analyzing, {(i+1)/(len(learning_rate))*100:.1f}%, duration: {time.time() - start_time:.1f}s", end="\r")
 
             self.thetas.append(theta)
         self.lambdas = lmbdas
-        # self.learning_rates = learning_rate
 
-        print(f"Analyzing, 100%, duration: {time.time() - start_time:.1f}s            ")
+        if self._print_percentage:
+            print(f"Analyzing, 100%, duration: {time.time() - start_time:.1f}s            ")
     
-    def run_analysis(self, optimization_method:Optimizer, gradient:callable, learning_rate:float|list, lmbdas=0, N_bootstraps=1) -> np.ndarray:
+    def run_analysis(self, optimization_method:Optimizer, cost_function:callable, learning_rate:float|list, lmbdas=0, N_bootstraps=1) -> np.ndarray:
         """
         Runs the descent analysis and stores the results.
         """
@@ -651,8 +684,11 @@ class DescentAnalyzer:
 
         if (not isinstance(lmbdas, list)) and (not isinstance(lmbdas, np.ndarray)):
             lmbdas = [lmbdas]
+
+        if not (callable(cost_function)):
+            raise TypeError(f"Argument 'cost_function' {(type(cost_function))} is not callable")
         
-        self._analyze(optimization_method, gradient, learning_rate, lmbdas, N_bootstraps)
+        self._analyze(optimization_method, cost_function, learning_rate, lmbdas, N_bootstraps)
         self._update_data()
 
         return self.thetas
@@ -678,11 +714,6 @@ class DescentAnalyzer:
                 while i <= stop: # May already be additional files created
                     filename_full = f"{filename}_{i}.pkl"
                     if not os.path.exists(filename_full):
-                        # print(self.data.keys())
-                        # for o in self.data.keys():
-                        #     print(o, type(self.data[o]))
-                        #     for p in range(len(self.data[o])):
-                        #         print(type(self.data[o][p]))
                         with open(filename_full, 'wb') as f:
                             pickle.dump(self.data, f)
                         
@@ -740,6 +771,7 @@ class DescentAnalyzer:
         self.data["MSE_test"] = self.MSE_test; self.data["MSE_train"] = self.MSE_train
         self.data["R2_test"] = self.R2_test; self.data["R2_train"] = self.R2_train
 
+############ Activation functions ############
 class Activation:
     @staticmethod
     def sigmoid(z):
@@ -873,7 +905,7 @@ class FFNN:
         predicted_classes = (predictions > 0.5).astype(int)
         return np.mean(predicted_classes.flatten() == y.flatten())
 
-def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False):
+def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False, annot=True, only_less_than=None):
     """
     Plots a 2D heatmap with lambda and eta as inputs.
 
@@ -900,7 +932,7 @@ def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, 
     cmap = 'plasma'
     if Reverse_cmap == True:
         cmap = 'plasma_r'
-    fig, ax = plt.subplots(figsize = (12, 10))
+    fig, ax = plt.subplots(figsize = (12, 7))
     tick = ticker.ScalarFormatter(useOffset=False, useMathText=True)
     tick.set_powerlimits((0, 0))
     if x_log:
@@ -911,7 +943,26 @@ def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, 
         t_y = [u'${}$'.format(tick.format_data(eta)) for eta in etas]
     else:
         t_y = [fr'${eta}$' for eta in etas]
-    sns.heatmap(data = value, ax = ax, cmap = cmap, annot=True, fmt=".3f",  xticklabels=t_x, yticklabels=t_y)
+
+    
+    if only_less_than is not None:
+        annot_data = np.where(value < only_less_than, np.round(value, 3).astype(str), "")
+        sns.heatmap(
+            data=value,
+            ax=ax,
+            cmap=cmap,
+            annot=annot_data,  # Use the formatted conditional annotations
+            fmt="",  # Set fmt to an empty string as annotations are pre-formatted
+            annot_kws={"size": 6.5},
+        )
+        x_labels = [f"{float(label.get_text()):.1e}" for label in ax.get_xticklabels()]
+        y_labels = [f"{float(label.get_text()):.1e}" for label in ax.get_yticklabels()]
+
+        # Apply the formatted labels with rotation and font adjustments
+        ax.set_xticklabels(x_labels, rotation=45, ha='right', fontsize=8)
+        ax.set_yticklabels(y_labels, rotation=0, fontsize=8)
+    else:
+        sns.heatmap(data = value, ax = ax, cmap = cmap, annot=annot, fmt=".3f",  xticklabels=t_x, yticklabels=t_y)
     if title is not None:
         plt.title(title)
     plt.xlim(0, len(lambdas))
