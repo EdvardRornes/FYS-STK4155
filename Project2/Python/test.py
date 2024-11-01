@@ -9,137 +9,210 @@ def blockPrint():
 def enablePrint():
     sys.stdout = sys.__stdout__
 
-def test_GD(eps=3):
-    # blockPrint()
+def test_GD(eps=3, eps_MSE=0.1):
+    blockPrint()
 
     N = 1000
     x = np.random.rand(N,1)
-    beta_true = np.array([[1, -8, 16],]).T
+    beta_true = np.random.rand(3)
     func = Polynomial(*beta_true)
     y = func(x)
 
-    planeGD = PlaneGD(momentum=0, learning_rate=0.3590565341426001)
+    # Testing DescentSolver
+    planeGD = PlaneGradient(momentum=0, learning_rate=0.3590565341426001)
     test = DescentSolver(planeGD, 3)
 
     beta_test = np.random.randn(3, 1)
 
+    gradientOLS = AutoGradCostFunction(CostRidge, 2)
     test.gradient = gradientOLS
-    beta_test = test(x, y, N)
-
-    test_analyzer = DescentAnalyzer(x, y, "planeGD", 3, N)
-
-    test_analyzer.run_analysis(gradientOLS, 0.3590565341426001)
-    beta_test_analyzer = test_analyzer["thetas"]
-
-    print(beta_test)
-    print(beta_test_analyzer)
-
-    enablePrint()
-    assert np.linalg.norm(beta_true - beta_test) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test)}"
-
-def test_SGD(eps=3):
-    blockPrint()
-
-    N = 1000; batch_size = 5
-    x = np.random.rand(N,1)
-    beta_true = np.array([[1, -8, 16],]).T
-    func = Polynomial(*beta_true)
-    y = func(x)
-
-    planeSGD = PlaneGD(momentum=0, learning_rate=0.3590565341426001)
-    test = DescentSolver(planeSGD, 3, mode="SGD")
-
-    beta_test = np.random.randn(N,1)
-
-    test.gradient = gradientOLS
-    beta_test = test(x, y, N, batch_size, theta=beta_test)
-
-    enablePrint()
-    assert np.linalg.norm(beta_true - beta_test) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test)}"
-
-def test_AdaGrad(eps=5):
-    blockPrint()
-
-    N = 10_000; batch_size = 5
-    x = np.random.rand(N,1)
-    beta_true = np.array([[1, -8, 16],]).T
-    func = Polynomial(*beta_true)
-    y = func(x)
-
-    adagraddiradd = Adagrad(learning_rate=0.3590565341426001)
-    test1 = DescentSolver(adagraddiradd, 3)
-    test2 = DescentSolver(adagraddiradd, 3, mode="SGD")
-
-    beta_test = np.random.randn(N,1)
-
-    test1.gradient = gradientOLS; test2.gradient = gradientOLS
-    beta_test1 = test1(x, y, N, theta=beta_test); beta_test2 = test2(x, y, N, batch_size, theta=beta_test)
-
-    enablePrint()
-
-    assert np.linalg.norm(beta_true - beta_test1) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test1)}"
-    assert np.linalg.norm(beta_true - beta_test2) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test2)}"
-
-def test_RMSprop(eps=3):
-    blockPrint()
     
+    X = create_Design_Matrix(x, 3)
+    beta_test = test(X, y, N, 0)
 
-    N = 10_000; batch_size = 5
+    # Testing DescentAnalyzer
+    test_analyzer = DescentAnalyzer(x, y, 3, N, print_percentage=False)
+
+    planeGD = PlaneGradient(momentum=0, learning_rate=0.3590565341426001)
+    gradientOLS = AutoGradCostFunction(CostRidge, 2)
+
+    test.gradient = gradientOLS
+    test_analyzer.run_analysis(planeGD, gradientOLS, 0.3590565341426001, 0)
+    
+    mse_train = test_analyzer["MSE_train"]
+    mse_test = test_analyzer["MSE_test"]
+
+    enablePrint()
+    assert np.linalg.norm(beta_true - beta_test) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test)}"
+    assert np.linalg.norm(mse_train) < eps_MSE, f"Test GD for MSE-train failed with error {np.linalg.norm(mse_train)}"
+    assert np.linalg.norm(mse_test) < eps_MSE, f"Test GD for MSE-test failed with error {np.linalg.norm(mse_test)}"
+
+def test_SGD(eps=3, eps_MSE=0.1):
+    blockPrint()
+
+    # Testing DescentSolver
+    N = 1000; N_epochs = 10; batch_size = 4
     x = np.random.rand(N,1)
-    beta_true = np.array([[1, -8, 16],]).T
+    beta_true = np.random.rand(3)
+    func = Polynomial(*beta_true)
+    y = func(x)
+    
+    planeGD = PlaneGradient(momentum=0, learning_rate=0.3590565341426001)
+    test = DescentSolver(planeGD, 3, mode="SGD")
+
+    gradientOLS = AutoGradCostFunction(CostRidge, 2)
+    
+    test.gradient = gradientOLS
+    
+    X = create_Design_Matrix(x, 2)
+    
+    beta_test = test(X, y, N_epochs, 0, batch_size)
+
+    # Testing DescentAnalyzer
+    N = 20; N_epochs = 10; batch_size = 4
+
+    x = np.sort(np.random.uniform(0, 1, N)) 
+    y_ = np.sort(np.random.uniform(0, 1, N))
+    y = Franke.franke(x,y_); y = y.reshape(-1, 1)
+    x = [x,y_]
+    
+    t0 = 2; t1 = 2
+    learningrate = LearningRate(t0, t1, N, batch_size, "test")
+    
+    
+    test_analyzer = DescentAnalyzer(x, y, 5, N_epochs, batch_size=batch_size, GD_SGD="SGD", print_percentage=False)
+
+    planeGD = PlaneGradient(momentum=0, learning_rate=learningrate)
+    gradientOLS = AutoGradCostFunction(CostRidge, 2)
+
+    test.gradient = gradientOLS
+    test_analyzer.run_analysis(planeGD, gradientOLS, learningrate, 0)
+    
+    mse_train = test_analyzer["MSE_train"]
+    mse_test = test_analyzer["MSE_test"]
+
+    enablePrint()
+    assert np.linalg.norm(beta_true - beta_test) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test)}"
+    assert np.linalg.norm(mse_train) < eps_MSE, f"Test SGD for MSE-train failed with error {np.linalg.norm(mse_train)}"
+    assert np.linalg.norm(mse_test) < eps_MSE, f"Test SGD for MSE-test failed with error {np.linalg.norm(mse_test)}"
+
+def test_AdaGrad(eps=5, eps_MSE=0.1):
+    blockPrint()
+
+    N = 1000; batch_size = 100
+    x = np.random.rand(N,1)
+    beta_true = np.random.rand(3)
     func = Polynomial(*beta_true)
     y = func(x)
 
-    # t0, t1 = 5, 50
-    # def learning_schedule(epoch, i):
-    #     t = epoch*m + i 
-    #     return t0/(t+t1)
+    # Testing DescentSolver
+    adagraddiradd = Adagrad(learning_rate=0.3590565341426001)
+    test = DescentSolver(adagraddiradd, 3, mode="SGD")
 
-    RMS_propproppapp = RMSprop(learning_rate=0.3590565341426001)
-    test1 = DescentSolver(RMS_propproppapp, 3)
-    test2 = DescentSolver(RMS_propproppapp, 3, mode="SGD")
+    beta_test = np.random.randn(3, 1)
 
-    beta_test = np.random.randn(N,1)
+    gradientOLS = AutoGradCostFunction(CostRidge, 2)
+    test.gradient = gradientOLS
+    
+    X = create_Design_Matrix(x, 2)
+    beta_test = test(X, y, N, 0, batch_size)
 
-    test1.gradient = gradientOLS; test2.gradient = gradientOLS
-    beta_test1 = test1(x, y, N, theta=beta_test)
-    beta_test2 = test2(x, y, N, batch_size, theta=beta_test)
+    # Testing DescentAnalyzer
+    test_analyzer = DescentAnalyzer(x, y, 3, N, batch_size=batch_size, GD_SGD="SGD", print_percentage=False)
+
+    adagraddiradd = Adagrad(momentum=0, learning_rate=0.3590565341426001)
+    gradientOLS = AutoGradCostFunction(CostRidge, 2)
+
+    test.gradient = gradientOLS
+    test_analyzer.run_analysis(adagraddiradd, gradientOLS, 0.3590565341426001, 0)
+    
+    mse_train = test_analyzer["MSE_train"]
+    mse_test = test_analyzer["MSE_test"]
 
     enablePrint()
-    print(beta_test1)
-    print(beta_test2)
-    assert np.linalg.norm(beta_true - beta_test1) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test1)}"
-    assert np.linalg.norm(beta_true - beta_test2) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test2)}"
+    assert np.linalg.norm(beta_true - beta_test) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test)}"
+    assert np.linalg.norm(mse_train) < eps_MSE, f"Test AdaGrad for MSE-train failed with error {np.linalg.norm(mse_train)}"
+    assert np.linalg.norm(mse_test) < eps_MSE, f"Test AdaGrad for MSE-test failed with error {np.linalg.norm(mse_test)}"
+    
+def test_RMSprop(eps=3, eps_MSE=0.1):
+    blockPrint()
 
-def test_Adam(eps=3):
-    # blockPrint()
-
-    N = 10_0; batch_size = 5
+    N = 1000; batch_size = 100
     x = np.random.rand(N,1)
-    beta_true = np.array([[1, -8, 16],]).T
+    beta_true = np.random.rand(3)
     func = Polynomial(*beta_true)
     y = func(x)
 
-    adamramdampadamkada = Adam(learning_rate=0.3590565341426001)
-    test1 = DescentSolver(adamramdampadamkada, 3)
-    test2 = DescentSolver(adamramdampadamkada, 3, mode="SGD")
+    # Testing DescentSolver
+    RMS_propproppapp = RMSprop(learning_rate=0.01)
+    test = DescentSolver(RMS_propproppapp, 3, mode="SGD")
 
-    # X = create_Design_Matrix(x.flatten(), 3)
-    beta_test = np.random.randn(N,1)
+    beta_test = np.random.randn(3, 1)
 
-    test1.gradient = gradientOLS; test2.gradient = gradientOLS
-    beta_test1 = test1(x, y, N, theta=beta_test); beta_test2 = test2(x, y, N, batch_size, theta=beta_test)
+    gradientOLS = AutoGradCostFunction(CostRidge, 2)
+    test.gradient = gradientOLS
+    
+    X = create_Design_Matrix(x, 2)
+    beta_test = test(X, y, N, 0, batch_size)
+
+    # Testing DescentAnalyzer
+    test_analyzer = DescentAnalyzer(x, y, 3, N, batch_size=batch_size, GD_SGD="SGD", print_percentage=False)
+
+    RMS_propproppapp = RMSprop(momentum=0, learning_rate=0.01)
+    gradientOLS = AutoGradCostFunction(CostRidge, 2)
+
+    test.gradient = gradientOLS
+    test_analyzer.run_analysis(RMS_propproppapp, gradientOLS, 0.01, 0)
+    
+    mse_train = test_analyzer["MSE_train"]
+    mse_test = test_analyzer["MSE_test"]
 
     enablePrint()
+    assert np.linalg.norm(beta_true - beta_test) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test)}"
+    assert np.linalg.norm(mse_train) < eps_MSE, f"Test RMSprop for MSE-train failed with error {np.linalg.norm(mse_train)}"
+    assert np.linalg.norm(mse_test) < eps_MSE, f"Test RMSprop for MSE-test failed with error {np.linalg.norm(mse_test)}"
 
-    print(beta_test1)
-    print(beta_test2)
-    assert np.linalg.norm(beta_true - beta_test1) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test1)}"
-    assert np.linalg.norm(beta_true - beta_test2) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test2)}"
+def test_Adam(eps=3, eps_MSE=0.1):
+    blockPrint()
+
+    N = 1000; batch_size = 100
+    x = np.random.rand(N,1)
+    beta_true = np.random.rand(3)
+    func = Polynomial(*beta_true)
+    y = func(x)
+
+    # Testing DescentSolver
+    adamramdampadamkada = Adam(learning_rate=0.01)
+    test = DescentSolver(adamramdampadamkada, 3, mode="SGD")
+
+    beta_test = np.random.randn(3, 1)
+
+    gradientOLS = AutoGradCostFunction(CostRidge, 2)
+    test.gradient = gradientOLS
+    
+    X = create_Design_Matrix(x, 2)
+    beta_test = test(X, y, N, 0, batch_size)
+
+    # Testing DescentAnalyzer
+    test_analyzer = DescentAnalyzer(x, y, 3, N, batch_size=batch_size, GD_SGD="SGD", print_percentage=False)
+
+    adamramdampadamkada = Adam(momentum=0, learning_rate=0.01)
+    gradientOLS = AutoGradCostFunction(CostRidge, 2)
+
+    test.gradient = gradientOLS
+    test_analyzer.run_analysis(adamramdampadamkada, gradientOLS, 0.01, 0)
+    
+    mse_train = test_analyzer["MSE_train"]
+    mse_test = test_analyzer["MSE_test"]
+
+    enablePrint()
+    assert np.linalg.norm(beta_true - beta_test) < eps, f"Test failed with error {np.linalg.norm(beta_true - beta_test)}"
+    assert np.linalg.norm(mse_train) < eps_MSE, f"Test Adam for MSE-train failed with error {np.linalg.norm(mse_train)}"
+    assert np.linalg.norm(mse_test) < eps_MSE, f"Test Adam for MSE-test failed with error {np.linalg.norm(mse_test)}"
 
 if __name__ == "__main__":
-    test_GD()
-    # test_SGD()
+    # test_GD()
+    test_SGD()
     # test_AdaGrad()
     # test_RMSprop()
     # test_Adam()
