@@ -8,6 +8,7 @@ from tensorflow.keras import regularizers           # Use any regularizer (l1, l
 from tensorflow.keras.models import Sequential      # Append layers to models
 from tensorflow.keras.layers import Dense           # Define characteristics of a layer
 from tensorflow.keras import optimizers             # Use any optimizer (SGD, Adam, RMSprop)
+from utils import *
 
 # Load breast cancer dataset
 cancer = load_breast_cancer()
