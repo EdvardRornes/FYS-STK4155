@@ -1,4 +1,4 @@
-from new_utils import *
+from utils import *
 import sys, os
 
 # Disable print

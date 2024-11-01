@@ -730,7 +730,7 @@ class FFNN:
         # Output layer (applying sigmoid activation for binary classification)
         Z = A @ self.weights[-1] + self.biases[-1]
         self.z_values.append(Z)
-        A_output = Activation.sigmoid(Z)  # Apply sigmoid to output for binary classification
+        A_output = self.activation(Z)  # Apply sigmoid to output for binary classification
         self.activations.append(A_output)
         return A_output
     
@@ -782,7 +782,6 @@ class FFNN:
                 print(f'Epoch {epoch}, MSE ({self.activation_func}): {mse}')
         
         return mse_history
-
 
     def predict(self, X):
         return self.forward(X)
