@@ -923,7 +923,7 @@ def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, 
         y_log: bool
             If True, y-axis is logarithmic.
         savefig: bool
-            If True, saves the plot as a PDF.
+            If True, saves the plot as a PDF. Don't include file extension
         filename: str
             Name for the saved file if savefig is True.
         Reverse_cmap: bool

@@ -8,7 +8,7 @@ from utils import *
 import time
 import warnings
 
-# Suppress specific warnings
+# Suppress specific warnings (they stem from poor parameter combinations)
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow encountered in matmul")
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow encountered in exp")
 warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in matmul")
