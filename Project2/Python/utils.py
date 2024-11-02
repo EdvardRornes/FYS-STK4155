@@ -923,26 +923,42 @@ def analyze_save_data(method:str, size:int, index:int, key="MSE_train"):
             elif happy.upper() in ["Q", "QUIT", "X"]:
                 exit()
 
-############ Neural Networks ############
 class FFNN:
     def __init__(self, input_size, hidden_layers, output_size, activation='relu', alpha=0.01, lambda_reg=0.0):
+        """
+        Initialize the Feedforward Neural Network (FFNN).
+
+        Parameters:
+        - input_size (int): Number of input features.
+        - hidden_layers (list): List of integers representing the size of each hidden layer.
+        - output_size (int): Number of output neurons.
+        - activation (str): Activation function to use ('relu', 'sigmoid', 'lrelu').
+        - alpha (float): Leaky ReLU parameter (only for 'lrelu').
+        - lambda_reg (float): L2 regularization parameter.
+        """
         self.layers = [input_size] + hidden_layers + [output_size]
         self.weights = []
         self.biases = []
         self.activation_func = activation
         self.alpha = alpha
         self.lambda_reg = lambda_reg
-
-        # Mapping for activation functions
+        
+        # Initialize activation functions mapping
         self.activation_map = {
             'relu': (Activation.relu, Activation.relu_derivative),
             'sigmoid': (Activation.sigmoid, Activation.sigmoid_derivative),
             'lrelu': (lambda z: Activation.Lrelu(z, self.alpha), lambda z: Activation.Lrelu_derivative(z, self.alpha))
         }
         
+        # Initialize the activation function
         self.activation, self.activation_derivative = self.activation_map.get(self.activation_func.lower(), (Activation.relu, Activation.relu_derivative))
 
         # Initialize weights and biases
+        self.initialize_weights_and_biases()
+
+    def initialize_weights_and_biases(self):
+        self.weights = []
+        self.biases = []
         for i in range(len(self.layers) - 1):
             weight_matrix = np.random.randn(self.layers[i], self.layers[i + 1]) * np.sqrt(2. / self.layers[i])
             self.weights.append(weight_matrix)
@@ -959,12 +975,18 @@ class FFNN:
             Z = A @ self.weights[i] + self.biases[i]
             self.z_values.append(Z)
             A = self.activation(Z)
+
+            # Clip activations to prevent overflow
+            A = np.clip(A, -1e10, 1e10)
             self.activations.append(A)
 
-        # Output layer (applying sigmoid activation for binary classification)
+        # Output layer
         Z = A @ self.weights[-1] + self.biases[-1]
         self.z_values.append(Z)
-        A_output = self.activation(Z)  # Apply sigmoid to output for binary classification
+        A_output = self.activation(Z)
+
+        # Clip output activations
+        A_output = np.clip(A_output, -1e10, 1e10)
         self.activations.append(A_output)
         return A_output
     
@@ -972,12 +994,10 @@ class FFNN:
         m = X.shape[0]
         y = y.reshape(-1, 1)
 
-        # Calculate delta for output layer using binary cross-entropy loss
         output = self.activations[-1]
-        delta = output - y  # Gradient of the binary cross-entropy loss
+        delta = output - y  # Gradient of the loss
 
         for i in reversed(range(len(self.weights))):
-            # Calculate gradients
             dw = (self.activations[i].T @ delta) / m
             db = np.sum(delta, axis=0, keepdims=True) / m
             dw += (self.lambda_reg / m) * self.weights[i]  # Regularization term
@@ -992,6 +1012,7 @@ class FFNN:
     
     def train(self, X, y, learning_rate=0.01, epochs=1000, batch_size=None, shuffle=True, lambda_reg=0.0):
         self.lambda_reg = lambda_reg  # Update regularization parameter
+        self.initialize_weights_and_biases()  # Reset weights and biases for new training
         mse_history = []
         m = X.shape[0]
         if batch_size is None:
@@ -1012,7 +1033,7 @@ class FFNN:
             mse = np.mean((self.activations[-1] - y_batch) ** 2)
             mse_history.append(mse)
 
-            if epoch % (epochs//5) == 0:
+            if epoch % (epochs // 5) == 0:
                 print(f'Epoch {epoch}, MSE ({self.activation_func}): {mse}')
         
         return mse_history
@@ -1024,6 +1045,7 @@ class FFNN:
         predictions = self.predict(X)
         predicted_classes = (predictions > 0.5).astype(int)
         return np.mean(predicted_classes.flatten() == y.flatten())
+
 
 def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False, annot=True, only_less_than=None):
     """
@@ -1090,5 +1112,5 @@ def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, 
     plt.xlabel(r'$\lambda$')
     plt.ylabel(r'$\eta$')
     plt.tight_layout()
-    if savefig is not None:
+    if savefig:
         plt.savefig(f'Figures/{filename}.pdf')

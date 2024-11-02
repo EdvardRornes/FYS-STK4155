@@ -98,7 +98,7 @@ aps,
 \date{\today}
 
 \begin{abstract}
-	Neural networks are a massive part of modern day science. We develop a program\footnote{\href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project1}{Github}} which consists of both linear and logistic regression. In particular the program contains: gradient decent, stochastic gradient decent and a simple neural network. Linear regression is performed on the Franke function, whilst the logistic regression used to identify malignant tumors using breast cancer data from sklearn. Different activation functions such as: Sigmoid, ReLU and LeakyReLU were used. The number of epochs and hidden nodes along with values for the hyper-parameter $\lambda$ and the learning rate $\eta$ were analyzed and tuned to optimal values. For the cancer data, the best accuracy achieved for ReLU, LeakyReLU and the sigmoid activation functions where $97.9\%,98.6\%$ and $97.9\%$ respectively. The sigmoid activation function was seen to be largely invariant under changes in the hyperparameter $\lambda$ for optimal learning rates, whilst both ReLU and LeakyReLU varied much more to changes. Overall LeakyReLU performed the best across all tests, but for the cancer data it's improvement was slim compared to other activation functions.
+	In recent years, neural networks have become increasingly important for advancements in various scientific fields. In this report, we develop a program\footnote{\href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project1}{Github}} that consists of both linear and logistic regression methods. In particular, the program implements gradient descent, stochastic gradient descent, and a simple feed-forward neural network with backpropagation. The neural network is evaluated against linear regression on the Franke function and against logistic regression using sklearn's breast cancer data, where it identifies malignant tumors. We explore three activation functions: Sigmoid, ReLU, and LeakyReLU. The analysis involves tuning the number of epochs, hidden nodes, and the hyperparameters $\lambda$ (regularization) and $\eta$ (learning rate) to optimal values. On the Franke function, our own implementation of the neural network performed poorly compared to linear regression, with peak $R^2$-scores of $x$ and $y$ respectively. For the cancer data, the highest accuracies achieved with ReLU, LeakyReLU, and Sigmoid activation functions were $97.9\%, 98.6\%$, and $97.9\%$, respectively, compared to $z\%$ for logistic regression. Notably, the Sigmoid activation function exhibited minimal sensitivity to variations in the hyperparameter $\lambda$ at optimal learning rates, whereas ReLU and LeakyReLU showed significant responsiveness. Overall, while LeakyReLU yielded the best performance across all tests, its improvement over the other activation functions was marginal when applied to the cancer dataset. Additionally, the Sigmoid activation function was found to be appreciably slower than the ReLU variants.
 \end{abstract}
 
 \maketitle
@@ -128,7 +128,7 @@ We then insist that the derivative of these w.r.t. $\bm\beta$ is $0$, and choose
 \end{align}
 
 \subsection{Regularization Terms}
-Regularization is a technique to prevent overfitting by adding a penalty to the cost function that discourages complex models. The two common regularization methods that we inspected previously are Ridge (L2) and Lasso (L1) regularization. In this project we will only be considering Ridge, where the cost function is given by
+Regularization is a technique to prevent overfitting by adding a penalty to the cost function that discourages complex models. The two common regularization methods that we inspected previously are Ridge and Lasso regularization. In this project we will only be considering Ridge, where the cost function is given by
 \begin{align}
 	C_\text{Ridge}(\bm \beta) = C_\text{OLS}(\bm \beta) + \lambda \|\bm \beta\|_2^2,
 \end{align}
@@ -204,6 +204,14 @@ By selecting appropriate activation functions for each layer, FFNNs can effectiv
 Backpropagation is the key algorithm for training neural networks by optimizing weights to minimize the cost function. It works by propagating the error backward from the output layer to the input layers, computing gradients for each weight based on the error. These gradients are then used to update the weights, enabling the network to learn from its errors and make more accurate predictions over time.
 
 \section{Implementation}
+In this project, we implement a Feedforward Neural Network (FFNN) to analyze the Franke function. The FFNN is structured with an input layer, one or more hidden layers, and an output layer, with each layer utilizing an activation function. The architecture is defined by specifying the input size, the number of neurons in hidden layers, and the output size. 
+
+The weights and biases are initialized using random values scaled by the number of input neurons, which aids in faster convergence during training. The network supports several activation functions, including ReLU, Sigmoid, and Leaky ReLU. The activation functions are chosen based on their performance in the forward pass, where the input data is transformed through the layers of the network.
+
+The forward propagation computes the output of the network by applying the activation function to the weighted sum of inputs at each layer. The backward propagation algorithm updates the weights and biases using gradient descent, where the mean squared error serves as the loss function. We implement regularization techniques to mitigate overfitting.
+
+The training process includes splitting the data into training and test sets, followed by iterating through a specified number of epochs, during which the network adjusts its weights to minimize the error. After training, the network can predict outputs for new data, allowing for evaluation against known values from the Franke function. The overall performance of the model is assessed using metrics such as accuracy and mean squared error.
+
 
 \section{Results \& Discussion}
 

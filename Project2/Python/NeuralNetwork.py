@@ -75,7 +75,7 @@ for lr in learning_rates:
     mse_results["Keras Sigmoid"].append(history.history['loss'][-1])
     r2_results["Keras Sigmoid"].append(r2_score(z_train, y_pred_keras))
 
-# Plot MSE and R² as a function of learning rate
+# Plot MSE and R2 as a function of learning rate
 fig, axs = plt.subplots(2, 1, figsize=(8, 12))  # Changed to 2 rows, 1 column
 fig.subplots_adjust(hspace=0.4)
 
