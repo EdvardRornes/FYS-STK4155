@@ -934,7 +934,8 @@ class DescentAnalyzer:
 class Activation:
     @staticmethod
     def sigmoid(z):
-        """Sigmoid activation function."""
+        # Clip input values to prevent overflow
+        z = np.clip(z, -500, 500)
         return 1 / (1 + np.exp(-z))
 
     @staticmethod
@@ -1124,7 +1125,8 @@ def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_reg
     return data_OLS, data_Ridge
 
 class FFNN:
-    def __init__(self, input_size, hidden_layers, output_size, activation='relu', alpha=0.01, lambda_reg=0.0, beta1=0.9, beta2=0.999, epsilon=1e-8):
+    def __init__(self, input_size, hidden_layers, output_size, activation='relu', alpha=0.01, lambda_reg=0.0, 
+                 beta1=0.9, beta2=0.999, epsilon=1e-8, loss_function='mse'):
         """
         Initialize the Feedforward Neural Network (FFNN) with Adam optimizer.
         
@@ -1138,6 +1140,7 @@ class FFNN:
         - beta1 (float): Exponential decay rate for the first moment estimate in Adam.
         - beta2 (float): Exponential decay rate for the second moment estimate in Adam.
         - epsilon (float): Small constant to prevent division by zero in Adam.
+        - loss_function (str): Loss function to use ('mse' or 'bce').
         """
         self.layers = [input_size] + hidden_layers + [output_size]
         self.weights = []
@@ -1149,6 +1152,7 @@ class FFNN:
         self.beta2 = beta2
         self.epsilon = epsilon
         self.t = 0  # Initialize time step for Adam
+        self.loss_function = loss_function  # Added loss function parameter
 
         # Initialize activation functions mapping
         self.activation_map = {
@@ -1193,18 +1197,35 @@ class FFNN:
 
         Z = A @ self.weights[-1] + self.biases[-1]
         self.z_values.append(Z)
-        A_output = self.activation(Z)
-        # Avoid overflow problems
-        A_output = np.clip(A_output, -1e10, 1e10)
+        if self.loss_function.lower() == 'mse':
+            # Linear activation of regression
+            A_output = self.activation(Z)
+        else:
+            # Sigmoid activation for classification
+            A_output = Activation.sigmoid(Z)
         self.activations.append(A_output)
         return A_output
-    
+
+    def compute_loss(self, y_true, y_pred):
+        if self.loss_function == 'mse':
+            return np.mean((y_pred - y_true) ** 2)
+        elif self.loss_function == 'bce':
+            # Adding a small epsilon to avoid log(0)
+            return -np.mean(y_true * np.log(y_pred + 1e-15) + (1 - y_true) * np.log(1 - y_pred + 1e-15))
+        else:
+            raise ValueError("Invalid loss function specified. Use 'mse' or 'bce'.")
+
     def backward(self, X, y, learning_rate):
         m = X.shape[0]
         y = y.reshape(-1, 1)
 
         output = self.activations[-1]
-        delta = output - y
+        
+        # Compute delta based on the loss function
+        if self.loss_function == 'mse':
+            delta = output - y
+        elif self.loss_function == 'bce':
+            delta = output - y  # This is correct for binary cross-entropy
         self.t += 1  # Increment time step
 
         for i in reversed(range(len(self.weights))):
@@ -1229,12 +1250,12 @@ class FFNN:
 
             if i > 0:
                 delta = (delta @ self.weights[i].T) * self.activation_derivative(self.z_values[i - 1])
-    
+
     def train(self, X, y, learning_rate=0.001, epochs=1000, batch_size=None, shuffle=True, lambda_reg=0.0):
         self.lambda_reg = lambda_reg
         self.initialize_weights_and_biases()
         self.initialize_adam_parameters()
-        mse_history = []
+        loss_history = []
         m = X.shape[0]
         if batch_size is None:
             batch_size = m
@@ -1251,28 +1272,28 @@ class FFNN:
                 self.forward(X_batch)
                 self.backward(X_batch, y_batch, learning_rate)
 
-            mse = np.mean((self.activations[-1] - y_batch) ** 2)
-            mse_history.append(mse)
+            # Calculate and store the loss
+            loss = self.compute_loss(y_batch, self.activations[-1])
+            loss_history.append(loss)
 
             if epoch % (epochs // 5) == 0:
-                print(f'Epoch {epoch}, MSE ({self.activation_func}): {mse:.2f}')
+                print(f'Epoch {epoch}, Loss ({self.loss_function}): {loss:.2f}')
         
-        return mse_history
+        return loss_history
 
     def predict(self, X):
         return self.forward(X)
 
     def accuracy(self, X, y):
         predictions = self.predict(X)
-        predicted_classes = (predictions > 0.5).astype(int)
-        return np.mean(predicted_classes.flatten() == y.flatten())
+        if self.loss_function == 'bce':
+            predicted_classes = (predictions > 0.5).astype(int)
+            return np.mean(predicted_classes.flatten() == y.flatten())
+        else:
+            return np.mean(np.round(predictions) == y.flatten())
 
-<<<<<<< HEAD
+
 def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False, annot=True, only_less_than=None, only_greater_than=None, xaxis_fontsize=None, yaxis_fontsize=None):
-=======
-
-def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False, annot=True, only_less_than=None):
->>>>>>> b6381d3e92faabb409653bf374e6b0fbdced30c6
     """
     Plots a 2D heatmap with lambda and eta as inputs.
 

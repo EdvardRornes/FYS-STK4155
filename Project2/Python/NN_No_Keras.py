@@ -41,7 +41,7 @@ ffnn_sigmoid = FFNN(input_size=2, hidden_layers=hidden_layers, output_size=1, ac
 ffnn_lrelu = FFNN(input_size=2, hidden_layers=hidden_layers, output_size=1, activation='lrelu')
 
 # Loop over each learning rate, regularization lambda, and activation type
-lambdas = np.logspace(-15, -5, 11)
+lambdas = np.logspace(-10, 0, 11)
 heatmap_data = {"ReLU": [], "Sigmoid": [], "Leaky ReLU": []}
 
 start_time = time.time()

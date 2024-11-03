@@ -22,7 +22,7 @@ z_train = z.reshape(-1, 1)
 
 # Learning rates
 learning_rates = []
-log_learning_rate_min = -8
+log_learning_rate_min = -4
 log_learning_rate_max = 0
 for m in range(log_learning_rate_min, log_learning_rate_max):
     learning_rates.append(float(10**m))
