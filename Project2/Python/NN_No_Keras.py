@@ -1,6 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.preprocessing import minmax_scale
+from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from scipy.interpolate import griddata
 from utils import *
@@ -12,15 +14,17 @@ latex_fonts()
 save = True
 
 # Sample data
-N = 100; eps = 0.0
+N = 200; eps = 0.0
 franke = Franke(N, eps)
 x = franke.x; y = franke.y; z = franke.z
 epochs = 250
-batch_size = 25
+batch_size = 50
 hidden_layers = [4, 8, 16, 32, 16, 8, 4, 2]
 
-X_train = np.c_[x, y]
-z_train = z.reshape(-1, 1)
+X = np.c_[x, y]
+z = minmax_scale(z)
+z_reshaped = z.reshape(-1, 1)
+X_train, X_test, z_train, z_test = train_test_split(X, z_reshaped, test_size=0.25, random_state=1)
 
 # Learning rates
 learning_rates = []
@@ -30,6 +34,8 @@ for m in range(log_learning_rate_min, log_learning_rate_max):
     learning_rates.append(float(10**m))
     learning_rates.append(float(3*10**m))
 learning_rates.append(float(10**log_learning_rate_max))
+
+lambdas = np.logspace(-10, 0, 11)
 
 # Prepare to store MSE and R2 for each activation type
 mse_results = {"ReLU": [], "Sigmoid": [], "Leaky ReLU": []}
@@ -41,7 +47,6 @@ ffnn_sigmoid = FFNN(input_size=2, hidden_layers=hidden_layers, output_size=1, ac
 ffnn_lrelu = FFNN(input_size=2, hidden_layers=hidden_layers, output_size=1, activation='lrelu')
 
 # Loop over each learning rate, regularization lambda, and activation type
-lambdas = np.logspace(-10, 0, 11)
 heatmap_data = {"ReLU": [], "Sigmoid": [], "Leaky ReLU": []}
 
 start_time = time.time()
@@ -71,9 +76,9 @@ for activation_type, ffnn in zip(["ReLU", "Sigmoid", "Leaky ReLU"], [ffnn_relu, 
             # Train FFNN and get MSE history
             mse_history = ffnn.train(X_train, z_train, epochs=epochs, batch_size=batch_size, learning_rate=lr, lambda_reg=lambda_reg)
 
-            z_pred = ffnn.predict(X_train)  # Renamed from y_pred to z_pred
-            mse = np.mean((z_pred - z_train) ** 2)
-            r2 = r2_score(z_train, z_pred)
+            z_pred = ffnn.predict(X_test)  # Renamed from y_pred to z_pred
+            mse = np.mean((z_pred - z_test) ** 2)
+            r2 = r2_score(z_test, z_pred)
 
             mse_for_etas.append(mse)
             r2_results[activation_type].append(r2)
@@ -130,7 +135,7 @@ plt.yscale('log')
 plt.legend()
 plt.grid()
 if save:
-    plt.savefig('Figures/Best_MSE_vs_Epochs.pdf')
+    plt.savefig(f'Figures/Best_MSE_vs_Epochs{epochs}.pdf')
 
 # Prepare for 3D plot
 fig = plt.figure(figsize=(10, 10))
@@ -158,7 +163,7 @@ for idx, (activation_type, (model, (best_lambda, best_eta))) in enumerate(activa
     x_grid, y_grid = np.meshgrid(np.unique(x), np.unique(y))
 
     # Interpolate to get smooth surface values
-    z_grid_pred = griddata((x, y), z_pred_best.flatten(), (x_grid, y_grid), method='cubic')
+    z_grid_pred = griddata((X_test[:,0], X_test[:,1]), z_pred_best.flatten(), (x_grid, y_grid), method='cubic')
 
     # Plot the surface
     ax.plot_surface(x_grid, y_grid, z_grid_pred, alpha=0.5, color='orange' if activation_type == 'ReLU' else 'green' if activation_type == 'Sigmoid' else 'yellow')
