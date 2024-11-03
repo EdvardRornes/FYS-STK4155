@@ -233,7 +233,9 @@ numberMinibacharray = np.array([4,8,16,32,64])
 numEpochsarray = np.array([10,100,1000])
 etas = np.logspace(-6,-4,5)
 lambdas = np.logspace(-4,-1,5)
-
+size = 5
+lambdas = np.logspace(-10, np.log10(1e0), size)
+etas = np.logspace(np.log10(1.8e-4), np.log10(1e0), size)
 
 for numEpochs in numEpochsarray:
     print(numEpochs)
