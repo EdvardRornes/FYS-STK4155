@@ -1,29 +1,40 @@
+import sys
+import os
+
+parent_dir = os.path.abspath(os.path.join(os.getcwd(), '..'))
+sys.path.append(parent_dir)
 from utils import *
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow.keras.models import Sequential
 from keras.layers import Dense, Input
 from tensorflow.keras.optimizers import Adam
-from sklearn.metrics import r2_score
+from sklearn.metrics import r2_score, mean_squared_error
+from sklearn.preprocessing import minmax_scale
+from sklearn.model_selection import train_test_split
+
 
 np.random.seed(0)
 latex_fonts()
 save = True
 
 # Sample data
-N = 100; eps = 0.0
+N = 400; eps = 0.0
 franke = Franke(N, eps)
 x = franke.x; y = franke.y; z = franke.z
+batch_size = 100
 epochs = 1000
-hidden_layers = [10, 20]
+hidden_layers = [4, 8, 16, 32, 16, 8, 4, 2]
 
-X_train = np.c_[x, y]
-z_train = z.reshape(-1, 1)
+X = np.c_[x, y]
+z = minmax_scale(z)
+z_reshaped = z.reshape(-1, 1)
+X_train, X_test, z_train, z_test = train_test_split(X, z_reshaped, test_size=0.25)
 
 # Learning rates
 learning_rates = []
-log_learning_rate_min = -8
-log_learning_rate_max = 0
+log_learning_rate_min = -7
+log_learning_rate_max = -1
 for m in range(log_learning_rate_min, log_learning_rate_max):
     learning_rates.append(float(10**m))
     learning_rates.append(float(3*10**m))
@@ -40,40 +51,44 @@ ffnn_lrelu = FFNN(input_size=2, hidden_layers=hidden_layers, output_size=1, acti
 
 # Keras model initialization
 model_keras = Sequential()
-model_keras.add(Input(shape=(2,)))  # Specify the input shape here
-model_keras.add(Dense(hidden_layers[0], activation='sigmoid'))
-model_keras.add(Dense(hidden_layers[1], activation='sigmoid'))
-model_keras.add(Dense(1))  # Output layer with linear activation
+model_keras.add(Input(shape=(2,)))
+for layers in hidden_layers:
+    model_keras.add(Dense(layers, activation='sigmoid'))
+model_keras.add(Dense(1))
 
 # Loop over each learning rate and activation type
 for lr in learning_rates:
     print(f"Testing learning rate: {lr:.1e}")
 
     # FFNN with ReLU
-    mse_history_relu = ffnn_relu.train(X_train, z_train, epochs=epochs, learning_rate=lr)
-    y_pred_relu = ffnn_relu.predict(X_train)
-    mse_results["ReLU"].append(mse_history_relu[-1])
-    r2_results["ReLU"].append(r2_score(z_train, y_pred_relu))
+    _ = ffnn_relu.train(X_train, z_train, epochs=epochs, batch_size=batch_size, learning_rate=lr)
+    z_pred_relu = ffnn_relu.predict(X_test)
+    test_MSE_relu = mean_squared_error(z_pred_relu, z_test)
+    mse_results["ReLU"].append(test_MSE_relu)
+    r2_results["ReLU"].append(r2_score(z_test, z_pred_relu))
 
     # FFNN with Sigmoid
-    mse_history_sigmoid = ffnn_sigmoid.train(X_train, z_train, epochs=epochs, learning_rate=lr)
-    y_pred_sigmoid = ffnn_sigmoid.predict(X_train)
-    mse_results["Sigmoid"].append(mse_history_sigmoid[-1])
-    r2_results["Sigmoid"].append(r2_score(z_train, y_pred_sigmoid))
+    _ = ffnn_sigmoid.train(X_train, z_train, epochs=epochs, batch_size=batch_size, learning_rate=lr)
+    z_pred_sigmoid = ffnn_sigmoid.predict(X_test)
+    test_MSE_sigmoid = mean_squared_error(z_pred_sigmoid, z_test)
+    mse_results["Sigmoid"].append(test_MSE_sigmoid)
+    r2_results["Sigmoid"].append(r2_score(z_test, z_pred_sigmoid))
 
     # FFNN with Leaky ReLU
-    mse_history_lrelu = ffnn_lrelu.train(X_train, z_train, epochs=epochs, learning_rate=lr)
-    y_pred_lrelu = ffnn_lrelu.predict(X_train)
-    mse_results["Leaky ReLU"].append(mse_history_lrelu[-1])
-    r2_results["Leaky ReLU"].append(r2_score(z_train, y_pred_lrelu))
+    _ = ffnn_lrelu.train(X_train, z_train, epochs=epochs, batch_size=batch_size, learning_rate=lr)
+    z_pred_lrelu = ffnn_lrelu.predict(X_test)
+    test_MSE_lrelu = mean_squared_error(z_pred_lrelu, z_test)
+    mse_results["Leaky ReLU"].append(test_MSE_lrelu)
+    r2_results["Leaky ReLU"].append(r2_score(z_test, z_pred_lrelu))
 
     # Keras implementation with Sigmoid
     print('Keras is slow :(')
     model_keras.compile(optimizer=Adam(learning_rate=lr), loss='mean_squared_error')
-    history = model_keras.fit(X_train, z_train, epochs=epochs, verbose=0)
-    y_pred_keras = model_keras.predict(X_train)
-    mse_results["Keras Sigmoid"].append(history.history['loss'][-1])
-    r2_results["Keras Sigmoid"].append(r2_score(z_train, y_pred_keras))
+    model_keras.fit(X_train, z_train, epochs=epochs, batch_size=batch_size, verbose=0)
+    z_pred_keras = model_keras.predict(X_test)
+    test_MSE_keras = mean_squared_error(z_pred_keras, z_test)
+    mse_results["Keras Sigmoid"].append(test_MSE_keras)
+    r2_results["Keras Sigmoid"].append(r2_score(z_test, z_pred_keras))
 
 # Plot MSE and R2 as a function of learning rate
 fig, axs = plt.subplots(2, 1, figsize=(8, 12))  # Changed to 2 rows, 1 column

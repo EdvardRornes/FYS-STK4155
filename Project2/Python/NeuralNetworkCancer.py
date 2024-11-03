@@ -22,7 +22,9 @@ X_test = scaler.transform(X_test)
 
 # Hyperparameter ranges
 hidden_layers = [15, 30, 15, 8, 4, 2]
-epochs = [250]
+epochs = [100]
+batchsize = len(X_test[0])//10
+batchsize = 50
 # Tighter logspace needed for etas, nicer values for plotting.
 eta_lower = -4
 eta_upper = -1
@@ -34,7 +36,7 @@ for m in range(eta_lower, eta_upper):
     etas.append(float(7.5*10**m))
 etas.append(float(10**eta_upper))
 
-lambdas = np.logspace(-15, -6, 10)
+lambdas = np.logspace(-10, 0, 11)
 activations = ['relu', 'lrelu', 'sigmoid']
 
 # Prepare to store results
@@ -60,11 +62,11 @@ for epoch in epochs:
             for i, eta in enumerate(etas):
                 # Suppress print from class to avoid clutter
                 blockPrint()
-                # Initialize the model
-                model = FFNN(input_size=X_train.shape[1], hidden_layers=hidden_layers, output_size=1, activation=activation, lambda_reg=lambd)
+                # Initialize the model using cross entropy as loss function
+                model = FFNN(input_size=X_train.shape[1], hidden_layers=hidden_layers, output_size=1, activation=activation, lambda_reg=lambd, loss_function='bce')
                 # Train the model
                 print(f"Training with activation: {activation}, lambda: {lambd}, eta: {eta}")
-                model.train(X_train, y_train, learning_rate=eta, epochs=epoch, batch_size=epoch//10, lambda_reg=lambd)
+                model.train(X_train, y_train, learning_rate=eta, epochs=epoch, batch_size=batchsize, lambda_reg=lambd)
                 # Predictions
                 y_pred = model.predict(X_test)
                 # Ensure y_pred is a 1D array for binary classification
@@ -106,7 +108,7 @@ for epoch in epochs:
             lambdas=lambdas,
             etas=etas,
             value=accuracy_matrix,
-            title=fr'Accuracy for different combinations of $\lambda$ and $\eta$ with activation {activation} and {epoch} epochs',
+            title=fr'Accuracy for N with activation {activation}, {epoch} epochs and {batchsize} batch size',
             x_log=True,
             y_log=True,
             savefig=save,
@@ -115,8 +117,8 @@ for epoch in epochs:
         )
 
 # Best parameters for each activation function for each epoch count
-for epoch, activations_dict in best_params.items():
-    for activation, (lambd, eta, mse, accuracy) in activations_dict.items():
-        print(f"Best combination for activation '{activation}' at {epoch} epochs: "
-              f"Lambda = {lambd:.2e}, Learning Rate = {eta:.2e}, MSE = {mse:.4f}, Accuracy = {100*accuracy:.1f}%")
+# for epoch, activations_dict in best_params.items():
+#     for activation, (lambd, eta, mse, accuracy) in activations_dict.items():
+#         print(f"Best combination for activation '{activation}' at {epoch} epochs: "
+#               f"Lambda = {lambd:.2e}, Learning Rate = {eta:.2e}, MSE = {mse:.4f}, Accuracy = {100*accuracy:.1f}%")
 plt.show()
