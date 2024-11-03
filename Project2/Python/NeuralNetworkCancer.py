@@ -6,31 +6,25 @@ from sklearn.metrics import accuracy_score, mean_squared_error
 from sklearn.preprocessing import StandardScaler
 from utils import *
 import time
-import warnings
 
-# Suppress specific warnings (they stem from poor parameter combinations)
-warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow encountered in matmul")
-warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow encountered in exp")
-warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in matmul")
-warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in multiply")
-warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in subtract")
-warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in reduce")
+np.random.seed(0)
 
 latex_fonts()
+save = True
 
 # Load the dataset
 cancer = load_breast_cancer()
-X_train, X_test, y_train, y_test = train_test_split(cancer.data, cancer.target.reshape(-1, 1), random_state=1)
+X_train, X_test, y_train, y_test = train_test_split(cancer.data, cancer.target.reshape(-1, 1), random_state=1, test_size=0.25)
 scaler = StandardScaler()
 scaler.fit(X_train)
 X_train = scaler.transform(X_train)
 X_test = scaler.transform(X_test)
 
 # Hyperparameter ranges
-hidden_layers = [10, 20]
-epochs = [10, 100, 250]
-# Nicer logspace for plotting of learning rates
-eta_lower = -3
+hidden_layers = [2, 4, 8, 16, 32, 16, 8, 4, 2]
+epochs = [50, 100, 250, 500, 1000, 2500]
+# Tighter logspace needed for etas, nicer values for plotting.
+eta_lower = -4
 eta_upper = -1
 etas = []
 for m in range(eta_lower, eta_upper):
@@ -39,16 +33,14 @@ for m in range(eta_lower, eta_upper):
     etas.append(float(5*10**m))
     etas.append(float(7.5*10**m))
 etas.append(float(10**eta_upper))
+
 lambdas = np.logspace(-15, -6, 10)
-epochs = [25]
 activations = ['relu', 'lrelu', 'sigmoid']
 
 # Prepare to store results
 results = {}
 MSE_matrix = np.zeros((len(etas), len(lambdas)))
 accuracy_matrix = np.zeros((len(etas), len(lambdas)))
-
-# Prepare to store best parameters for each activation and epoch count
 best_params = {epoch: {} for epoch in epochs}
 
 # Timer
@@ -69,7 +61,7 @@ for epoch in epochs:
                 # Suppress print from class to avoid clutter
                 blockPrint()
                 # Initialize the model
-                model = FFNN(input_size=X_train.shape[1], hidden_layers=hidden_layers, output_size=1, activation=activation)
+                model = FFNN(input_size=X_train.shape[1], hidden_layers=hidden_layers, output_size=1, activation=activation, lambda_reg=lambd)
                 # Train the model
                 print(f"Training with activation: {activation}, lambda: {lambd}, eta: {eta}")
                 model.train(X_train, y_train, learning_rate=eta, epochs=epoch, batch_size=epoch//10, lambda_reg=lambd)
@@ -95,12 +87,12 @@ for epoch in epochs:
                 percentage_progress = (completed_iterations / total_iterations) * 100
                 # Elapsed time
                 elapsed_time = time.time() - start_time
-                # Output results
-                print(f"Activation: {activation}, Epochs: {epoch}, Lambda: {lambd:.2e}, Learning Rate: {eta:.2e}, MSE: {mse:.4f}, "
-                      f"Accuracy: {100*accuracy:.1f}% | Progress: {percentage_progress:.1f}%, Time Elapsed: {elapsed_time:.2f}s")
+                ETA = elapsed_time*(100/percentage_progress-1)
+                print(f"Activation: {activation}, Epochs: {epoch}, Lambda: {lambd:.1e}, Learning Rate: {eta:.1e}, MSE: {mse:.4f}, "
+                      f"Accuracy: {100*accuracy:.1f}% | Progress: {completed_iterations}/{total_iterations} ({percentage_progress:.1f}%), Time Elapsed: {elapsed_time:.1f}s, ETA: {ETA:.1f}s")
 
-                # Update the best parameters if the current MSE is lower
-                if mse < best_mse:
+                # Update best parameters
+                if accuracy < best_accuracy:
                     best_mse = mse
                     best_accuracy = accuracy
                     best_lambda = lambd
@@ -113,23 +105,12 @@ for epoch in epochs:
         plot_2D_parameter_lambda_eta(
             lambdas=lambdas,
             etas=etas,
-            value=MSE_matrix,
-            title=fr'MSE for different combinations of $\lambda$ and $\eta$ with activation {activation} and {epoch} epochs',
-            x_log=True,
-            y_log=True,
-            savefig=False,
-            filename=fr'mse_heatmap_{activation}_epochs{epoch}'
-        )
-        # 2D map of accuracy
-        plot_2D_parameter_lambda_eta(
-            lambdas=lambdas,
-            etas=etas,
             value=accuracy_matrix,
-            title=fr'Accuracy for different combinations $\lambda$ and $\eta$ with activation {activation} and {epoch} epochs',
+            title=fr'Accuracy for different combinations of $\lambda$ and $\eta$ with activation {activation} and {epoch} epochs',
             x_log=True,
             y_log=True,
-            savefig=False,
-            filename=fr'accuracy_heatmap_{activation}_epochs{epoch}',
+            savefig=save,
+            filename=fr'Cancer_Accuracy_Heatmap_{activation}_Epochs{epoch}',
             Reverse_cmap=True
         )
 
@@ -138,5 +119,4 @@ for epoch, activations_dict in best_params.items():
     for activation, (lambd, eta, mse, accuracy) in activations_dict.items():
         print(f"Best combination for activation '{activation}' at {epoch} epochs: "
               f"Lambda = {lambd:.2e}, Learning Rate = {eta:.2e}, MSE = {mse:.4f}, Accuracy = {100*accuracy:.1f}%")
-
 plt.show()

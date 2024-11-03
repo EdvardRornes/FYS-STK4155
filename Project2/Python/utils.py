@@ -1123,17 +1123,34 @@ def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_reg
 
     return data_OLS, data_Ridge
 
-############ Neural Networks ############
 class FFNN:
-    def __init__(self, input_size, hidden_layers, output_size, activation='relu', alpha=0.01, lambda_reg=0.0):
+    def __init__(self, input_size, hidden_layers, output_size, activation='relu', alpha=0.01, lambda_reg=0.0, beta1=0.9, beta2=0.999, epsilon=1e-8):
+        """
+        Initialize the Feedforward Neural Network (FFNN) with Adam optimizer.
+        
+        Parameters:
+        - input_size (int): Number of input features.
+        - hidden_layers (list): List of integers representing the size of each hidden layer.
+        - output_size (int): Number of output neurons.
+        - activation (str): Activation function to use ('relu', 'sigmoid', 'lrelu').
+        - alpha (float): Leaky ReLU parameter (only for 'lrelu').
+        - lambda_reg (float): L2 regularization parameter.
+        - beta1 (float): Exponential decay rate for the first moment estimate in Adam.
+        - beta2 (float): Exponential decay rate for the second moment estimate in Adam.
+        - epsilon (float): Small constant to prevent division by zero in Adam.
+        """
         self.layers = [input_size] + hidden_layers + [output_size]
         self.weights = []
         self.biases = []
         self.activation_func = activation
         self.alpha = alpha
         self.lambda_reg = lambda_reg
+        self.beta1 = beta1
+        self.beta2 = beta2
+        self.epsilon = epsilon
+        self.t = 0  # Initialize time step for Adam
 
-        # Mapping for activation functions
+        # Initialize activation functions mapping
         self.activation_map = {
             'relu': (Activation.relu, Activation.relu_derivative),
             'sigmoid': (Activation.sigmoid, Activation.sigmoid_derivative),
@@ -1142,29 +1159,43 @@ class FFNN:
         
         self.activation, self.activation_derivative = self.activation_map.get(self.activation_func.lower(), (Activation.relu, Activation.relu_derivative))
 
-        # Initialize weights and biases
+        # Initialize weights, biases, and Adam parameters
+        self.initialize_weights_and_biases()
+        self.initialize_adam_parameters()
+
+    def initialize_weights_and_biases(self):
+        self.weights = []
+        self.biases = []
         for i in range(len(self.layers) - 1):
             weight_matrix = np.random.randn(self.layers[i], self.layers[i + 1]) * np.sqrt(2. / self.layers[i])
             self.weights.append(weight_matrix)
             bias_vector = np.zeros((1, self.layers[i + 1]))
             self.biases.append(bias_vector)
     
+    def initialize_adam_parameters(self):
+        # Initialize moment estimates for Adam optimizer
+        self.m_weights = [np.zeros_like(w) for w in self.weights]
+        self.v_weights = [np.zeros_like(w) for w in self.weights]
+        self.m_biases = [np.zeros_like(b) for b in self.biases]
+        self.v_biases = [np.zeros_like(b) for b in self.biases]
+    
     def forward(self, X):
         self.activations = [X]
         self.z_values = []
         A = X
 
-        # Hidden layers
         for i in range(len(self.weights) - 1):
             Z = A @ self.weights[i] + self.biases[i]
             self.z_values.append(Z)
             A = self.activation(Z)
+            A = np.clip(A, -1e10, 1e10)
             self.activations.append(A)
 
-        # Output layer (applying sigmoid activation for binary classification)
         Z = A @ self.weights[-1] + self.biases[-1]
         self.z_values.append(Z)
-        A_output = self.activation(Z)  # Apply sigmoid to output for binary classification
+        A_output = self.activation(Z)
+        # Avoid overflow problems
+        A_output = np.clip(A_output, -1e10, 1e10)
         self.activations.append(A_output)
         return A_output
     
@@ -1172,26 +1203,37 @@ class FFNN:
         m = X.shape[0]
         y = y.reshape(-1, 1)
 
-        # Calculate delta for output layer using binary cross-entropy loss
         output = self.activations[-1]
-        delta = output - y  # Gradient of the binary cross-entropy loss
+        delta = output - y
+        self.t += 1  # Increment time step
 
         for i in reversed(range(len(self.weights))):
-            # Calculate gradients
             dw = (self.activations[i].T @ delta) / m
             db = np.sum(delta, axis=0, keepdims=True) / m
-            dw += (self.lambda_reg / m) * self.weights[i]  # Regularization term
+            dw += (self.lambda_reg / m) * self.weights[i]
 
+            # Update first moment estimate
+            self.m_weights[i] = self.beta1 * self.m_weights[i] + (1 - self.beta1) * dw
+            self.m_biases[i] = self.beta1 * self.m_biases[i] + (1 - self.beta1) * db
+            # Update second moment estimate
+            self.v_weights[i] = self.beta2 * self.v_weights[i] + (1 - self.beta2) * (dw ** 2)
+            self.v_biases[i] = self.beta2 * self.v_biases[i] + (1 - self.beta2) * (db ** 2)
+            # Correct bias in moment estimates
+            m_hat_w = self.m_weights[i] / (1 - self.beta1 ** self.t)
+            m_hat_b = self.m_biases[i] / (1 - self.beta1 ** self.t)
+            v_hat_w = self.v_weights[i] / (1 - self.beta2 ** self.t)
+            v_hat_b = self.v_biases[i] / (1 - self.beta2 ** self.t)
             # Update weights and biases
-            self.weights[i] -= learning_rate * dw
-            self.biases[i] -= learning_rate * db
+            self.weights[i] -= learning_rate * m_hat_w / (np.sqrt(v_hat_w) + self.epsilon)
+            self.biases[i] -= learning_rate * m_hat_b / (np.sqrt(v_hat_b) + self.epsilon)
 
-            # Update delta for next layer
             if i > 0:
                 delta = (delta @ self.weights[i].T) * self.activation_derivative(self.z_values[i - 1])
     
-    def train(self, X, y, learning_rate=0.01, epochs=1000, batch_size=None, shuffle=True, lambda_reg=0.0):
-        self.lambda_reg = lambda_reg  # Update regularization parameter
+    def train(self, X, y, learning_rate=0.001, epochs=1000, batch_size=None, shuffle=True, lambda_reg=0.0):
+        self.lambda_reg = lambda_reg
+        self.initialize_weights_and_biases()
+        self.initialize_adam_parameters()
         mse_history = []
         m = X.shape[0]
         if batch_size is None:
@@ -1212,8 +1254,8 @@ class FFNN:
             mse = np.mean((self.activations[-1] - y_batch) ** 2)
             mse_history.append(mse)
 
-            if epoch % (epochs//5) == 0:
-                print(f'Epoch {epoch}, MSE ({self.activation_func}): {mse}')
+            if epoch % (epochs // 5) == 0:
+                print(f'Epoch {epoch}, MSE ({self.activation_func}): {mse:.2f}')
         
         return mse_history
 
@@ -1225,7 +1267,12 @@ class FFNN:
         predicted_classes = (predictions > 0.5).astype(int)
         return np.mean(predicted_classes.flatten() == y.flatten())
 
+<<<<<<< HEAD
 def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False, annot=True, only_less_than=None, only_greater_than=None, xaxis_fontsize=None, yaxis_fontsize=None):
+=======
+
+def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False, annot=True, only_less_than=None):
+>>>>>>> b6381d3e92faabb409653bf374e6b0fbdced30c6
     """
     Plots a 2D heatmap with lambda and eta as inputs.
 
@@ -1316,5 +1363,5 @@ def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, 
         plt.ylabel(r'$\eta$', fontsize=yaxis_fontsize)
 
     plt.tight_layout()
-    if savefig is not None:
+    if savefig:
         plt.savefig(f'Figures/{filename}.pdf')

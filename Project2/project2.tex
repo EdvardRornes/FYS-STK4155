@@ -98,7 +98,7 @@ aps,
 \date{\today}
 
 \begin{abstract}
-	Neural networks are a massive part of modern day science. We develop a program\footnote{\href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project1}{Github}} which consists of both linear and logistic regression. In particular the program contains: gradient decent, stochastic gradient decent and a simple neural network. Linear regression is performed on the Franke function, whilst the logistic regression used to identify malignant tumors using breast cancer data from sklearn. Different activation functions such as: Sigmoid, ReLU and LeakyReLU were used. The number of epochs and hidden nodes along with values for the hyper-parameter $\lambda$ and the learning rate $\eta$ were analyzed and tuned to optimal values. For the cancer data, the best accuracy achieved for ReLU, LeakyReLU and the sigmoid activation functions where $97.9\%,98.6\%$ and $97.9\%$ respectively. The sigmoid activation function was seen to be largely invariant under changes in the hyperparameter $\lambda$ for optimal learning rates, whilst both ReLU and LeakyReLU varied much more to changes. Overall LeakyReLU performed the best across all tests, but for the cancer data it's improvement was slim compared to other activation functions.
+	In recent years, neural networks have become increasingly important for advancements in various scientific fields. In this report, we develop a program\footnote{\href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project1}{Github}} that consists of both linear and logistic regression methods. In particular, the program implements gradient descent, stochastic gradient descent, and a simple feed-forward neural network with backpropagation. The neural network is evaluated against linear regression on the Franke function and against logistic regression using sklearn's breast cancer data, where it identifies malignant tumors. We explore three activation functions: Sigmoid, ReLU, and LeakyReLU. The analysis involves tuning the number of epochs, hidden nodes, and the hyperparameters $\lambda$ (regularization) and $\eta$ (learning rate) to optimal values. On the Franke function, our own implementation of the neural network performed poorly compared to linear regression, with peak $R^2$-scores of $x$ and $y$ respectively. For the cancer data, the highest accuracies achieved with ReLU, LeakyReLU, and Sigmoid activation functions were $97.9\%, 98.6\%$, and $97.9\%$, respectively, compared to $z\%$ for logistic regression. Notably, the Sigmoid activation function exhibited minimal sensitivity to variations in the hyperparameter $\lambda$ at optimal learning rates, whereas ReLU and LeakyReLU showed significant responsiveness. Overall, while LeakyReLU yielded the best performance across all tests, its improvement over the other activation functions was marginal when applied to the cancer dataset. Additionally, the Sigmoid activation function was found to be appreciably slower than the ReLU variants.
 \end{abstract}
 
 \maketitle
@@ -112,8 +112,8 @@ The main goal of this project is understand the various techniques behind machin
 
 We begin by introducing the relevant background necessary to understand the implementations. Then we outline said implementations before discussing the results. The results go over both linear and non-linear regression on the Franke function where performance issues in the implementation are easier to visualize. Finally the neural network and logistic regression are applied to the cancer data. 
 
-\section{Theory}
-In this section we derive and discuss the relevant theory behind the methods used. 
+\section{Methods}
+In this section we present the various methods used in this report. 
 
 \subsection{Linear Regression}
 As discussed in a previous project \cite{project1}, linear regression is the simplest method for fitting a continuous given a data set. The data set is approximated by $\bm y=\bm X\bm\beta$ and the $\beta$ coefficients are found by minimizing the cost function. For this project we consider the two regression methods:
@@ -128,7 +128,7 @@ We then insist that the derivative of these w.r.t. $\bm\beta$ is $0$, and choose
 \end{align}
 
 \subsection{Regularization Terms}
-Regularization is a technique to prevent overfitting by adding a penalty to the cost function that discourages complex models. The two common regularization methods that we inspected previously are Ridge (L2) and Lasso (L1) regularization. In this project we will only be considering Ridge, where the cost function is given by
+Regularization is a technique to prevent overfitting by adding a penalty to the cost function that discourages complex models. The two common regularization methods that we inspected previously are Ridge and Lasso regularization. In this project we will only be considering Ridge, where the cost function is given by
 \begin{align}
 	C_\text{Ridge}(\bm \beta) = C_\text{OLS}(\bm \beta) + \lambda \|\bm \beta\|_2^2,
 \end{align}
@@ -207,6 +207,16 @@ By selecting appropriate activation functions for each layer, FFNNs can effectiv
 Backpropagation is the key algorithm for training neural networks by optimizing weights to minimize the cost function. It works by propagating the error backward from the output layer to the input layers, computing gradients for each weight based on the error. These gradients are then used to update the weights, enabling the network to learn from its errors and make more accurate predictions over time.
 
 \section{Implementation}
+(Write about your implementation Isak)
+
+Further, the Feedforward Neural Network (FFNN) was implemented to be able to analyze both the Franke function and the breast cancer data. The FFNN is structured with an input layer, one or more hidden layers, and an output layer, with each layer utilizing an activation function. The architecture is defined by specifying the input size, the number of neurons in hidden layers, and the output size. In the case of the Franke function, the input layer is size 2, whilst for the breast cancer data the input layer corresponds to the number of features, i.e. $30$.
+
+The weights and biases are initialized using random values scaled by the number of input neurons, which aids in faster convergence during training. The network supports ReLU, Sigmoid, and Leaky ReLU as activation functions. 
+
+The forward propagation computes the output of the network by applying the activation function to the weighted sum of inputs at each layer. The backward propagation algorithm updates the weights and biases using gradient descent, where the mean squared error serves as the loss function. We implement regularization techniques to mitigate overfitting.
+
+The training process includes splitting the data into training and test sets, followed by iterating through a specified number of epochs, during which the network adjusts its weights to minimize the error. After training, the network can predict outputs for new data, allowing for evaluation against known values from the Franke function. The overall performance of the model is assessed using MSE and accuracy for Franke and cancer data respectively.
+
 
 \section{Results \& Discussion}
 
@@ -214,28 +224,49 @@ Backpropagation is the key algorithm for training neural networks by optimizing 
 The results for the MSE and $R^2$ as a function of the learning rate $\eta$ with 1000 epochs with our own FFNN and keras NN with different activation functions are given in Fig. \ref{fig:NN_Franke_LR_1000}. Here we can see that the MSE ($R^2$) decrease (increase) as the learning rate becomes larger where the maximal learning rate is given by $0.3$. The sigmoid activation can be seen to perform quite poorly here, only achieving a measly $R^2$ score of $\sim0.1$, being slightly better than taking the average. 
 
 Increasing the learning rate any higher than $\eta=0.3$ immediately begins to cause large divergences for multiple of the activation functions. This is on the contrary to what one would expect. If, say $\eta=0.3$ is the optimal learning rate for a given activation function, one would expect $\eta=0.4$ to give a slightly larger MSE, but not completely diverge. It is not clear what could be causing this. The fact that all activation functions also perform best at the same learning rate is also unexpected. Both of these issues are likely a problem with our implementation.
-\begin{figure}
+\begin{figure}[ht!]
 	\includegraphics[width=0.5\textwidth]{Python/Figures/NN_MSE_R2_Franke_LearningRate_Epochs1000.pdf}
 	\caption{MSE and $R^2$ regression results for the FFNN as a function of $\eta$ with 1000 epochs. The results quickly diverge past $0.3$ thus we only plot that far.}
 	\label{fig:NN_Franke_LR_1000}
 \end{figure}
 
 Further we used the result for the best learning rate to plot the MSE after each epoch, given in Fig. \ref{fig:NN_Franke_Epochs}. The sigmoid activation function seems to flatten quite early on, and already get diminising returns after epoch number 10. ReLU and LReLU both get increasingly better as we increase the number of epochs, flattening towards the end of the plot. Finally the keras version with sigmoid as the activation function has negligible improvements between epochs 10-200, but improves massively after that. It clearly outperforms our implementations throughout. 
-\begin{figure}
+\begin{figure}[ht!]
 	\includegraphics[width=0.5\textwidth]{Python/Figures/NN_MSE_Franke_Epoch.pdf}
 	\caption{The MSE regression results for the FFNN as a function of number of epochs for ReLU, LReLU, Sigmoid and keras.}
 	\label{fig:NN_Franke_Epochs}
 \end{figure}
 
-This can be seen even clearer in Fig. \ref{fig:3D_Franke}. Here we plot the predictions of each activation function given 250 samples, represented as blue dots, from the Franke function. The sigmoid activation function seemingly only maps the average of all the points. ReLU and LReLU perform appreciably better, but are dwarfed when compared to keras' sigmoid. The latter almost perfectly fits the Franke function given the number of points, in agreement with its much lower MSE.
-\begin{figure}
+This can be seen even clearer in Fig. \ref{fig:3D_Franke}. Here we plot the predictions of each activation function given 250 samples, represented as blue dots, from the Franke function. The sigmoid activation function seemingly only maps the average of all the points. ReLU and LReLU perform appreciably better, but are dwarfed when compared to keras' sigmoid. The latter almost perfectly fits the Franke function given the number of points, in agreement with its much lower MSE. We note here that we did not use any regulator $\lambda$ for any of this data. The reason for this is simply that \texttt{keras} was far too slow to do a complete parameter search.
+\begin{figure}[ht!]
 \centering
 \includegraphics[width=0.5\textwidth]{Python/Figures/NN_3D_Predict_Franke_Epochs1000.pdf}
 \caption{3D plots of the regression results for the FFNN with activation functions ReLU, LReLU and Sigmoid, along with keras' neural network using the Sigmoid activation. The blue dots correspond to the sampled points from the Franke function with $250$ total samples. $1000$ epochs were used.}
 \label{fig:3D_Franke}
 \end{figure}
+
+Next we used the regulator $\lambda$ on the various activation functions for our own FFNN on the Franke function. The 2D parameter plots showing the MSE are given in Fig. \ref{fig:FFNN_Franke_heatmaps}. We can definitely see here that the sigmoid function has much lower variation w.r.t. $\eta$ and $\lambda$, but this also means that it never reaches a good fit either, and instead simply performs roughly as well as taking the average. ReLU and LReLU have much higher dependence on these, and thus one can find that there are parameter combinations which perform much. Though they still perform much worse than linear regression with OLS and Ridge when we compare it to our results from \cite{project1}. But these are ones again beaten our by keras. As mentioned prior, this is likely a mistake of implementation, thus one cannot be so fast to judge the FFNN for these results.
+\begin{figure*}[ht!]
+	\begin{subfigure}{0.4353\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/Heatmap_MSE_ReLU_Franke.pdf}
+		\caption{ReLU}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.4353\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/Heatmap_MSE_Leaky ReLU_Franke.pdf}
+		\caption{LReLU}
+	\end{subfigure}
+	\hfill\newline
+	\begin{subfigure}{0.4353\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/Heatmap_MSE_Sigmoid_Franke.pdf}
+		\caption{Sigmoid}
+	\end{subfigure}
+	\caption{MSE for various combinations of $\eta$ and $\lambda$ for ReLU, LReLU and Sigmoid activation functions with $1000$ epochs on the Franke function.}
+	\label{fig:FFNN_Franke_heatmaps}
+\end{figure*}
 \subsection{Cancer Data}
 The accuracy of the FFNN for the three different activation functions for different values of $\eta$ and $\lambda$ are given in Fig. \ref{fig:FFNN_cancer_heatmaps}.
+<<<<<<< HEAD
 
 \begin{figure*}
 	\begin{subfigure}{0.497\textwidth}
@@ -268,26 +299,34 @@ The accuracy of the FFNN for the three different activation functions for differ
 \begin{figure*}
 	\begin{subfigure}{0.497\textwidth}
 		\includegraphics[width=\textwidth]{Python/Figures/accuracy_heatmap_relu_epochs1000.pdf}
+=======
+\begin{figure*}[ht!]
+	\begin{subfigure}{0.4353\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/Cancer_Accuracy_Heatmap_relu_Epochs100.pdf}
+>>>>>>> b6381d3e92faabb409653bf374e6b0fbdced30c6
 		\caption{ReLU}
 		\label{fig:ReLU_heatmap}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}{0.497\textwidth}
-		\includegraphics[width=\textwidth]{Python/Figures/accuracy_heatmap_lrelu_epochs1000.pdf}
+	\begin{subfigure}{0.4353\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/Cancer_Accuracy_Heatmap_lrelu_Epochs100.pdf}
 		\caption{LReLU}
 		\label{fig:LReLU_heatmap}
 	\end{subfigure}
 	\hfill\newline
-	\begin{subfigure}{0.497\textwidth}
-		\includegraphics[width=\textwidth]{Python/Figures/accuracy_heatmap_sigmoid_epochs1000.pdf}
+	\begin{subfigure}{0.4353\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/Cancer_Accuracy_Heatmap_sigmoid_Epochs100.pdf}
 		\caption{Sigmoid}
 		\label{fig:Sigmoid_heatmap}
 	\end{subfigure}
-	\caption{Accuracy for various combinations of $\eta$ and $\lambda$ for ReLU, LReLU and Sigmoid activation functions with $1000$ epochs.}
+	\caption{Accuracy for various combinations of $\eta$ and $\lambda$ for ReLU, LReLU and Sigmoid activation functions with $1000$ epochs on the breast cancer dataset.}
 	\label{fig:FFNN_cancer_heatmaps}
 \end{figure*}
 
 \section{Conclusion}
+We find that our own implementation of the FFNN is outperformed by simple linear regression, but a properly made FFNN like \texttt{keras} produces an MSE which is an order of magnitude lower than our linear regression code. For logistic regression our FFNN performs quite well, approaching $98\%$ accuracy with certain parameter combinations.
+
+A step forward would for example be testing out different values of $a$ in LReLU and seeing whether it may achieve a higher level of performance.
 
 % Bibliography
 \bibliographystyle{JHEP}
