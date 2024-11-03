@@ -85,6 +85,10 @@ aps,
 \renewcommand{\O}{\mathcal{O}}
 \newcommand{\f}[2]{\frac{#1}{#2}}
 \newcommand{\p}{\partial}
+\makeatletter
+\renewcommand{\p@subsection}{}
+\renewcommand{\p@subsubsection}{}
+\makeatletter
 
 
 \begin{document}
@@ -110,10 +114,16 @@ Neural networks are a powerful tool for handling large datasets where traditiona
 
 The main goal of this project is understand the various techniques behind machines learning, and investigate they can be applied to the healthcare system, specifically in diagnosing malignant breast cancer tumors based on the tumor's several features based on the data from \texttt{sklearn}'s datasets \cite{sklearn}. We do this by testing the performance of a neural network by comparing it with logistic regression as we are working with discrete data. 
 
-We begin by introducing the relevant background necessary to understand the implementations. Then we outline said implementations before discussing the results. We go over both linear and non-linear regression on the Franke function where performance issues in the implementation are easier to visualize. Finally the neural network and logistic regression are applied to the cancer data. 
+We begin by introducing the relevant background necessary to understand the implementations. Then we outline said implementations before discussing the results. We go over both linear and non-linear regression on the Franke function where performance issues in the implementation are easier to visualize. Finally the neural network and logistic regression are applied to the cancer data. We then analyze the results and make a conclusion on which methods perform the best overall.
 
 \section{Methods}
-In this section we present the various methods used in this report. 
+In this section we present the various methods used in this report. For reference, the Franke function which we will be using to test our linear regression methods is:
+\begin{align}	\label{eq:franke}
+	f(x,y)&=\frac{3}{4}\exp(-\frac{(9x-2)^2}{4}-\frac{(9y-2)^2}{4})\nonumber\\
+	&+\frac{3}{4}\exp(-\frac{(9x+1)^2}{49}-\frac{(9y+1)^2}{10})\nonumber\\
+	&+\frac{1}{2}\exp(-\frac{(9x-7)^2}{4}-\frac{(9y-3)^2}{4})\nonumber\\
+	&-\frac{1}{5}\exp(-(9x-4)^2-(9y-7)^2).
+\end{align}
 
 \subsection{Linear Regression}
 As discussed in a previous project \cite{project1}, linear regression is the simplest method for fitting a continuous given a data set. The data set is approximated by $\bm y=\bm X\bm\beta$ and the $\beta$ coefficients are found by minimizing the cost function. For this project we consider the two regression methods:
@@ -166,33 +176,33 @@ Furthermore, to penalize overfitting, and regularization term may be added to \(
 \end{align}
 
 \subsection{Resampling Methods}
-Resampling methods are used to estimate the accuracy of predictive models by splitting the data into training and testing sets or by generating multiple datasets. Common techniques include cross-validation and bootstrapping. In cross-validation, the data is split into $k$ folds, and the model is trained on $k-1$ folds and tested on the remaining fold. This process is repeated $k$ times, and the average accuracy is computed. Bootstrapping involves sampling with replacement from the dataset to create multiple training sets. These methods help assess model stability and generalizability on unseen data.
+Resampling methods are used to estimate the accuracy of predictive models by splitting the data into training and testing sets or by generating multiple datasets. Common techniques include cross-validation and bootstrapping. In cross-validation, the data is split into $k$ folds, and the model is trained on $k-1$ folds and tested on the remaining fold. This process is repeated $k$ times, and the average accuracy is computed. Bootstrapping involves sampling with replacement from the dataset to create multiple training sets. These methods help assess model stability and generalizability on unseen data. For more details see \cite{project1}.
 
 \subsection{Gradient Descent}	\label{sec:gradient_descent}
 Gradient descent (GD) is an essential optimization algorithm in machine learning, commonly used to minimize cost functions by adjusting model parameters iteratively. Given model parameters $\theta$ and a cost function $C(\theta)$, the GD update rule adjusts parameters in the opposite direction of the gradient:
 \begin{align}
-	\theta_i^{(j+1)}=\theta_i^{(j)}-\eta\pdv{C}{\theta_i}
+	\theta_i^{(j+1)}=\theta_i^{(j)}-\eta\pdv{C}{\theta_i},
 \end{align}
 where $\eta$ is the learning rate. Batch gradient descent (BGD) calculates the gradient over the entire dataset:
 \begin{align}
-	\theta^{(j+1)}=\theta^{(j)}-\eta\nabla_\theta C
+	\theta^{(j+1)}=\theta^{(j)}-\eta\nabla_\theta C.
 \end{align}
 BGD is computationally expensive for large datasets but provides smooth convergence toward the minimum.
 
-The learning rate \(\eta\) does not necessarily be of a constant value, and can change with each iteration. There are several ways to implement a varying learning rate. In this report, we either use a constant learning rate or a learning rate on the form 
+The learning rate \(\eta\) does not necessarily need to be constant, and can change with each iteration. There are several ways to implement a varying learning rate. In this report, we either use a constant learning rate or a learning rate on the form 
 \begin{align} \label{eq:varyin_learning_rate}
 	\eta(e,i;N;b;t_0;t_1) = \frac{t_0}{e\cdot N/b + i t_1},
 \end{align}
-where \(e\) is the current epoch, \(N\) the data-size, \(b\) the batch size (see sec. \ref{sec:stochastic_gradient_descent}) and \(i\) the current batch-iteration. The parameter \(t_0\) is related to the initial magnitude of the learning rate, making it possible to faster or larger learning rates at the beginning of the algorithm. Keeping this parameter fairly large can be beneficial in scenarios where multiple local minimas are present, as the learning rate will sort of  `wait' a bit before it starts converging on a solution. The parameter \(t_1\) on the other hand influences how quickly the learning rate decreases over `time'. For example, in scenarios where the data is sensitive to `small' changes, keeping \(t_1\) small can help increase the accuracy of the model near the end of the training. 
+where \(e\) is the current epoch, \(N\) the data-size, \(b\) the batch size (see sec. \ref{sec:stochastic_gradient_descent}) and \(i\) the current batch-iteration. The parameter \(t_0\) is related to the initial magnitude of the learning rate, allowing larger learning rates at the beginning of the algorithm. Keeping this parameter fairly large can be beneficial in scenarios where multiple local minima are present, as the learning rate will `wait' a bit before it starts converging on a solution. The parameter \(t_1\) on the other hand influences how quickly the learning rate decreases over `time'. For example, in scenarios where the data is sensitive to small changes, keeping \(t_1\) small can help increase the accuracy of the model near the end of the training. 
 
 \subsection{Stochastic Gradient Descent} \label{sec:stochastic_gradient_descent}
 Stochastic Gradient Descent (SGD) is a variation of gradient descent where each parameter update is performed on a single data point or a small batch. The update rule for SGD is:
 \[
 \theta_i^{(j+1)} = \theta_i^{(j)} - \eta \pdv{C^{(i)}}{\theta_i}
 \]
-where $C^{(i)}$ is the cost function evaluated at a single data point $i$. While SGD introduces noise in the updates, it often converges faster for large datasets and helps escape local minima, making it ideal for training neural networks.
+where $C^{(i)}$ is the cost function evaluated at a single data point $i$. While SGD introduces noise in the updates, it often converges faster for large datasets, and helps escape local minima, making it ideal for training neural networks.
 
-`Plane' gradient descent or stochastic gradient descent may also keep track of a `momentum' parameter \(m\), which is supposed to `push' the descent algorithm in the correct direction. This parameter helps build up `speed' towards a solution, and can be helpful to overcome local minimas. It is implemented in the following way:
+`Plain' gradient descent or stochastic gradient descent may also keep track of a so-called `momentum' parameter \(m\), which is supposed to push the descent algorithm in the correct direction. This parameter helps build up speed towards a solution, and can be helpful to overcome local minima. It is implemented in the following way:
 \begin{align}
 	m_i = \beta m_i + (1-\beta)(\nabla_{\theta}C)_i,
 \end{align}
@@ -203,7 +213,7 @@ and modifies the new \(\theta_{i+1}\) like
 
 
 \subsection{Optimization Algorithms} \label{sec:optimization_algorithms}
-To reach the global minima of the cost function, there exists several optimization algorithms which can help speed up the process and becoming trapped in local minimas. These algorithms essentially modify the learning rate by analyzing the magnitude and behavior of the gradients. This section gives a brief summary of three optimization algorithms; the adaptive gradient (AdaGrad) algorithm, the root mean squared propagation (RMSprop) algorithm and the adaptive moment estimation (Adam) algorithm. 
+To reach the global minima of the cost function, there exists several optimization algorithms which can help speed up the process and becoming trapped in local minima. These algorithms essentially modify the learning rate by analyzing the magnitude and behavior of the gradients. This section gives a brief summary of three optimization algorithms; the adaptive gradient (AdaGrad) algorithm, the root mean squared propagation (RMSprop) algorithm and the adaptive moment estimation (Adam) algorithm. 
 
 
 \subsubsection{AdaGrad}
@@ -214,39 +224,39 @@ The AdaGrad algorithm modifies the learning rate by keeping track of how large c
 where \(\epsilon\) is a small parameter to avoid division by zero.
 
 \subsubsection{RMSprop}
-The RMSprop optimization algorithm has a similar goal as AdaGrad, minimizing the effect of (too) large gradients. However, RMSprop does this a bit differently, by calculating a sort of `decaying average of the squared gradients'. Specifically, it keeps track of a parameter \(G_i\) which represents how the average of the squared gradients `move', and uses a parameter \( r \) which controls the `rate of decay'. Typically, \( r\) is set very close to 1, and we have used \(r=0.99\) troughout. The RMSprop algorithm `modifies' the learing rate like 
+The RMSprop optimization algorithm has a similar goal as AdaGrad, minimizing the negative effects of large gradients. However, RMSprop does this a bit differently, by calculating a `decaying average of the squared gradients'. Specifically, it keeps track of a parameter \(G_i\) which represents how the average of the squared gradients change, and uses a parameter \(r\) which controls the `rate of decay'. Typically, \(r\) is set very close to 1, and we have used \(r=0.99\) throughout. The RMSprop algorithm modifies the learning rate as such:
 \begin{align}
 	G_i &= r G_{i-1} + (1 - r) \cdot (\nabla_{\theta}C)_{i}^{2}, \\
 	\eta_i &\rightarrow \frac{\epsilon + \eta_i}{\sqrt{G_i}},
 \end{align}
-where \(\epsilon\) is introduced to avoid zero-division.
+where \(\epsilon\) is again introduced to avoid zero-division.
 
 \subsubsection{Adam}
-The Adam algorithm is perhaps the most advanced optimization algorithm of the ones we present here. It works by essentially combining RMSprop and momentum. It adjusts the learing rate by computing estimates of the mean (`first momentum' \(m\)) and the variance (`second momentum' \(v\)) of the gradients. The two momentums are updated in each itteration like
+The Adam algorithm is perhaps the most advanced optimization algorithm of the ones we present here. It works by essentially combining RMSprop and momentum. It adjusts the learning rate by computing estimates of the mean (`first momentum' \(m\)) and the variance (`second momentum' \(v\)) of the gradients. The two momenta are updated in each iteration:
 \begin{align}	\label{eq:adam_momentums}
-	m_i &= \beta_1 m_{i-1} + (1 - \beta_1) \nabla_{\theta} C \\
-    v_i &= \beta_2 v_{i-1} + (1 - \beta_2) (\nabla_{\theta} C)^2,
+	m_i&=\beta_1m_{i-1}+(1-\beta_1) \nabla_\theta C,\\
+    v_i&=\beta_2v_{i-1}+(1-\beta_2) (\nabla_\theta C)^2,
 \end{align}
-for some parameters \(\beta_1\) and \(\beta_2\) which are typically close to one. Given these values for \(\beta_1, \beta_2\), eq. \eqref{eq:adam_momentums} implies that \(m\) and \(v\) initially starts out close to zero. To account for this, Adam includes corrections terms,
+with the parameters \(\beta_1\) and \(\beta_2\) which are typically close to one. Given these values for \(\beta_1, \beta_2\), eq. \eqref{eq:adam_momentums} implies that \(m\) and \(v\) initially starts out close to zero. To account for this, Adam includes additional corrections terms:
 \begin{align}
-	\hat{m}_i &= \frac{m_i}{1 - \beta_1^i} \\
-    \hat{v}_i &= \frac{v_i}{1 - \beta_2^i}.
+	\hat{m}_i &=\frac{m_i}{1-\beta_1^i},\\
+    \hat{v}_i &=\frac{v_i}{1-\beta_2^i}.
 \end{align}
-Adam calculates the next \(\theta_{i+1}\) as 
+Adam then calculates the next \(\theta_{i+1}\) as such:
 \begin{align}
-	\theta_{i+1} = \theta_{i} - \frac{\eta}{\sqrt{\hat{v}_i} + \epsilon} \hat{m}_i
+	\theta_{i+1}=\theta_{i}-\frac{\eta}{\sqrt{\hat{v}_i}+\epsilon}\hat{m}_i
 \end{align}
 
 
 
 \subsection{Neural Networks}	\label{sec:neutral_networks}
-Neural networks are computational models inspired by the human brain, designed to recognize patterns and relationships within data. They consist of layers of interconnected neurons or nodes, where each neuron applies a transformation to the input data. In each layer, neurons take a weighted sum of inputs, apply an activation function to introduce non-linearity, and pass the result to the next layer. The final layer produces the output, serving as the network’s prediction.
+Neural networks are computational models inspired by the human brain, designed to recognize patterns and relationships within data. They consist of layers of interconnected neurons or nodes, where each neuron applies a transformation to the input data. In each layer, neurons take a weighted sum of inputs, apply an \textit{activation function} to introduce non-linearity, and pass the result to the next layer. The final layer produces the output, serving as the network’s prediction.
 
 \subsubsection{Feed Forward Neural Networks}
 Feed-forward neural networks (FFNNs) are the simplest type of neural network, where data flows forward from input to output without forming cycles. These networks contain one or more hidden layers that apply an activation function to capture complex, nonlinear patterns in the data. The training process adjusts the weights of each connection to minimize a cost function, typically using gradient descent.
 
 \subsubsection{Activation Functions}
-Activation functions play a critical role in neural networks by introducing non-linearity, which enables the network to approximate more complex functions beyond simple linear mappings. In this project, we use three different activation functions: sigmoid, tanh, ReLU, and Leaky ReLU. Each function has different properties that can impact training performance and convergence.
+Activation functions play a critical role in neural networks by introducing non-linearity, which enables the network to approximate more complex functions beyond simple linear mappings. In this project, we use three different activation functions: sigmoid, ReLU, and Leaky ReLU. Each function has different properties that can impact training performance and convergence.
 \begin{itemize}
 	\item The sigmoid function, suitable for binary classification, takes an input $z\in\mathbb{R}$ and outputs a value in the range $(0,1)$. This makes it useful for probabilistic interpretations. As mentioned prior, it is given by:
 	\begin{align} 
@@ -260,7 +270,7 @@ Activation functions play a critical role in neural networks by introducing non-
 		\end{cases}.
 	\end{align}
 	This reduces the number of calculations that the network has to perform and can speed up the training.
-	\item The Leaky ReLU (LReLU) function is a variation of ReLU that allows a small gradient when $z\leq0$. This can help mitigate a known issue known as ``dying ReLU'' where neurons become inactive due to consistently recieving negative inputs., helping to mitigate issues with inactive neurons. It is given by:
+	\item The Leaky ReLU (LReLU) function is a variation of ReLU that allows a small gradient when $z\leq0$. This can help mitigate an issue known as `dying ReLU' where neurons become inactive due to consistently receiving negative inputs, helping to mitigate issues with inactive neurons. It is given by:
 	\begin{align} 
 		LR(z)=
 		\begin{cases} 
@@ -276,40 +286,42 @@ Backpropagation is the key algorithm for training neural networks by optimizing 
 
 \section{Implementation}
 \subsection{Linear and Logistic Regression}
-Linear and Logistic Regression was used to study data from the Franke function and the breast cancer data, respectively. Both methods rely on some sort of optimization algorithm when applying the gradient descent algorithm, see sec. \ref{sec:optimization_algorithms}. The optimization algorithms (plane GD/SGD, Adagrad, RMSprop or Adam) are implemented as classes inheriting from a parent class \texttt{Optimizer}. The \texttt{Optimizer} class defaults to the parameters \(\eta=0.01, m=0.9, \epsilon=1e-8, \beta_1=0.9, \beta_2=0.999, r=0.9\), with the possibility of \(\eta\) being a callable, see sec. \ref{sec:gradient_descent}. In this report, when comparing constant and varying learning rates, we have set \(t_0 = 2\) and \(t_{1} = 2/\eta\) (for constant \(\eta\)) in the equation for varying learning rate \eqref{eq:varyin_learning_rate}.
+Linear and Logistic Regression was used to study data from the Franke function and the breast cancer data, respectively. Both methods rely on some sort of optimization algorithm when applying the gradient descent algorithm, see sec. \ref{sec:optimization_algorithms}. The optimization algorithms (plain GD/SGD, Adagrad, RMSprop or Adam) are implemented as classes inheriting from a parent class \texttt{Optimizer}. This class defaults to the parameters \(\eta=0.01, m=0.9, \epsilon=1e-8, \beta_1=0.9, \beta_2=0.999, r=0.9\), with the possibility of \(\eta\) being a callable, see sec. \ref{sec:gradient_descent}. In this report, when comparing constant and varying learning rates, we have set \(t_0 = 2\) and \(t_{1} = 2/\eta\) (for constant \(\eta\)) in the equation for varying learning rate \eqref{eq:varyin_learning_rate}.
 
 After an optimization algorithm has been chosen, the class \texttt{DescentSolver} is used together with a chosen gradient, the Ridge-gradient (linear regression) or a logistic-gradient (logistic regression), to compute GD or SGD. To analyze the results of \texttt{DescentSolver}, the class \texttt{DescentAnalyzer} is used. This class computes metrics, MSE/\(R^2\) (linear regression) or accuracy score (logistic regression), for an (equally sized) grid of \(\lambda\), \(\eta\)-values. The metrics, together with all other parameters, are saved as pickle-files, which can be read at a later time from \texttt{DescentAnalyzer.load\_data} giving a dictionary of the data. 
 
-Further, the Feedforward Neural Network (FFNN) was implemented to be able to analyze both the Franke function and the breast cancer data. The FFNN is structured with an input layer, one or more hidden layers, and an output layer, with each layer utilizing an activation function, and currently only supports the Adam optimizer. The architecture is defined by specifying the input size, the number of neurons in hidden layers, and the output size. In the case of the Franke function, the input layer is size 2, one for $x$ and one for $y$, whilst for the breast cancer data the input layer corresponds to the number of features, i.e. $30$, which corresponds to several properties of the tumor, such as circumference, density etc. 
+Further, the \texttt{FFNN} class was implemented to analyze both the Franke function and the breast cancer data. The FFNN is structured with an input layer, one or more hidden layers, and an output layer, with each layer utilizing an activation function, and currently only supports the Adam optimizer. This was due to unknown performance issues when trying to incorporate the \texttt{Optimize} class. The architecture is defined by specifying the input size, the number of neurons in hidden layers, and the output size. In the case of the Franke function, the input layer is size 2, one for \(x\) and one for \(y\), while for the breast cancer data, the input layer corresponds to the number of features, i.e., \(30\), representing several properties of the tumor, such as circumference, density, etc.
 
-We tested out various different ways of layering the hidden layers. In the end, for the Franke function, we settled with using a pyramid-like architecture for the hidden layers $[4,8,16,32,16,8,4,2]$ whilst for the breast cancer data we used $[15,30,15,8,4,2]$. These were decided on based on the size of both the input and output, where the latter is $1$ in both cases. The weights and biases are initialized using random values scaled by the number of input neurons, which aids in faster convergence during training. The network supports ReLU, Sigmoid, and Leaky ReLU as activation functions. The forward propagation computes the output of the network by applying the activation function to the weighted sum of inputs at each layer. The backward propagation algorithm updates the weights and biases using gradient descent, where the mean squared error serves as the loss function. We implement regularization techniques to mitigate overfitting.
+We tested various configurations for layering the hidden layers. Ultimately, for the Franke function, we settled on a pyramid-like architecture for the hidden layers \([4,8,16,32,16,8,4,2]\), while for the breast cancer data, we used \([15,30,15,8,4,2]\). These choices were based on the sizes of both the input and output layers, where the output layer is \(1\) in both cases. The weights and biases are initialized using random values scaled by the number of input neurons, which aids in faster convergence during training. The network supports ReLU, Sigmoid, and Leaky ReLU as activation functions. 
 
-The training process includes splitting the data into training and test sets, followed by iterating through a specified number of epochs, during which the network adjusts its weights to minimize the error. The test size used throughout is $25\%$. After training, the network can predict outputs for new data, allowing for evaluation against known values from the Franke function. The overall performance of the model is assessed using MSE and accuracy for Franke and cancer data respectively.
+The forward propagation computes the output of the network by applying the chosen activation function to the weighted sum of inputs at each layer. Depending on the task, the FFNN uses mean squared error (MSE) as the loss function for regression tasks (like the Franke function) and binary cross-entropy (BCE) for classification tasks (like breast cancer data). The backward propagation algorithm updates the weights and biases using gradient descent, which considers the specific loss function being used. We also implement regularization techniques to mitigate overfitting.
 
-On the cancer data we use StandardScaling to scale the data after splitting it to avoid data leakage, whereas the Franke function was normalized to the range $[0,1]$ using min-max scaling.
+The training process includes splitting the data into training and test sets, followed by iterating through a specified number of epochs during which the network adjusts its weights to minimize the error. The test size used throughout is \(25\%\). After training, the network can predict outputs for new data, allowing for evaluation against known values from the Franke function. The overall performance of the model is assessed using MSE for the Franke function and accuracy for the breast cancer data, reflecting the different loss functions applied during training.
+
+On the cancer data we use StandardScaling to scale the data after splitting it to avoid data leakage, whereas the Franke function was normalized to the range $[0,1]$ using min-max scaling. On the Franke function we also implemented \texttt{tensorflow.keras} to compare its results with our own FFNN.
 
 
 \section{Results \& Discussion}
 We represent the results and compare the various methods. The larger plots have been placed in Appendix \ref{Appendix:A} to preserve space for the sake of readability.
 
 \subsection{Franke}
-The results for the MSE and $R^2$ as a function of the learning rate $\eta$ with 1000 epochs with our own FFNN with different activation functions and keras NN with the sigmoid activation function are given in Fig. \ref{fig:NN_Franke_LR_1000}. In this particular plot we are not using any regularization terms. The reason for this is simply due to \texttt{keras} being very slow, but we still wanted to include it as a reference. The optimal learning rates for $\lambda=0$ can easily be read off this plot.
+The results for the MSE and $R^2$ as a function of the learning rate $\eta$ with 1000 epochs with our own FFNN with different activation functions and keras NN with the sigmoid activation function are given in Fig. \ref{fig:NN_Franke_LR_1000}. In this particular plot we are not using any regularization terms. The reason for this is simply due to \texttt{keras} being very slow, but we still wanted to include it as a reference. The optimal learning rates for $\lambda=0$ can easily be read off this plot: $\{10^{-3},10^{-3},3\times10^{-3},2\times 10^{-2}\}$ for \{ReLU, Sigmoid, LReLU, \texttt{keras}\}.
 \begin{figure}[ht!]
 	\includegraphics[width=0.5\textwidth]{Python/Figures/NN_MSE_R2_Franke_LearningRate_Epochs1000.pdf}
 	\caption{MSE and $R^2$ regression results for the FFNN as a function of $\eta$ with 1000 epochs.}
 	\label{fig:NN_Franke_LR_1000}
 \end{figure}
 
-Further we used the result for the best learning rate to plot the MSE after each epoch, given in Fig. \ref{fig:NN_Franke_Epochs}. As expected, all activation functions perform poorly on low epochs, and gradually improve as you go along. At the end, all seem to achieve a relatively good MSE as the number of epochs increase.
+Further we used the result for the best learning rate to plot the MSE after each epoch, given in Fig. \ref{fig:NN_Franke_Epochs}. As expected, all activation functions perform poorly on low epochs, and gradually improve as you go along. At the end, all seem to achieve a relatively good MSE as the number of epochs increase, with the exception of our own implementation of the Sigmoid function.
 
-Overall these metrics seem to imply that ReLU and LReLU are outperforming \texttt{keras}, but when explicitly plotting the predictions this does not seem to be the case, as can be seen in Fig. \ref{fig:3D_Franke}. Note that this plotted prediction is a rerun with the best parameters for each activation type. Thus their performance being worse here compared to \texttt{keras} may simply be due to large variation from one run to another in our implementation.
+Overall these metrics seem to imply that ReLU and LReLU are outperforming \texttt{keras}. This is likely due to the choice of using the sigmoid function, which is more suited towards binary classification tasks. As can be seen in Fig. \ref{fig:3D_Franke}, ReLU, LReLU and \texttt{keras} are all quite close to recreating the Franke function, whilst Sigmoid performs about as well as LASSO did in \cite{project1}.
 \begin{figure}[ht!]
 	\includegraphics[width=0.5\textwidth]{Python/Figures/NN_MSE_Franke_Epoch.pdf}
 	\caption{The MSE regression results for the FFNN as a function of number of epochs for ReLU, LReLU, Sigmoid and keras.}
 	\label{fig:NN_Franke_Epochs}
 \end{figure}
 
-We then did the above again, but now with a regularization parameter $\lambda$ and excluded \texttt{keras} due to time constraints. The MSE for various combinations of $\eta$ and $\lambda$ are given in Fig. \ref{fig:FFNN_Franke_heatmaps}. The best results from here are then picked to once again plot the MSE over epochs given in Fig. \ref{fig:best_MSE_Franke_Epochs} and another 3D plot to visualize the results in Fig. \ref{fig:NN_noKeras_3D_Franke_Epochs250}. Clearly the sigmoid activation function performs worse overall, whilst ReLU and LReLU have a close competition between them. The convergence is much faster here, and we same performance with ReLU and LReLU after only $50$ epochs. The sigmoid function converges much slower, but this is due to it being suited for binary classification and not regression. The much faster convergence does suggest that the regularization parameter is improving our performance significantly.
+We then did the above again, but now with a regularization parameter $\lambda$ and excluded \texttt{keras} due to time constraints. The MSE for various combinations of $\eta$ and $\lambda$ are given in Fig. \ref{fig:FFNN_Franke_heatmaps}. The best results from here are then picked to once again plot the MSE over epochs given in Fig. \ref{fig:best_MSE_Franke_Epochs} and another 3D plot to visualize the results in Fig. \ref{fig:NN_noKeras_3D_Franke_Epochs250}. Clearly the sigmoid activation function performs worse overall once again, whilst ReLU and LReLU have a close competition between them. The convergence is much faster here, and we same performance with ReLU and LReLU after only $50$ epochs. The sigmoid function converges much slower, but this is due to it being suited for binary classification and not regression. The much faster convergence does suggest that the regularization parameter is improving our performance significantly.
 \begin{figure}[ht!]
 	\includegraphics[width=0.5\textwidth]{Python/Figures/Best_MSE_vs_Epochs250.pdf}
 	\caption{The MSE regression results for the FFNN as a function of number of epochs for ReLU, LReLU, Sigmoid with the best performing combination of $\lambda$ and $\eta$.}
@@ -340,46 +352,61 @@ A step forward would for example be testing out different values of $a$ in LReLU
 
 %%%%%%%%% Linear Regression %%%%%%%%%
 \begin{figure*}
-	\begin{subfigure}{0.4353\textwidth}
+	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Python/Figures/LinRegSGD_25x25_epoch10_batchS4.pdf}
-		\caption{MSE score using SGD for franke data with \(10\) epochs, batch size \(4\), \(\lambda\in[10^{-10}, 10^{1}]\) and \(\eta\in[4.2\cdot 10^{-2}, 4.3\cdot 10^{-3}]\)}
-		\label{fig:LogReg25x25_epoch10_bacthS50}
+		\caption{MSE score using SGD for franke data with \(10\) epochs, batch size \(4\).}
+		\label{fig:LinReg25x25_epoch10_bacthS50}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}{0.4353\textwidth}
+	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Python/Figures/LinRegAdaGrad_25x25_epoch10_batchS4.pdf}
-		\caption{MSE score using AdaGrad for franke data with \(10\) epochs, batch size \(4\), \(\lambda\in[10^{-10}, 10^{1}]\) and \(\eta\in[10^{-10}, 10^{0}]\)}
-		\label{fig:LogReg25x25_epoch10_bacthS50_zoomed}
+		\caption{MSE score using AdaGrad for franke data with \(10\) epochs, batch size \(4\).}
+		\label{fig:LinReg25x25_epoch10_bacthS50_zoomed}
 	\end{subfigure}
 \hfill\newline
-	\begin{subfigure}{0.4353\textwidth}
+	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Python/Figures/LinRegRMSprop_25x25_epoch10_batchS4.pdf}
-		\caption{MSE score using RMSprop for franke data with \(10\) epochs, batch size \(4\), \(\lambda\in[10^{-10}, 6\cdot 10^{-1}]\) and \(\eta\in[6.6\cdot 10^{-2}, 6\cdot 10^{-1}]\)}
-		\label{fig:LogReg25x25_epoch100_bacthS50}
+		\caption{MSE score using RMSprop for franke data with \(10\) epochs, batch size \(4\).}
+		\label{fig:LinReg25x25_epoch100_bacthS50}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}{0.4353\textwidth}
+	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Python/Figures/LinRegAdam_25x25_epoch10_batchS4_zoomed.pdf}
-		\caption{MSE score using Adam for franke data with \(10\) epochs, batch size \(4\), \(\lambda\in[10^{-10}, 10^{1}]\) and \(\eta\in[5.1\cdot 10^{-2}, 10^{0}]\)}
-		\label{fig:LogReg25x25_epoch100_bacthS50_zoomed}
+		\caption{MSE score using Adam for franke data with \(10\) epochs, batch size \(4\).}
+		\label{fig:LinReg25x25_epoch100_bacthS50_zoomed}
 	\end{subfigure}
 	\caption{Accuracy score for logistic regression, for number of epochs \(N=10\) (left), \(N=100\) (right). The figures to the right are zoomed in versions of the ones to the left.}
-	\label{fig:LogReg}
+	\label{fig:LinReg}
 \end{figure*}
 
-%%%%%%%%% Neural Netwrok different acitivation functions %%%%%%%%%
+%%%%%%%%% Neural Network different acitivation functions %%%%%%%%%
+
 \begin{figure*}[ht!]
-	\begin{subfigure}{0.4353\textwidth}
+	\begin{subfigure}[b]{0.43\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/NN_3D_Predict_Franke_Epochs1000.pdf}
+		\caption{3D plots for best $\eta$ with $1000$ epochs. The blue dots correspond to the sampled points from the Franke function with $100$ total samples.}
+		\label{fig:3D_Franke}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}[b]{0.43\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/NN_noKeras_3D_Franke_Epochs250.pdf}
+		\caption{3D plots for best combination of $\lambda$ and $\eta$ for our own neural network with $250$ epochs and $100$ samples from the Franke function.}
+		\label{fig:NN_noKeras_3D_Franke_Epochs250}
+	\end{subfigure}
+\end{figure*}
+
+\begin{figure*}[ht!]
+	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Python/Figures/Heatmap_MSE_ReLU_Franke_Epochs250.pdf}
 		\caption{ReLU}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}{0.4353\textwidth}
+	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Python/Figures/Heatmap_MSE_Leaky ReLU_Franke_Epochs250.pdf}
 		\caption{LReLU}
 	\end{subfigure}
 	\hfill\newline
-	\begin{subfigure}{0.4353\textwidth}
+	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Python/Figures/Heatmap_MSE_Sigmoid_Franke_Epochs250.pdf}
 		\caption{Sigmoid}
 	\end{subfigure}
@@ -389,27 +416,27 @@ A step forward would for example be testing out different values of $a$ in LReLU
 
 %%%%%%%%% Logistic Regression %%%%%%%%%
 \begin{figure*}
-	\begin{subfigure}{0.4353\textwidth}
+	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Python/Figures/LogReg25x25_epoch10_batchS50.pdf}
-		\caption{Logistic regression for cancer data with \(10\) epochs, batch size \(50\), \(\lambda\in[10^{-10}, 10^{1}]\) and \(\eta\in[10^{-10}, 10^{1}]\)}
+		\caption{Logistic regression for cancer data with \(10\) epochs, batch size \(50\).}
 		\label{fig:LogReg25x25_epoch10_bacthS50}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}{0.4353\textwidth}
+	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Python/Figures/LogReg25x25_epoch10_batchS50_zoomed.pdf}
-		\caption{Logistic regression for cancer data with \(10\) epochs, batch size \(50\), \(\lambda\in[10^{-10}, 10^{0}]\) and \(\eta\in[10^{-4}, 10^{0}]\)}
+		\caption{Logistic regression for cancer data with \(10\) epochs, batch size \(50\).}
 		\label{fig:LogReg25x25_epoch10_bacthS50_zoomed}
 	\end{subfigure}
 \hfill\newline
-	\begin{subfigure}{0.4353\textwidth}
+	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Python/Figures/LogReg25x25_epoch100_batchS50.pdf}
-		\caption{Logistic regression for cancer data with \(100\) epochs, batch size \(50\), \(\lambda\in[10^{-10}, 10^{0}]\) and \(\eta\in[10^{-10}, 10^{0}]\)}
+		\caption{Logistic regression for cancer data with \(100\) epochs, batch size \(50\).}
 		\label{fig:LogReg25x25_epoch100_bacthS50}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}{0.4353\textwidth}
+	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Python/Figures/LogReg25x25_epoch100_batchS50_zoomed.pdf}
-		\caption{Logistic regression for cancer data with \(100\) epochs, batch size \(50\), \(\lambda\in[10^{-10}, 10^{0}]\) and \(\eta\in[8.3\cdot 10^{-3}, 10^{0}]\)}
+		\caption{Logistic regression for cancer data with \(100\) epochs, batch size \(50\).}
 		\label{fig:LogReg25x25_epoch100_bacthS50_zoomed}
 	\end{subfigure}
 	\caption{Accuracy score for logistic regression, for number of epochs \(N=10\) (left), \(N=100\) (right). The figures to the right are zoomed in versions of the ones to the left.}
@@ -417,19 +444,19 @@ A step forward would for example be testing out different values of $a$ in LReLU
 \end{figure*}
 
 \begin{figure*}[ht!]
-	\begin{subfigure}{0.4353\textwidth}
+	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Python/Figures/Cancer_Accuracy_Heatmap_relu_Epochs250.pdf}
 		\caption{ReLU}
 		\label{fig:ReLU_heatmap}
 	\end{subfigure}
 	\hfill
-	\begin{subfigure}{0.4353\textwidth}
+	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Python/Figures/Cancer_Accuracy_Heatmap_lrelu_Epochs250.pdf}
 		\caption{LReLU}
 		\label{fig:LReLU_heatmap}
 	\end{subfigure}
 	\hfill\newline
-	\begin{subfigure}{0.4353\textwidth}
+	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Python/Figures/Cancer_Accuracy_Heatmap_sigmoid_Epochs250.pdf}
 		\caption{Sigmoid}
 		\label{fig:Sigmoid_heatmap}
