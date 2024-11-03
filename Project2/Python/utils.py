@@ -43,10 +43,44 @@ def latex_fonts():
         'figure.titlesize': 25 # Figure title font size
     })
 
+############ Metric functions ############
 def MSE(y,ytilde):
     n = len(y)
     return 1/n * np.sum(np.abs(y-ytilde)**2)
 
+############ Activation functions ############
+class Activation:
+    @staticmethod
+    def sigmoid(z):
+        """Sigmoid activation function."""
+        return 1 / (1 + anp.exp(-z))
+
+    @staticmethod
+    def sigmoid_derivative(z):
+        """Derivative of the Sigmoid activation function."""
+        sigmoid_z = Activation.sigmoid(z)
+        return sigmoid_z * (1 - sigmoid_z)
+
+    @staticmethod
+    def relu(z):
+        """ReLU activation function."""
+        return np.where(z > 0, z, 0)
+
+    @staticmethod
+    def relu_derivative(z):
+        """Derivative of ReLU activation function."""
+        return np.where(z > 0, 1, 0)
+
+    @staticmethod
+    def Lrelu(z, alpha=0.01):
+        """Leaky ReLU activation function."""
+        return np.where(z > 0, z, alpha * z)
+
+    @staticmethod
+    def Lrelu_derivative(z, alpha=0.01):
+        """Derivative of Leaky ReLU activation function."""
+        return np.where(z > 0, 1, alpha)
+    
 ############ Cost/gradient functions ############
 def gradientOLS(X, y, beta):
     n=len(y)
@@ -61,20 +95,20 @@ def CostRidge(X, y, theta, lmbda):
     n = len(y)
     return (1.0 / n) * anp.sum((y-X @ theta) ** 2) + lmbda / n * anp.sum(theta**2)
 
-def sigmoid(x):
-    return 1/(1+anp.exp(-x))
+# def sigmoid(x):
+#     return 1/(1+anp.exp(-x))
 
-def logistic_reg(x,w):
-    return sigmoid(anp.dot(x,w))
+# def logistic_reg(x,w):
+#     return sigmoid(anp.dot(x,w))
 
-def logistic_cost(x, t, w, lmbda):
-    pred = logistic_reg(x,w)
-    cost_inner = anp.log(pred) * t + anp.log(1 - pred) * (1 - t)
-    return -1 / len(t) * anp.sum(cost_inner) + lmbda*anp.sum(w**2)
+# def logistic_cost(x, t, w, lmbda):
+#     pred = logistic_reg(x,w)
+#     cost_inner = anp.log(pred) * t + anp.log(1 - pred) * (1 - t)
+#     return -1 / len(t) * anp.sum(cost_inner) + lmbda*anp.sum(w**2)
 
 class LogisticCost:
 
-    def __init__(self, exp_clip=1e3, log_clip=1e-13, hypothesis=sigmoid):
+    def __init__(self, exp_clip=1e3, log_clip=1e-13, hypothesis=Activation.sigmoid):
         """
         Logistic cost function which removes too high values for exp/too low for log.
         """
@@ -463,7 +497,10 @@ class DescentSolver:
 
         # Storing callables
         self._cost_function = cost_function
-        self._gradient = AutoGradCostFunction(cost_function, elementwise=logistic) 
+        if not (cost_function is None):
+            self._gradient = AutoGradCostFunction(cost_function, elementwise=logistic) 
+        else:
+            self._gradient = None
         self._optimization_method = optimization_method
 
         # Storing parameters
@@ -592,7 +629,7 @@ class DescentAnalyzer:
     def __init__(self, x: np.ndarray, y: np.ndarray,
                  degree: int, epochs:int, batch_size=None, GD_SGD="GD",
                  momentum=0, epsilon=1e-8, beta1=0.9, beta2=0.999, decay_rate=0.9, print_percentage=True,
-                 test_size=0.25, X=None, activation_function=sigmoid, scaler="Standard"):
+                 test_size=0.25, X=None, activation_function=Activation.sigmoid, scaler="Standard"):
         """
         Analyzes either linear or logistic descent. Linear or logistic is decided by whether 'X' is given. Uses
         the class 'DescentSolver' to together with a chosen 'Optimizer' to analyze MSE/R2 (Linear) or accuracy
@@ -869,7 +906,7 @@ class DescentAnalyzer:
             if self._print_percentage:
                 print(f"Analyzing, {(self.counter)/(len(self.learning_rates)*len(self.lambdas)*N_bootstraps)*100:.1f}%, duration: {time.time() - self.start_time:.1f}s", end="\r")
                 self.counter += 1
-        
+
         self.accuracy_score_test[i,j] = np.mean(accuracy_score_test_tmp)
         self.accuracy_score_train[i,j] = np.mean(accuracy_score_train_tmp)
 
@@ -928,41 +965,6 @@ class DescentAnalyzer:
     
     def _no_scaling(self, X_train, X_test):
         return X_train, X_test
-
-
-############ Activation functions ############
-class Activation:
-    @staticmethod
-    def sigmoid(z):
-        # Clip input values to prevent overflow
-        z = np.clip(z, -500, 500)
-        return 1 / (1 + np.exp(-z))
-
-    @staticmethod
-    def sigmoid_derivative(z):
-        """Derivative of the Sigmoid activation function."""
-        sigmoid_z = Activation.sigmoid(z)
-        return sigmoid_z * (1 - sigmoid_z)
-
-    @staticmethod
-    def relu(z):
-        """ReLU activation function."""
-        return np.where(z > 0, z, 0)
-
-    @staticmethod
-    def relu_derivative(z):
-        """Derivative of ReLU activation function."""
-        return np.where(z > 0, 1, 0)
-
-    @staticmethod
-    def Lrelu(z, alpha=0.01):
-        """Leaky ReLU activation function."""
-        return np.where(z > 0, z, alpha * z)
-
-    @staticmethod
-    def Lrelu_derivative(z, alpha=0.01):
-        """Derivative of Leaky ReLU activation function."""
-        return np.where(z > 0, 1, alpha)
 
 ############ Analyzing/creating data ############
 def create_data(x:np.ndarray, y:np.ndarray, method:str, epochs:int, learning_rates:list, lmbdas:list, 
@@ -1323,66 +1325,149 @@ def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, 
     fig, ax = plt.subplots(figsize = (12, 7))
     tick = ticker.ScalarFormatter(useOffset=False, useMathText=True)
     tick.set_powerlimits((0, 0))
+    
     if x_log:
         t_x = [u'${}$'.format(tick.format_data(lambd)) for lambd in lambdas]
     else:
         t_x = [fr'${lambd}$' for lambd in lambdas]
+        
     if y_log:
         t_y = [u'${}$'.format(tick.format_data(eta)) for eta in etas]
     else:
         t_y = [fr'${eta}$' for eta in etas]
 
-    
-    if only_less_than is not None and (only_greater_than is None):
+    if only_less_than is not None and only_greater_than is None:
         annot_data = np.where(value < only_less_than, np.round(value, 3).astype(str), "")
-        sns.heatmap(
-            data=value,
-            ax=ax,
-            cmap=cmap,
-            annot=annot_data,  # Use the formatted conditional annotations
-            fmt="",  # Set fmt to an empty string as annotations are pre-formatted
-            annot_kws={"size": 6.5},
-        )
-        x_labels = [f"{float(label.get_text()):.1e}" for label in ax.get_xticklabels()]
-        y_labels = [f"{float(label.get_text()):.1e}" for label in ax.get_yticklabels()]
-
-        # Apply the formatted labels with rotation and font adjustments
-        ax.set_xticklabels(x_labels, rotation=45, ha='right', fontsize=14)
-        ax.set_yticklabels(y_labels, rotation=0, fontsize=14)
-    
-    elif only_greater_than is not None and (only_less_than is None):
-        annot_data = np.where(value > only_greater_than, np.round(value, 3).astype(str),"")
-        sns.heatmap(
-            data=value,
-            ax=ax,
-            cmap=cmap,
-            annot=annot_data,  # Use the formatted conditional annotations
-            fmt="",  # Set fmt to an empty string as annotations are pre-formatted
-            annot_kws={"size": 6.5},
-        )
-        x_labels = [f"{float(label.get_text()):.1e}" for label in ax.get_xticklabels()]
-        y_labels = [f"{float(label.get_text()):.1e}" for label in ax.get_yticklabels()]
-
-        # Apply the formatted labels with rotation and font adjustments
-        ax.set_xticklabels(x_labels, rotation=45, ha='right', fontsize=14)
-        ax.set_yticklabels(y_labels, rotation=0, fontsize=14)
-
+    elif only_greater_than is not None and only_less_than is None:
+        annot_data = np.where(value > only_greater_than, np.round(value, 3).astype(str), "")
     else:
-        sns.heatmap(data = value, ax = ax, cmap = cmap, annot=annot, fmt=".3f",  xticklabels=t_x, yticklabels=t_y)
-    if title is not None:
+        annot_data = np.round(value, 3).astype(str) if annot else None
+
+    sns.heatmap(
+        data=value,
+        ax=ax,
+        cmap=cmap,
+        annot=annot_data,
+        fmt="",  
+        annot_kws={"size": 6.5} if annot else None,
+        xticklabels=t_x,
+        yticklabels=t_y,
+    )
+
+    # Adjust x and y tick labels
+    ax.set_xticks(np.arange(len(lambdas)) + 0.5)
+    ax.set_xticklabels([f"{float(label):.1e}" for label in lambdas], rotation=45, ha='right', fontsize=14)
+    
+    ax.set_yticks(np.arange(len(etas)) + 0.5)
+    ax.set_yticklabels([f"{float(label):.1e}" for label in etas], rotation=0, fontsize=14)
+
+    # Add title and labels
+    if title:
         plt.title(title)
+    
+    plt.xlabel(r'$\lambda$', fontsize=xaxis_fontsize or 12)
+    plt.ylabel(r'$\eta$', fontsize=yaxis_fontsize or 12)
+
     plt.xlim(0, len(lambdas))
     plt.ylim(0, len(etas))
-    if xaxis_fontsize is None:
-        plt.xlabel(r'$\lambda$')
-    else:
-        plt.xlabel(r'$\lambda$', fontsize=xaxis_fontsize)
-
-    if yaxis_fontsize is None:
-        plt.ylabel(r'$\eta$')
-    else:
-        plt.ylabel(r'$\eta$', fontsize=yaxis_fontsize)
-
     plt.tight_layout()
+
     if savefig:
         plt.savefig(f'Figures/{filename}.pdf')
+    plt.show()
+
+# def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False, annot=True, only_less_than=None, only_greater_than=None, xaxis_fontsize=None, yaxis_fontsize=None):
+#     """
+#     Plots a 2D heatmap with lambda and eta as inputs.
+
+#     Arguments:
+#         lambdas: array-like
+#             Values for the regularization parameter (lambda) on the x-axis.
+#         etas: array-like
+#             Values for the learning rate (eta) on the y-axis.
+#         value: 2D array-like
+#             Values for each combination of lambda and eta.
+#         title: str
+#             Title of the plot.
+#         x_log: bool
+#             If True, x-axis is logarithmic.
+#         y_log: bool
+#             If True, y-axis is logarithmic.
+#         savefig: bool
+#             If True, saves the plot as a PDF. Don't include file extension
+#         filename: str
+#             Name for the saved file if savefig is True.
+#         Reverse_cmap: bool
+#             If True, reverses the color map. Useful for comparison between MSE (low = good) and accuracy (high = good).
+#     """
+#     cmap = 'plasma'
+#     if Reverse_cmap == True:
+#         cmap = 'plasma_r'
+#     fig, ax = plt.subplots(figsize = (12, 7))
+#     tick = ticker.ScalarFormatter(useOffset=False, useMathText=True)
+#     tick.set_powerlimits((0, 0))
+#     if x_log:
+#         t_x = [u'${}$'.format(tick.format_data(lambd)) for lambd in lambdas]
+#     else:
+#         t_x = [fr'${lambd}$' for lambd in lambdas]
+#     if y_log:
+#         t_y = [u'${}$'.format(tick.format_data(eta)) for eta in etas]
+#     else:
+#         t_y = [fr'${eta}$' for eta in etas]
+
+    
+#     if only_less_than is not None and (only_greater_than is None):
+#         annot_data = np.where(value < only_less_than, np.round(value, 3).astype(str), "")
+#         sns.heatmap(
+#             data=value,
+#             ax=ax,
+#             cmap=cmap,
+#             annot=annot_data,  # Use the formatted conditional annotations
+#             fmt="",  # Set fmt to an empty string as annotations are pre-formatted
+#             annot_kws={"size": 6.5},
+#         )
+#         x_labels = [f"{float(label):.1e}" for label in lambdas]
+#         y_labels = [f"{float(label):.1e}" for label in etas]
+
+#         # Apply the formatted labels with rotation and font adjustments
+#         ax.set_xticklabels(x_labels, rotation=45, ha='right', fontsize=14)
+#         ax.set_yticklabels(y_labels, rotation=0, fontsize=14)
+    
+#     elif only_greater_than is not None and (only_less_than is None):
+#         annot_data = np.where(value > only_greater_than, np.round(value, 3).astype(str),"")
+#         sns.heatmap(
+#             data=value,
+#             ax=ax,
+#             cmap=cmap,
+#             annot=annot_data,  # Use the formatted conditional annotations
+#             fmt="",  # Set fmt to an empty string as annotations are pre-formatted
+#             annot_kws={"size": 6.5},
+#         )
+#         x_labels = [f"{float(label):.1e}" for label in lambdas]
+#         y_labels = [f"{float(label):.1e}" for label in etas]
+
+#         # Apply the formatted labels with rotation and font adjustments
+#         ax.set_xticklabels(x_labels, rotation=45, ha='right', fontsize=14)
+#         ax.set_yticklabels(y_labels, rotation=0, fontsize=14)
+
+#     else:
+#         sns.heatmap(data = value, ax = ax, cmap = cmap, annot=annot, fmt=".3f",  xticklabels=t_x, yticklabels=t_y)
+
+#     if title is not None:
+#         plt.title(title)
+
+#     if xaxis_fontsize is None:
+#         plt.xlabel(r'$\lambda$')
+#     else:
+#         plt.xlabel(r'$\lambda$', fontsize=xaxis_fontsize)
+
+#     if yaxis_fontsize is None:
+#         plt.ylabel(r'$\eta$')
+#     else:
+#         plt.ylabel(r'$\eta$', fontsize=yaxis_fontsize)
+
+#     plt.xlim(0, len(lambdas))
+#     plt.ylim(0, len(etas))
+#     plt.tight_layout()
+#     if savefig:
+#         plt.savefig(f'Figures/{filename}.pdf')
