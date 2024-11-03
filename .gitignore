@@ -215,6 +215,7 @@ sympy-plots-for-*.tex/
 
 # pythontex
 *.pytxcode
+*.pyc 
 pythontex-files-*/
 
 # tcolorbox
