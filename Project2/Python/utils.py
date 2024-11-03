@@ -1078,10 +1078,10 @@ def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_reg
     return data_OLS, data_Ridge
 
 class FFNN:
-    def __init__(self, input_size, hidden_layers, output_size, activation='relu', alpha=0.01, lambda_reg=0.0):
+    def __init__(self, input_size, hidden_layers, output_size, activation='relu', alpha=0.01, lambda_reg=0.0, beta1=0.9, beta2=0.999, epsilon=1e-8):
         """
-        Initialize the Feedforward Neural Network (FFNN).
-
+        Initialize the Feedforward Neural Network (FFNN) with Adam optimizer.
+        
         Parameters:
         - input_size (int): Number of input features.
         - hidden_layers (list): List of integers representing the size of each hidden layer.
@@ -1089,6 +1089,9 @@ class FFNN:
         - activation (str): Activation function to use ('relu', 'sigmoid', 'lrelu').
         - alpha (float): Leaky ReLU parameter (only for 'lrelu').
         - lambda_reg (float): L2 regularization parameter.
+        - beta1 (float): Exponential decay rate for the first moment estimate in Adam.
+        - beta2 (float): Exponential decay rate for the second moment estimate in Adam.
+        - epsilon (float): Small constant to prevent division by zero in Adam.
         """
         self.layers = [input_size] + hidden_layers + [output_size]
         self.weights = []
@@ -1096,7 +1099,11 @@ class FFNN:
         self.activation_func = activation
         self.alpha = alpha
         self.lambda_reg = lambda_reg
-        
+        self.beta1 = beta1
+        self.beta2 = beta2
+        self.epsilon = epsilon
+        self.t = 0  # Initialize time step for Adam
+
         # Initialize activation functions mapping
         self.activation_map = {
             'relu': (Activation.relu, Activation.relu_derivative),
@@ -1104,11 +1111,11 @@ class FFNN:
             'lrelu': (lambda z: Activation.Lrelu(z, self.alpha), lambda z: Activation.Lrelu_derivative(z, self.alpha))
         }
         
-        # Initialize the activation function
         self.activation, self.activation_derivative = self.activation_map.get(self.activation_func.lower(), (Activation.relu, Activation.relu_derivative))
 
-        # Initialize weights and biases
+        # Initialize weights, biases, and Adam parameters
         self.initialize_weights_and_biases()
+        self.initialize_adam_parameters()
 
     def initialize_weights_and_biases(self):
         self.weights = []
@@ -1119,27 +1126,29 @@ class FFNN:
             bias_vector = np.zeros((1, self.layers[i + 1]))
             self.biases.append(bias_vector)
     
+    def initialize_adam_parameters(self):
+        # Initialize moment estimates for Adam optimizer
+        self.m_weights = [np.zeros_like(w) for w in self.weights]
+        self.v_weights = [np.zeros_like(w) for w in self.weights]
+        self.m_biases = [np.zeros_like(b) for b in self.biases]
+        self.v_biases = [np.zeros_like(b) for b in self.biases]
+    
     def forward(self, X):
         self.activations = [X]
         self.z_values = []
         A = X
 
-        # Hidden layers
         for i in range(len(self.weights) - 1):
             Z = A @ self.weights[i] + self.biases[i]
             self.z_values.append(Z)
             A = self.activation(Z)
-
-            # Clip activations to prevent overflow
             A = np.clip(A, -1e10, 1e10)
             self.activations.append(A)
 
-        # Output layer
         Z = A @ self.weights[-1] + self.biases[-1]
         self.z_values.append(Z)
         A_output = self.activation(Z)
-
-        # Clip output activations
+        # Avoid overflow problems
         A_output = np.clip(A_output, -1e10, 1e10)
         self.activations.append(A_output)
         return A_output
@@ -1149,24 +1158,36 @@ class FFNN:
         y = y.reshape(-1, 1)
 
         output = self.activations[-1]
-        delta = output - y  # Gradient of the loss
+        delta = output - y
+        self.t += 1  # Increment time step
 
         for i in reversed(range(len(self.weights))):
             dw = (self.activations[i].T @ delta) / m
             db = np.sum(delta, axis=0, keepdims=True) / m
-            dw += (self.lambda_reg / m) * self.weights[i]  # Regularization term
+            dw += (self.lambda_reg / m) * self.weights[i]
 
+            # Update first moment estimate
+            self.m_weights[i] = self.beta1 * self.m_weights[i] + (1 - self.beta1) * dw
+            self.m_biases[i] = self.beta1 * self.m_biases[i] + (1 - self.beta1) * db
+            # Update second moment estimate
+            self.v_weights[i] = self.beta2 * self.v_weights[i] + (1 - self.beta2) * (dw ** 2)
+            self.v_biases[i] = self.beta2 * self.v_biases[i] + (1 - self.beta2) * (db ** 2)
+            # Correct bias in moment estimates
+            m_hat_w = self.m_weights[i] / (1 - self.beta1 ** self.t)
+            m_hat_b = self.m_biases[i] / (1 - self.beta1 ** self.t)
+            v_hat_w = self.v_weights[i] / (1 - self.beta2 ** self.t)
+            v_hat_b = self.v_biases[i] / (1 - self.beta2 ** self.t)
             # Update weights and biases
-            self.weights[i] -= learning_rate * dw
-            self.biases[i] -= learning_rate * db
+            self.weights[i] -= learning_rate * m_hat_w / (np.sqrt(v_hat_w) + self.epsilon)
+            self.biases[i] -= learning_rate * m_hat_b / (np.sqrt(v_hat_b) + self.epsilon)
 
-            # Update delta for next layer
             if i > 0:
                 delta = (delta @ self.weights[i].T) * self.activation_derivative(self.z_values[i - 1])
     
-    def train(self, X, y, learning_rate=0.01, epochs=1000, batch_size=None, shuffle=True, lambda_reg=0.0):
-        self.lambda_reg = lambda_reg  # Update regularization parameter
-        self.initialize_weights_and_biases()  # Reset weights and biases for new training
+    def train(self, X, y, learning_rate=0.001, epochs=1000, batch_size=None, shuffle=True, lambda_reg=0.0):
+        self.lambda_reg = lambda_reg
+        self.initialize_weights_and_biases()
+        self.initialize_adam_parameters()
         mse_history = []
         m = X.shape[0]
         if batch_size is None:
@@ -1188,7 +1209,7 @@ class FFNN:
             mse_history.append(mse)
 
             if epoch % (epochs // 5) == 0:
-                print(f'Epoch {epoch}, MSE ({self.activation_func}): {mse}')
+                print(f'Epoch {epoch}, MSE ({self.activation_func}): {mse:.2f}')
         
         return mse_history
 

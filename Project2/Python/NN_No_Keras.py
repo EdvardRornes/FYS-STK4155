@@ -2,22 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import r2_score
 from sklearn.preprocessing import StandardScaler
-import seaborn as sns
-from matplotlib import ticker
 from scipy.interpolate import griddata
 from utils import *
-import warnings
 import time
 
-np.random.seed(1)
-
-# Suppress specific warnings
-# warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow encountered in matmul")
-# warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow encountered in exp")
-# warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in matmul")
-# warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in multiply")
-# warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in subtract")
-# warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in reduce")
+np.random.seed(0)
 
 latex_fonts()
 save = True
@@ -26,7 +15,8 @@ save = True
 N = 100; eps = 0.0
 franke = Franke(N, eps)
 x = franke.x; y = franke.y; z = franke.z
-epochs = 1000
+epochs = 250
+batch_size = 25
 hidden_layers = [2, 4, 8, 16, 32, 16, 8, 4, 2]
 
 X_train = np.c_[x, y]
@@ -35,7 +25,7 @@ z_train = z.reshape(-1, 1)
 # Learning rates
 learning_rates = []
 log_learning_rate_min = -5
-log_learning_rate_max = -1
+log_learning_rate_max = -2
 for m in range(log_learning_rate_min, log_learning_rate_max):
     learning_rates.append(float(10**m))
     learning_rates.append(float(3*10**m))
@@ -45,18 +35,18 @@ learning_rates.append(float(10**log_learning_rate_max))
 mse_results = {"ReLU": [], "Sigmoid": [], "Leaky ReLU": []}
 r2_results = {"ReLU": [], "Sigmoid": [], "Leaky ReLU": []}
 
-# Initialize FFNNs
+# Initialize FFNNs w/ Adam optimizer
 ffnn_relu = FFNN(input_size=2, hidden_layers=hidden_layers, output_size=1, activation='relu')
 ffnn_sigmoid = FFNN(input_size=2, hidden_layers=hidden_layers, output_size=1, activation='sigmoid')
 ffnn_lrelu = FFNN(input_size=2, hidden_layers=hidden_layers, output_size=1, activation='lrelu')
 
 # Loop over each learning rate, regularization lambda, and activation type
-lambdas = np.logspace(-11, 1, 13)
+lambdas = np.logspace(-15, -5, 11)
 heatmap_data = {"ReLU": [], "Sigmoid": [], "Leaky ReLU": []}
 
 start_time = time.time()
-iterations = 3 * len(learning_rates) * len(lambdas)
-iterations_so_far = 0
+total_iterations = 3 * len(learning_rates) * len(lambdas)
+iteration = 0
 
 # Store best results for each activation type
 best_results = {"ReLU": {"mse": np.inf, "params": (None, None)}, 
@@ -65,27 +55,26 @@ best_results = {"ReLU": {"mse": np.inf, "params": (None, None)},
 
 # Store best predictions for each activation type
 best_predictions = {"ReLU": None, "Sigmoid": None, "Leaky ReLU": None}
+# Store best MSE history for each activation function
+best_mse_history = {"ReLU": [], "Sigmoid": [], "Leaky ReLU": []}
 
-# Modified loop to create an N x M matrix in `heatmap_data`
 for activation_type, ffnn in zip(["ReLU", "Sigmoid", "Leaky ReLU"], [ffnn_relu, ffnn_sigmoid, ffnn_lrelu]):
     mse_for_lambdas = []
-    
     for lambda_reg in lambdas:
         mse_for_etas = []
-        
         for lr in learning_rates:
-            iterations_so_far += 1
-            percentage = 100 * iterations_so_far / iterations
-            print(f"activation = {activation_type:<7} | lambda = {lambda_reg:<6.1g} | learning rate = {lr:<7.1e} | percentage = {percentage:<4.1f}% | time elapsed = {time.time() - start_time:.1f}")
+            iteration += 1
+            percentage = 100 * iteration / total_iterations
+            print(f"\ractivation = {activation_type:<7} | lambda = {lambda_reg:<6.1g} | learning rate = {lr:<7.1e} | iteration {iteration}/{total_iterations} ({percentage:<4.1f}%) | time elapsed = {time.time() - start_time:.1f} | ", end='', flush=True)
             blockPrint()
-            # Train FFNN
-            ffnn.train(X_train, z_train, epochs=epochs, learning_rate=lr, lambda_reg=lambda_reg)
+
+            # Train FFNN and get MSE history
+            mse_history = ffnn.train(X_train, z_train, epochs=epochs, batch_size=batch_size, learning_rate=lr, lambda_reg=lambda_reg)
+
             z_pred = ffnn.predict(X_train)  # Renamed from y_pred to z_pred
-            
-            # Compute metrics
             mse = np.mean((z_pred - z_train) ** 2)
             r2 = r2_score(z_train, z_pred)
-            
+
             mse_for_etas.append(mse)
             r2_results[activation_type].append(r2)
             enablePrint()
@@ -94,16 +83,17 @@ for activation_type, ffnn in zip(["ReLU", "Sigmoid", "Leaky ReLU"], [ffnn_relu, 
             if mse < best_results[activation_type]["mse"]:
                 best_results[activation_type]["mse"] = mse
                 best_results[activation_type]["params"] = (lambda_reg, lr)  # Store best lambda and learning rate
+                best_mse_history[activation_type] = mse_history  # Store MSE history for the best parameters
                 
                 # Save the best predictions for this activation type
                 best_predictions[activation_type] = z_pred  # Renamed to z_pred
                 
-                # Print the new best found message
-                print(f"New best parameter combination found for {activation_type}: lambda={lambda_reg:.2e} | eta={lr:.2e}")
+                print(f"\nNew best parameter combination found for {activation_type}: lambda={lambda_reg:.2e} | eta={lr:.2e}")
         
         mse_for_lambdas.append(mse_for_etas)
     
     heatmap_data[activation_type] = mse_for_lambdas
+
 
 # Plot heatmaps for each activation type
 for activation_type, data in heatmap_data.items():
@@ -116,13 +106,31 @@ for activation_type, data in heatmap_data.items():
         x_log=True,
         y_log=True,
         savefig=save,
-        filename=f"Heatmap_MSE_{activation_type}_Franke"
+        filename=f"Heatmap_MSE_{activation_type}_Franke_Epochs{epochs}"
     )
+
 
 # Report best parameters for each activation
 for activation_type, result in best_results.items():
     best_lambda, best_eta = result["params"]
     print(f"Best parameters for {activation_type} activation: lambda={best_lambda:.2e}, eta={best_eta:.2e}")
+
+# Plot MSE as a function of epochs for best parameters
+plt.figure(figsize=(12, 6))
+
+for activation_type in best_mse_history:
+    best_lambda, best_eta = best_results[activation_type]["params"]
+    label = fr"{activation_type} ($\lambda={best_lambda:.2e}, \eta={best_eta:.2e}$)"
+    plt.plot(range(1, epochs + 1), best_mse_history[activation_type], label=label)
+
+plt.title('MSE as a function of epochs for best parameter combinations')
+plt.xlabel('Epochs')
+plt.ylabel('Mean Squared Error (MSE)')
+plt.yscale('log')
+plt.legend()
+plt.grid()
+if save:
+    plt.savefig('Figures/Best_MSE_vs_Epochs.pdf')
 
 # Prepare for 3D plot
 fig = plt.figure(figsize=(10, 10))
@@ -135,7 +143,6 @@ activation_functions = {
     'Leaky ReLU': (ffnn_lrelu, best_results['Leaky ReLU']['params']),
 }
 
-
 # Plot each FFNN model's prediction in 3D with optimal parameters
 for idx, (activation_type, (model, (best_lambda, best_eta))) in enumerate(activation_functions.items(), start=1):
     ax = fig.add_subplot(2, 2, idx, projection='3d')
@@ -144,16 +151,16 @@ for idx, (activation_type, (model, (best_lambda, best_eta))) in enumerate(activa
     # Scatter plot of the original data
     ax.scatter(x, y, z, color='blue', label='Original Data', s=10, alpha=0.6)
 
-    # Use the best predictions saved earlier
+    # Use the best predictions
     z_pred_best = best_predictions[activation_type]  # Using the best predictions saved
 
-    # Generate a grid for the surface
+    # Grid for the surface
     x_grid, y_grid = np.meshgrid(np.unique(x), np.unique(y))
 
     # Interpolate to get smooth surface values
     z_grid_pred = griddata((x, y), z_pred_best.flatten(), (x_grid, y_grid), method='cubic')
 
-    # Plot the surface with transparency
+    # Plot the surface
     ax.plot_surface(x_grid, y_grid, z_grid_pred, alpha=0.5, color='orange' if activation_type == 'ReLU' else 'green' if activation_type == 'Sigmoid' else 'yellow')
     
     # Set titles and labels
@@ -164,7 +171,7 @@ for idx, (activation_type, (model, (best_lambda, best_eta))) in enumerate(activa
     ax.legend(loc='upper left')
 
 # Adjust subplot layout
-plt.tight_layout(rect=[0, 0, 1, 0.95])  # Add space for suptitle
+plt.tight_layout(rect=[0, 0, 1, 0.95])
 fig.suptitle("3D Plots of FFNN Predictions with Optimal Parameters")
 if save:
     plt.savefig(f'Figures/NN_noKeras_3D_Franke_Epochs{epochs}.pdf')

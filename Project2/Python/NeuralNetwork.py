@@ -11,7 +11,7 @@ latex_fonts()
 save = True
 
 # Sample data
-N = 250; eps = 0.0
+N = 100; eps = 0.0
 franke = Franke(N, eps)
 x = franke.x; y = franke.y; z = franke.z
 epochs = 1000
@@ -22,13 +22,12 @@ z_train = z.reshape(-1, 1)
 
 # Learning rates
 learning_rates = []
-log_learning_rate_min = -4
-log_learning_rate_max = -1
+log_learning_rate_min = -8
+log_learning_rate_max = 0
 for m in range(log_learning_rate_min, log_learning_rate_max):
     learning_rates.append(float(10**m))
     learning_rates.append(float(3*10**m))
 learning_rates = sorted(learning_rates)
-print(learning_rates)
 
 # Prepare to store MSE and R2 for each activation type
 mse_results = {"ReLU": [], "Sigmoid": [], "Leaky ReLU": [], "Keras Sigmoid": []}
@@ -48,7 +47,7 @@ model_keras.add(Dense(1))  # Output layer with linear activation
 
 # Loop over each learning rate and activation type
 for lr in learning_rates:
-    print(f"Testing learning rate: {lr}")
+    print(f"Testing learning rate: {lr:.1e}")
 
     # FFNN with ReLU
     mse_history_relu = ffnn_relu.train(X_train, z_train, epochs=epochs, learning_rate=lr)
@@ -69,6 +68,7 @@ for lr in learning_rates:
     r2_results["Leaky ReLU"].append(r2_score(z_train, y_pred_lrelu))
 
     # Keras implementation with Sigmoid
+    print('Keras is slow :(')
     model_keras.compile(optimizer=Adam(learning_rate=lr), loss='mean_squared_error')
     history = model_keras.fit(X_train, z_train, epochs=epochs, verbose=0)
     y_pred_keras = model_keras.predict(X_train)
@@ -88,7 +88,7 @@ axs[0].set_xscale('log')
 axs[0].set_yscale('log')
 axs[0].set_xlabel(r'$\eta$')
 axs[0].set_ylabel('MSE')
-axs[0].set_title(r'MSE vs $\eta$')
+axs[0].set_title(fr'MSE vs $\eta$ with {epochs} epochs')
 axs[0].legend()
 axs[0].grid()
 
@@ -136,10 +136,10 @@ history_keras_best = model_keras_best.fit(X_train, z_train, epochs=epochs, verbo
 
 # Plot final training losses
 plt.figure(figsize=(10, 5))
-plt.plot(mse_history_relu_best, label=fr'FFNN ReLU $\eta={best_lr_relu}$')
-plt.plot(mse_history_sigmoid_best, label=fr'FFNN Sigmoid $\eta={best_lr_sigmoid}$')
-plt.plot(mse_history_lrelu_best, label=fr'FFNN Leaky ReLU $\eta={best_lr_lrelu}$')
-plt.plot(history_keras_best.history['loss'], label=fr'Keras FFNN $\eta={best_lr_keras}$')
+plt.plot(mse_history_relu_best, label=fr'FFNN ReLU' + '\n' + fr'$\eta={best_lr_relu:.1e}$')
+plt.plot(mse_history_sigmoid_best, label=fr'FFNN Sigmoid' + '\n' + fr'$\eta={best_lr_sigmoid:.1e}$')
+plt.plot(mse_history_lrelu_best, label=fr'FFNN Leaky ReLU' + '\n' + fr'$\eta={best_lr_lrelu:.1e}$')
+plt.plot(history_keras_best.history['loss'], label=fr'Keras FFNN' + '\n' + fr'$\eta={best_lr_keras:.1e}$')
 plt.xlabel('Epochs')
 plt.ylabel('MSE')
 plt.xscale('log')
@@ -176,7 +176,7 @@ for i, (name, (model, learning_rate, color)) in enumerate(activation_functions.i
     ax.plot_surface(xx, yy, zz, color=color, alpha=0.5)
     
     # Set titles and labels
-    ax.set_title(fr'{name} FFNN Output, $\eta={learning_rate}$')
+    ax.set_title(fr'{name} FFNN Output' + '\n' fr'$\eta={learning_rate:.1e}$')
     ax.set_xlabel(r'$x$')
     ax.set_ylabel(r'$y$')
     ax.set_zlabel(r'Franke$(x,y)$')
