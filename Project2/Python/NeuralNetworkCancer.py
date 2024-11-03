@@ -21,8 +21,8 @@ X_train = scaler.transform(X_train)
 X_test = scaler.transform(X_test)
 
 # Hyperparameter ranges
-hidden_layers = [2, 4, 8, 16, 32, 16, 8, 4, 2]
-epochs = [50, 100, 250, 500, 1000, 2500]
+hidden_layers = [15, 30, 15, 8, 4, 2]
+epochs = [250]
 # Tighter logspace needed for etas, nicer values for plotting.
 eta_lower = -4
 eta_upper = -1

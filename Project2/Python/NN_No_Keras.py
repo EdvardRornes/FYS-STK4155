@@ -17,7 +17,7 @@ franke = Franke(N, eps)
 x = franke.x; y = franke.y; z = franke.z
 epochs = 250
 batch_size = 25
-hidden_layers = [2, 4, 8, 16, 32, 16, 8, 4, 2]
+hidden_layers = [4, 8, 16, 32, 16, 8, 4, 2]
 
 X_train = np.c_[x, y]
 z_train = z.reshape(-1, 1)

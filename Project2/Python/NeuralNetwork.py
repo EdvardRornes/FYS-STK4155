@@ -135,11 +135,11 @@ model_keras_best.compile(optimizer=Adam(learning_rate=best_lr_keras), loss='mean
 history_keras_best = model_keras_best.fit(X_train, z_train, epochs=epochs, verbose=0)
 
 # Plot final training losses
-plt.figure(figsize=(10, 5))
-plt.plot(mse_history_relu_best, label=fr'FFNN ReLU' + '\n' + fr'$\eta={best_lr_relu:.1e}$')
-plt.plot(mse_history_sigmoid_best, label=fr'FFNN Sigmoid' + '\n' + fr'$\eta={best_lr_sigmoid:.1e}$')
-plt.plot(mse_history_lrelu_best, label=fr'FFNN Leaky ReLU' + '\n' + fr'$\eta={best_lr_lrelu:.1e}$')
-plt.plot(history_keras_best.history['loss'], label=fr'Keras FFNN' + '\n' + fr'$\eta={best_lr_keras:.1e}$')
+plt.figure(figsize=(10, 8))
+plt.plot(mse_history_relu_best, label=fr'FFNN ReLU' + '\n' + fr'$\eta={best_lr_relu:.1e}$', color='r')
+plt.plot(mse_history_sigmoid_best, label=fr'FFNN Sigmoid' + '\n' + fr'$\eta={best_lr_sigmoid:.1e}$', color='g')
+plt.plot(mse_history_lrelu_best, label=fr'FFNN Leaky ReLU' + '\n' + fr'$\eta={best_lr_lrelu:.1e}$', color='y')
+plt.plot(history_keras_best.history['loss'], label=fr'Keras FFNN' + '\n' + fr'$\eta={best_lr_keras:.1e}$', color='purple')
 plt.xlabel('Epochs')
 plt.ylabel('MSE')
 plt.xscale('log')
