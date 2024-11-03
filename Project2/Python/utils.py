@@ -70,8 +70,30 @@ def logistic_reg(x,w):
 def logistic_cost(x, t, w, lmbda):
     pred = logistic_reg(x,w)
     cost_inner = anp.log(pred) * t + anp.log(1 - pred) * (1 - t)
-    return -anp.sum((cost_inner)) + lmbda*anp.sum(w**2)
-        
+    return -1 / len(t) * anp.sum(cost_inner) + lmbda*anp.sum(w**2)
+
+class LogisticCost:
+
+    def __init__(self, exp_clip=1e3, log_clip=1e-13, hypothesis=sigmoid):
+        """
+        Logistic cost function which removes too high values for exp/too low for log.
+        """
+        self.exp_clip = exp_clip; self.log_clip = log_clip
+        self.hypothesis_func = hypothesis
+
+    def __call__(self, x, y, w, lmbda):
+
+        # computing hypothesis
+        z = anp.dot(x,w)
+        z = anp.clip(z, -self.exp_clip, self.exp_clip)
+        h = self.hypothesis_func(z)
+
+        cost = (-1 / len(y)) * anp.sum(y * anp.log(h + self.log_clip) + (1 - y) * anp.log(1 - h + self.log_clip))
+        reg_term = lmbda * anp.sum(w[1:] ** 2)
+
+        # Compute total cost
+        return cost + reg_term
+    
 class AutoGradCostFunction:
 
     def __init__(self, cost_function:callable, argument_index=2, elementwise=False):
@@ -570,7 +592,7 @@ class DescentAnalyzer:
     def __init__(self, x: np.ndarray, y: np.ndarray,
                  degree: int, epochs:int, batch_size=None, GD_SGD="GD",
                  momentum=0, epsilon=1e-8, beta1=0.9, beta2=0.999, decay_rate=0.9, print_percentage=True,
-                 test_size=0.2, X=None, activation_function=sigmoid, scaler="Standard"):
+                 test_size=0.25, X=None, activation_function=sigmoid, scaler="Standard"):
         """
         Analyzes either linear or logistic descent. Linear or logistic is decided by whether 'X' is given. Uses
         the class 'DescentSolver' to together with a chosen 'Optimizer' to analyze MSE/R2 (Linear) or accuracy
@@ -825,10 +847,10 @@ class DescentAnalyzer:
         accuracy_score_train_tmp = np.zeros(N_bootstraps)
 
         for k in range(N_bootstraps):
-            # blockPrint()
+            blockPrint()
 
             w = np.random.randn(self.X.shape[1], 1)*1e-2
-            
+
             w = self.descentSolver(X_train, z_train, self.epochs, self.lambdas[j], self.batch_size, theta=w)
             enablePrint()
 
@@ -841,7 +863,6 @@ class DescentAnalyzer:
             z_train_pred = np.where(z_train_pred >= 0.5, 1, 0)
             z_test_pred = np.where(z_test_pred >= 0.5, 1, 0)
 
-            # print(accuracy_score_test_tmp[k])
             accuracy_score_test_tmp[k] = accuracy_score(z_test_pred, z_test)
             accuracy_score_train_tmp[k] = accuracy_score(z_train_pred, z_train)
 
@@ -1000,7 +1021,7 @@ def create_data(x:np.ndarray, y:np.ndarray, method:str, epochs:int, learning_rat
     analyzer_Ridge.save_data(filename_Ridge, overwrite=overwrite)
 
 def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_regression="Linear",
-                      ask_me_werd_stuff_in_the_terminal=True, plot=True) -> Tuple[dict, dict]:
+                      ask_me_werd_stuff_in_the_terminal=True, plot=True, xaxis_fontsize=None, yaxis_fontsize=None) -> Tuple[dict, dict]:
     
     
     methods = ["PlaneGradient", "Adagrad", "RMSprop", "Adam"]
@@ -1031,6 +1052,9 @@ def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_reg
     OLS_metric = data_OLS[key]
     Ridge_metric = data_Ridge[key]
 
+    epochs = data_Ridge["epochs"]; batch_size = data_Ridge["batch_size"]
+    print(f"{epochs} epochs, batch size: {batch_size}")
+
     ############# Plotting #############
     if plot:
         fig, ax = plt.subplots(1, figsize=(12,7))
@@ -1048,32 +1072,54 @@ def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_reg
         ytick_labels = [f"{l:.1e}" for l in learning_rates]
 
         fig, ax = plt.subplots(figsize = (12, 7))
-        sns.heatmap(Ridge_metric, ax=ax, cmap="viridis", annot=True, xticklabels=xtick_labels, yticklabels=ytick_labels)
+        sns.heatmap(Ridge_metric, ax=ax, cmap="viridis", annot=True, xticklabels=xtick_labels, yticklabels=ytick_labels, fmt=".3g")
+        sns.set(font_scale=0.5)
         ax.set_xlabel(r'$\lambda$')
         ax.set_ylabel(r'$\eta$')
         ax.set_title(f"{method} using Ridge cost function")
         plt.tight_layout()
         plt.show()
+
     if ask_me_werd_stuff_in_the_terminal:
         # Saving
         save = input("Save (y/n)? ")
         if save.upper() in ["Y", "YES", "YE"]:
+            msg_less = "Show values less than (type no for show values greater than)"; less_than = True 
+            msg_great = "Show values greater than (type no for show values less than)"
+            msg = msg_less 
             while True:
-                only_less_than = input("Exclude values less than: ")
-                plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(only_less_than))
-                plt.show()
+                x =  input(f"{msg}: ")
+                ask_happy = True 
+                if less_than:
+                    if x.upper() in ["NO", "N", ""]:
+                        less_than = False; msg = msg_great; ask_happy = False
+                    else:
+                        plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(x), xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
+                        plt.show()
+                else:
+                    if x.upper() in ["NO", "N", ""]:
+                        less_than = True; msg = msg_less; ask_happy = False
+                    else:
+                        plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_greater_than=float(x), xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
+                        plt.show()
+                    
+                if ask_happy:
+                    happy = input("Happy (y/n)? ")
+                    if happy.upper() in ["Y", "YES", "YE"]:
+                        title = input("Title: ") 
+                        filename = input("Filename: ")
+                        latex_fonts()
+                        
+                        if less_than:
+                            plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(x), title=title, savefig=True, filename=filename, xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
+                        else:
+                            plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_greater_than=float(x), title=title, savefig=True, filename=filename, xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
 
-                happy = input("Happy (y/n)? ")
-                if happy.upper() in ["Y", "YES", "YE"]:
-                    title = input("Title: ") 
-                    filename = input("Filename: ")
-                    latex_fonts()
-                    plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(only_less_than), title=title, savefig=True, filename=filename)
-                    plt.show()
-                    exit()
-                
-                elif happy.upper() in ["Q", "QUIT", "X"]:
-                    exit()
+                        plt.show()
+                        exit()
+                    
+                    elif happy.upper() in ["Q", "QUIT", "X"]:
+                        exit()
 
     return data_OLS, data_Ridge
 
@@ -1179,7 +1225,7 @@ class FFNN:
         predicted_classes = (predictions > 0.5).astype(int)
         return np.mean(predicted_classes.flatten() == y.flatten())
 
-def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False, annot=True, only_less_than=None):
+def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False, annot=True, only_less_than=None, only_greater_than=None, xaxis_fontsize=None, yaxis_fontsize=None):
     """
     Plots a 2D heatmap with lambda and eta as inputs.
 
@@ -1219,7 +1265,7 @@ def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, 
         t_y = [fr'${eta}$' for eta in etas]
 
     
-    if only_less_than is not None:
+    if only_less_than is not None and (only_greater_than is None):
         annot_data = np.where(value < only_less_than, np.round(value, 3).astype(str), "")
         sns.heatmap(
             data=value,
@@ -1233,16 +1279,42 @@ def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, 
         y_labels = [f"{float(label.get_text()):.1e}" for label in ax.get_yticklabels()]
 
         # Apply the formatted labels with rotation and font adjustments
-        ax.set_xticklabels(x_labels, rotation=45, ha='right', fontsize=8)
-        ax.set_yticklabels(y_labels, rotation=0, fontsize=8)
+        ax.set_xticklabels(x_labels, rotation=45, ha='right', fontsize=14)
+        ax.set_yticklabels(y_labels, rotation=0, fontsize=14)
+    
+    elif only_greater_than is not None and (only_less_than is None):
+        annot_data = np.where(value > only_greater_than, np.round(value, 3).astype(str),"")
+        sns.heatmap(
+            data=value,
+            ax=ax,
+            cmap=cmap,
+            annot=annot_data,  # Use the formatted conditional annotations
+            fmt="",  # Set fmt to an empty string as annotations are pre-formatted
+            annot_kws={"size": 6.5},
+        )
+        x_labels = [f"{float(label.get_text()):.1e}" for label in ax.get_xticklabels()]
+        y_labels = [f"{float(label.get_text()):.1e}" for label in ax.get_yticklabels()]
+
+        # Apply the formatted labels with rotation and font adjustments
+        ax.set_xticklabels(x_labels, rotation=45, ha='right', fontsize=14)
+        ax.set_yticklabels(y_labels, rotation=0, fontsize=14)
+
     else:
         sns.heatmap(data = value, ax = ax, cmap = cmap, annot=annot, fmt=".3f",  xticklabels=t_x, yticklabels=t_y)
     if title is not None:
         plt.title(title)
     plt.xlim(0, len(lambdas))
     plt.ylim(0, len(etas))
-    plt.xlabel(r'$\lambda$')
-    plt.ylabel(r'$\eta$')
+    if xaxis_fontsize is None:
+        plt.xlabel(r'$\lambda$')
+    else:
+        plt.xlabel(r'$\lambda$', fontsize=xaxis_fontsize)
+
+    if yaxis_fontsize is None:
+        plt.ylabel(r'$\eta$')
+    else:
+        plt.ylabel(r'$\eta$', fontsize=yaxis_fontsize)
+
     plt.tight_layout()
     if savefig is not None:
         plt.savefig(f'Figures/{filename}.pdf')
