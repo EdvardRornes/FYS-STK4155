@@ -99,7 +99,6 @@ for activation_type, ffnn in zip(["ReLU", "Sigmoid", "Leaky ReLU"], [ffnn_relu, 
     
     heatmap_data[activation_type] = mse_for_lambdas
 
-
 # Plot heatmaps for each activation type
 for activation_type, data in heatmap_data.items():
     data_array = np.array(data).T
@@ -111,9 +110,7 @@ for activation_type, data in heatmap_data.items():
         x_log=True,
         y_log=True,
         savefig=save,
-        filename=f"Heatmap_MSE_{activation_type}_Franke_Epochs{epochs}"
-    )
-
+        filename=f"Heatmap_MSE_{activation_type}_Franke_Epochs{epochs}")
 
 # Report best parameters for each activation
 for activation_type, result in best_results.items():
