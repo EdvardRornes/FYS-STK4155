@@ -6,6 +6,11 @@ from sklearn.metrics import accuracy_score, mean_squared_error
 from sklearn.preprocessing import StandardScaler
 from utils import *
 import time
+import warnings
+
+# Due to using autograd instead of numpy
+warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow encountered in exp")
+
 
 np.random.seed(1)
 
@@ -36,6 +41,7 @@ for m in range(eta_lower, eta_upper):
 etas.append(float(10**eta_upper))
 
 lambdas = np.logspace(-10, 0, 11)
+
 activations = ['relu', 'lrelu', 'sigmoid']
 
 # Prepare to store results
@@ -107,7 +113,7 @@ for epoch in epochs:
             lambdas=lambdas,
             etas=etas,
             value=accuracy_matrix,
-            title=fr'Accuracy for N with activation {activation}, {epoch} epochs and {batchsize} batch size',
+            title=fr'Accuracy for FFNN with activation {activation}, {epoch} epochs and {batchsize} batch size',
             x_log=True,
             y_log=True,
             savefig=save,

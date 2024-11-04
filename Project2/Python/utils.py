@@ -1126,7 +1126,7 @@ class FFNN:
             loss_history.append(loss)
 
             if epoch % (epochs // 5) == 0:
-                print(f'Epoch {epoch}, Loss ({self.loss_function}): {loss:.2f}')
+                print(f'Epoch {epoch}, Loss ({self.loss_function}): {loss:.3f}')
         
         return loss_history
 
