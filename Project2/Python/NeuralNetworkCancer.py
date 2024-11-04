@@ -7,10 +7,10 @@ from sklearn.preprocessing import StandardScaler
 from utils import *
 import time
 
-np.random.seed(0)
+np.random.seed(1)
 
 latex_fonts()
-save = True
+save = False
 
 # Load the dataset
 cancer = load_breast_cancer()
@@ -23,7 +23,6 @@ X_test = scaler.transform(X_test)
 # Hyperparameter ranges
 hidden_layers = [15, 30, 15, 8, 4, 2]
 epochs = [100]
-batchsize = len(X_test[0])//10
 batchsize = 50
 # Tighter logspace needed for etas, nicer values for plotting.
 eta_lower = -4

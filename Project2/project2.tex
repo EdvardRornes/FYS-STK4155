@@ -289,7 +289,7 @@ Linear and Logistic Regression was used to study data from the Franke function a
 After an optimization algorithm has been chosen, the class \texttt{DescentSolver} is used together with a chosen gradient, the Ridge-gradient (linear regression) or a logistic-gradient (logistic regression), to compute GD or SGD. To analyze the results of \texttt{DescentSolver}, the class \texttt{DescentAnalyzer} is used. This class computes metrics, MSE/\(R^2\) (linear regression) or accuracy score (logistic regression), for an (equally sized) grid of \(\lambda\), \(\eta\)-values. The metrics, together with all other parameters, are saved as pickle-files, which can be read at a later time from \texttt{DescentAnalyzer.load\_data} giving a dictionary of the data. 
 
 \subsection{Neural Network}
-Further, the \texttt{FFNN} class was implemented to analyze both the Franke function and the breast cancer data. The FFNN is structured with an input layer, one or more hidden layers, and an output layer, with each layer utilizing an activation function, and currently only supports the Adam optimizer. This was due to unknown performance issues when trying to incorporate the \texttt{Optimize} class. The architecture is defined by specifying the input size, the number of neurons in hidden layers, and the output size. In the case of the Franke function, the input layer is size 2, one for \(x\) and one for \(y\), while for the breast cancer data, the input layer corresponds to the number of features, i.e., \(30\), representing several properties of the tumor, such as circumference, density, etc.
+The \texttt{FFNN} class was implemented to analyze both the Franke function and the breast cancer data. The FFNN is structured with an input layer, one or more hidden layers, and an output layer, with each layer utilizing an activation function, and currently only supports the Adam optimizer. This was due to unknown performance issues when trying to incorporate the \texttt{Optimize} class. The architecture is defined by specifying the input size, the number of neurons in hidden layers, and the output size. In the case of the Franke function, the input layer is size 2, one for \(x\) and one for \(y\), while for the breast cancer data, the input layer corresponds to the number of features, i.e., \(30\), representing several properties of the tumor, such as circumference, density, etc.
 
 We tested various configurations for layering the hidden layers. Ultimately, for the Franke function, we settled on a pyramid-like architecture for the hidden layers \([4,8,16,32,16,8,4,2]\), while for the breast cancer data, we used \([15,30,15,8,4,2]\). These choices were based on the sizes of both the input and output layers, where the output layer is \(1\) in both cases. The weights and biases are initialized using random values scaled by the number of input neurons, which aids in faster convergence during training. The network supports ReLU, Sigmoid, and Leaky ReLU as activation functions. 
 
@@ -317,7 +317,7 @@ On the other hand, Adam converged for both varying and constant learning rates, 
 
 The odd one out was AdaGrad. Giving the largest MSE scores, AdaGrad performed the worse out of all the optimization methods. In fact, AdaGrad seemed to not converge at all, rather producing sort of random data. We found this somewhat strange, and we suggest that there could be that there is a flaw in the implementation of AdaGrad. On the other hand, AdaGrad showed good results for logistic regression (see sec. \ref{sec:cancer_data_logisit_regression}).
 
-Together, the results show an overall better performance for varying learning rate, compared to that of a constant learning rate. plain SGD is especially effected by this, compared to Adam which seems to converge for both varying and constant learning rates. Common for all optimization methods, except plain SGD, was that an increase (decrease) in number of epochs (batch size) gave better MSE scores.
+Together, the results show an overall better performance for varying learning rate, compared to that of a constant learning rate. Plain SGD is especially effected by this, compared to Adam which seems to converge for both varying and constant learning rates. Common for all optimization methods, except plain SGD, was that an increase (decrease) in number of epochs (batch size) gave better MSE scores.
 
 \subsubsection{Neural Network}
 The results for the MSE and $R^2$ as a function of the learning rate $\eta$ with 1000 epochs with our own FFNN with different activation functions and keras NN with the sigmoid activation function are given in Fig. \ref{fig:NN_Franke_LR_1000}. In this particular plot we are not using any regularization terms. The reason for this is simply due to \texttt{keras} being very slow, but we still wanted to include it as a reference. The optimal learning rates for $\lambda=0$ can easily be read off this plot: $\{10^{-3},10^{-3},3\times10^{-3},2\times 10^{-2}\}$ for \{ReLU, Sigmoid, LReLU, \texttt{keras}\}.
@@ -336,25 +336,32 @@ Overall these metrics seem to imply that ReLU and LReLU are outperforming \textt
 	\label{fig:NN_Franke_Epochs}
 \end{figure}
 
-We then did the above again, but now with a regularization parameter $\lambda$ and excluded \texttt{keras} due to time constraints. The MSE for various combinations of $\eta$ and $\lambda$ are given in Fig. \ref{fig:FFNN_Franke_heatmaps}. The best results from here are then picked to once again plot the MSE over epochs given in Fig. \ref{fig:best_MSE_Franke_Epochs} and another 3D plot to visualize the results in Fig. \ref{fig:NN_noKeras_3D_Franke_Epochs250}. Clearly the sigmoid activation function performs worse overall once again, whilst ReLU and LReLU have a close competition between them. The convergence is much faster here, and we same performance with ReLU and LReLU after only $50$ epochs. The sigmoid function converges much slower, but this is due to it being suited for binary classification and not regression. The much faster convergence does suggest that the regularization parameter is improving our performance significantly.
+We then did the above again, but now with a regularization parameter $\lambda$ and excluded \texttt{keras} due to time constraints. The MSE with 250 epochs for various combinations of $\eta$ and $\lambda$ are given in Fig. \ref{fig:FFNN_Franke_heatmaps}. The best results from here are then picked to once again plot the MSE over epochs given in Fig. \ref{fig:best_MSE_Franke_Epochs} and another 3D plot to visualize the results in Fig. \ref{fig:NN_noKeras_3D_Franke_Epochs250}. Clearly the sigmoid activation function performs worse overall once again, whilst ReLU and LReLU have a close competition between them. The convergence is much faster here, and we same performance with ReLU and LReLU after only $150$ epochs. The sigmoid function converges much slower, but this is expected due to it being suited for binary classification and not regression. The much faster convergence does suggest that the regularization parameter is improving our performance significantly.
 \begin{figure}[ht!]
 	\includegraphics[width=0.5\textwidth]{Figures/Best_MSE_vs_Epochs250.pdf}
 	\caption{The MSE regression results for the FFNN as a function of number of epochs for ReLU, LReLU, Sigmoid with the best performing combination of $\lambda$ and $\eta$.}
 	\label{fig:best_MSE_Franke_Epochs}
 \end{figure}
 
-
 \subsection{Cancer Data}
 \subsubsection{Logistic Regression} \label{sec:cancer_data_logisit_regression}
 Fig. \ref{fig:LogReg} shows the accuracy score of (plain stochastic) logistic regression for batch size \(N\in\{10, 100\}\) and a batch size \(b=50\), more figures can be found in the \texttt{Figures} folder. Note that the figures to the right in fig. \ref{fig:LogReg} are zoomed in versions of the one to the right, and the varying learning rate has been used. This figure shows an average accuracy score of \(\sim 0.97\) for \(t_1 = 2/\eta_{\text{const}} \sim[10^{-2}, 10^{-1}]\). The more advanced optimization methods were briefly looked into, showing similar results. However, Adam diverged for \(N=100\), and AdaGrad showed promising results (accuracy scores above \(0.9\)), the opposite behavior of what we saw for linear regression.
 
-\subsubsection{Neutral Network}
-The accuracy for logistic regression and our own FFNN for the three different activation functions and for different values of $\eta$ and $\lambda$ are given in Figs. \ref{fig:LogReg} and \ref{fig:FFNN_cancer_heatmaps} respectively.
+\subsubsection{Neural Network}  
+The accuracy of the FFNN using three activation function across different values of $\eta$ and $\lambda$ is presented in Fig \ref{fig:FFNN_cancer_heatmaps}. 
+
+Sigmoid activation generally performs poorly across much of the parameter space, but with the right combination of $\eta$ and $\lambda$, it reaches a maximum accuracy of $97.2\%$, or 139/143 correct `guesses'.  ReLU demonstrates greater resilience to high $\eta$ and $\lambda$ values, with only certain areas of the parameter space performing poorly and a maximal accuracy of $97.9\%$. LReLU, however, achieves both the highest accuracy of $98.6\%$ and consistently performs well across almost the entire parameter range.
+
+The results suggest that ReLU and LReLU handle a wider range of learning rates and regularization strengths more effectively, likely because their piecewise linear nature prevents gradient vanishing issues, which often affect Sigmoid under aggressive learning rates. This shows the importance of choosing the right activation function for each task. 
+
+Additionally, inputs to the Sigmoid function were clipped to prevent overflow, which might have impacted its accuracy. The slightly higher accuracy of LReLU over ReLU suggests it may provide an advantage by maintaining small gradients for negative inputs, offering a more stable training process. However, this difference, amounting to just one correct guess, may simply reflect statistical variance.
 
 \section{Conclusion}
-On the Franke function, we found that Sigmoid is not overly sensitive to changes in the learning rate and hyperparameter $\lambda$, but also struggles to get good results. On the other hand ReLU has the ability to get great results, but only for very specific combinations of $\eta$ and $\lambda$. LReLU seems to be the best of both worlds, being relatively insensitive to getting the exact right combination of $\eta$ and $\lambda$, whilst still managing to obtain very good MSE scores like ReLU.  For logistic regression our FFNN performs quite well, approaching $98\%$ accuracy with certain parameter combinations.
+On the Franke function, we found that Sigmoid is not overly sensitive to changes in the learning rate and hyperparameter $\lambda$, but also struggles to get good results. On the other hand ReLU has the ability to get great results, but only for very specific combinations of $\eta$ and $\lambda$. LReLU seems to be the best of both worlds, being relatively insensitive to getting the exact right combination of $\eta$ and $\lambda$, whilst still managing to obtain very good MSE scores like ReLU.
 
-A step forward would for example be testing out different values of $a$ in LReLU and seeing whether it may achieve a higher level of performance. Thoroughly testing out other optimizers such as Adagrad and RMSprop for the FFNN may also yield benefits, but due to time constraints we did not implement this properly. 
+For the FFNN on the cancer data, overall assessments here are similar for the Franke function. The best perfoming activation function was again LReLU, followed by ReLU and finally the Sigmoid function. The latter performed much better on this classification problem compared to regression as one would expect from its definition, but once again still falls short to the ReLU variants.
+
+There are plentiful of avenues to pursue here to extend and improve our analysis. A simple example would be testing out different values of $a$ in LReLU and seeing whether it may achieve an even higher level of performance. Further, thoroughly testing out other optimizers such as Adagrad and RMSprop for the FFNN may also yield benefits, but due to time constraints we did not implement this properly. Whilst we did test different hidden layer setups, this was not done extensively, and the odds of us achieving an optimal setup with relatively few attempts compared to possible combinations, is next to null. 
 
 % Bibliography
 \bibliographystyle{JHEP}
@@ -462,23 +469,23 @@ A selection of figures, more can be found in the \texttt{Figures} folder.
 
 \begin{figure*}[ht!]
 	\begin{subfigure}{0.41\textwidth}
-		\includegraphics[width=\textwidth]{Figures/Cancer_Accuracy_Heatmap_relu_Epochs250.pdf}
+		\includegraphics[width=\textwidth]{Figures/Cancer_Accuracy_Heatmap_relu_Epochs100.pdf}
 		\caption{ReLU}
 		\label{fig:ReLU_heatmap}
 	\end{subfigure}
 	\hfill
 	\begin{subfigure}{0.41\textwidth}
-		\includegraphics[width=\textwidth]{Figures/Cancer_Accuracy_Heatmap_lrelu_Epochs250.pdf}
+		\includegraphics[width=\textwidth]{Figures/Cancer_Accuracy_Heatmap_lrelu_Epochs100.pdf}
 		\caption{LReLU}
 		\label{fig:LReLU_heatmap}
 	\end{subfigure}
 	\hfill\newline
 	\begin{subfigure}{0.41\textwidth}
-		\includegraphics[width=\textwidth]{Figures/Cancer_Accuracy_Heatmap_sigmoid_Epochs250.pdf}
+		\includegraphics[width=\textwidth]{Figures/Cancer_Accuracy_Heatmap_sigmoid_Epochs100.pdf}
 		\caption{Sigmoid}
 		\label{fig:Sigmoid_heatmap}
 	\end{subfigure}
-	\caption{Accuracy for various combinations of $\eta$ and $\lambda$ for ReLU, LReLU and Sigmoid activation functions with $250$ epochs on the breast cancer dataset.}
+	\caption{Accuracy for various combinations of $\eta$ and $\lambda$ for ReLU, LReLU and Sigmoid activation functions with $100$ epochs and $50$ batch size on the breast cancer dataset.}
 	\label{fig:FFNN_cancer_heatmaps}
 \end{figure*}
 
