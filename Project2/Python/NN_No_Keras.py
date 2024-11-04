@@ -17,7 +17,7 @@ save = True
 N = 250; eps = 0.01
 franke = Franke(N, eps)
 x = franke.x; y = franke.y; z = franke.z
-epochs = 250
+epochs = 1000
 batch_size = 50
 hidden_layers = [4, 8, 16, 32, 16, 8, 4, 2]
 
