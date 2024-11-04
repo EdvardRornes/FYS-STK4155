@@ -93,7 +93,7 @@ aps,
 
 \begin{document}
 	
-\title{Application of Neural Networks and Regression on}
+\title{Evaluating Activation Functions and Optimizers in Feed-Forward Neural Networks: \\A Study on the Franke Function and Breast Cancer Classification}
 \author{Edvard B. Rørnes}
 \email{e.b.rornes@fys.uio.no}
 \author{Isak O. Rukan}
@@ -112,7 +112,9 @@ Over the last few years, machine learning and neural networks have become an inc
 
 Neural networks excel at handling complex, nonlinear relationships in data. Their flexibility in approximating intricate patterns has made them indispensable across diverse fields, including biology, engineering, finance, and physics. For just a few examples, see \cite{dawid2023modernapplicationsmachinelearning,thapar2023applicationsmachinelearningmodelling,mohammadi2022applicationsmachinelearninghealthcare}.
 
-The main goal of this project is to gain a deeper understanding of neural networks by first exploring the fundamentals of linear and logistic regression. To achieve this, we implement and experiment with various optimization techniques, comparing the performance of linear and logistic regression to that of neural networks. We use data generated from the Franke function to evaluate linear regression, and the binary breast cancer dataset from \texttt{sklearn}'s datasets \cite{sklearn} to assess logistic regression. The project first introduces the theory behind linear/logistic regression and neural networks, before proceeding to explain how this is implemented. Results are then presented, and the performance of linear/logistic regression is compared to the performance of the implemented neural network, and the known neural network of \texttt{sklearn}'s \texttt{keras}.
+The main goal of this project is to gain a deeper understanding of neural networks by first exploring the fundamentals of linear and logistic regression. To achieve this, we implement and experiment with various optimization techniques, comparing the performance of linear and logistic regression to that of neural networks. We use data generated from the Franke function to evaluate linear regression, and the binary breast cancer dataset from \texttt{sklearn}'s datasets \cite{sklearn} to assess logistic regression. 
+
+The project first introduces the theory behind linear/logistic regression and neural networks, before proceeding to explain how this is implemented. Results are then presented, and the performance of linear/logistic regression is compared to the performance of the implemented neural network, and the known neural network of \texttt{tensorflow}'s \texttt{keras}.
 
 \section{Methods}
 In this section we present the various methods used in this report. For reference, the Franke function which we will be using to test our linear regression methods is:
@@ -120,7 +122,7 @@ In this section we present the various methods used in this report. For referenc
 	f(x,y)&=\frac{3}{4}\exp(-\frac{(9x-2)^2}{4}-\frac{(9y-2)^2}{4})\nonumber\\
 	&+\frac{3}{4}\exp(-\frac{(9x+1)^2}{49}-\frac{(9y+1)^2}{10})\nonumber\\
 	&+\frac{1}{2}\exp(-\frac{(9x-7)^2}{4}-\frac{(9y-3)^2}{4})\nonumber\\
-	&-\frac{1}{5}\exp(-(9x-4)^2-(9y-7)^2)+\varepsilon.
+	&-\frac{1}{5}\exp(-(9x-4)^2-(9y-7)^2)+\varepsilon,
 \end{align}
 where $\varepsilon\sim\mathcal{N}(0,0.01)$ is a normal distributed error to simulate the irreducible error of measured data. In the domain $x,y\in[0,1]$ then the Franke function has the range $\sim[-0.2,1.05]$. Thus this corresponds to an error of roughly $0.8\%$. 
 
@@ -130,7 +132,7 @@ As discussed in a previous project \cite{project1}, linear regression is the sim
 	C_\text{OLS}(\bm\beta)&=\frac{2}{n}(\bm y-\bm X\bm\beta)^2,\\
 	C_\text{Ridge}(\bm\beta)&=C_\text{OLS}(\bm\beta)+\lambda||\bm\beta||_2^2.
 \end{align}
-We then insist that the derivative of these w.r.t. $\bm\beta$ is $0$, and choose the resulting $\beta$ coefficients as out model. Doing this we arrive at:
+We then insist that the derivative of these w.r.t. $\bm\beta$ is $0$, and choose the resulting $\beta$ coefficients as our model. Doing this we arrive at:
 \begin{align}
 	\bm\beta_\text{OLS}&=(\bm X^T\bm X)^{-1}\bm X^T\bm y,\\
 	\bm\beta_\text{Ridge}&=(\bm X^T\bm X+\lambda \bm I)^{-1}\bm X^T\bm y.
@@ -139,7 +141,7 @@ We then insist that the derivative of these w.r.t. $\bm\beta$ is $0$, and choose
 \subsection{Regularization Terms}
 Regularization is a technique to prevent overfitting by adding a penalty to the cost function that discourages complex models. Overfitting occurs when a model learns the noise in the training data rather than the underlying patterns, leading to poor generalization on unseen data. In the context of neural networks, regularization plays a critical role, especially when working with architectures that have many parameters.
 
-The two common regularization methods that we inspected previously are Ridge and Lasso regularization. In this project, we will only be considering Ridge regularization, where the cost function is given by
+The two common regularization methods that we inspected previously are Ridge and LASSO regularization. In this project, we will only be considering Ridge regularization, where the cost function is given by
 \begin{align}
 	C_\text{Ridge}(\bm \beta)=C_\text{OLS}(\bm\beta)+\lambda\|\bm\beta\|_2^2,
 \end{align}
@@ -151,31 +153,29 @@ In the context of neural networks, regularization techniques are crucial for con
 \end{align}
 where \( C_{\text{loss}} \) will be the MSE for regression tasks and cross-entropy loss for classification tasks.
 
-Incorporating regularization in neural networks offers several important benefits. Firstly, \(\ell^2\) regularization effectively applies a weight decay, which shrinks the weights during training and helps prevent the model from becoming overly complex. This leads to smoother decision boundaries and reduces the risk of overfitting, allowing the model to generalize better to unseen data. Secondly, regularized models tend to exhibit increased robustness to variations in the data, as the penalty encourages the learning of simpler models that do not fit the noise in the training set. Lastly, by tuning the hyperparameter \( \lambda \), practitioners can effectively control the model's complexity, striking a balance between bias and variance and tailoring the model to the specific problem at hand. These advantages highlight the critical role that regularization plays in developing neural networks that perform well in real-world applications.
-
-Overall, incorporating regularization terms such as Ridge regularization in the training of neural networks is essential for developing models that generalize well to new, unseen data. 
+Incorporating regularization in neural networks offers several important benefits. Firstly, \(\ell^2\) regularization effectively applies a weight decay, which shrinks the weights during training and helps prevent the model from becoming overly complex. This leads to smoother decision boundaries and reduces the risk of overfitting, allowing the model to generalize better to unseen data. Secondly, regularized models tend to exhibit increased robustness to variations in the data, as the penalty encourages the learning of simpler models that do not fit the noise in the training set. Lastly, by tuning the hyperparameter \( \lambda \), we can effectively control the model's complexity, striking a balance between bias and variance of the model to the specific problem. 
 
 
 \subsection{Logistic Regression}
 Whilst linear regression is quite successful in fitting continuous data, when the output is supposed to be discrete it fails. Linear regression predicts values across a continuous spectrum, resulting in predictions outside the range of valid class labels, such as giving negative probabilities. Logistic regression on the other hand is specifically designed for binary classification problems, and is thus ideal when dealing with discrete outcomes. 
 
-Logistic regression models the probability that an input belongs to a particular class by mapping real-valued inputs to a range between 0 and 1 using a `transformation function'. Typically, the sigmoid function \(\sigma\) is used, converting the linear prediction into a probability in a smooth manner. Given an input vector \(X\) and a set of weights \(\beta\), the predicted probability that the class label \(y\) equals \(1\) is expressed as:
+Logistic regression models the probability that an input belongs to a particular class by mapping real-valued inputs to a range between 0 and 1 using an \textbf{activation function}. Typically, the sigmoid function \(\sigma\) is used, converting the linear prediction into a probability in a smooth manner. Given an input vector \(X\) and a set of weights \(\beta\), the predicted probability that the class label \(y\) equals \(1\) is expressed as:
 \begin{align}
 	P(y=1|\bm X)=\sigma(\bm X\bm\beta)=\frac{1}{1+e^{-\bm X\bm\beta}}.
 \end{align}
 For each sample \(i\), we refer to this probability as \(\hat{y}_i\). To optimize the weights, logistic regression minimizes the cross-entropy loss function:
 \begin{align}	\label{eq:logic_cost}
-	C(\bm\beta)=-\frac1n\sum_{i=1}^n\left(y_i \ln(\hat y_i)+(1-y_i)\ln(1-\hat y_i) \right)
+	C(\bm\beta)=-\frac1n\sum_{i=1}^n\left(y_i \ln(\hat y_i)+(1-y_i)\ln(1-\hat y_i) \right),
 \end{align}
 where $y_i$ is the class label. 
 
-Furthermore, to penalize overfitting, a regularization term may be added to \eqref{eq:logic_cost}. This terms adds a penalty for large weights, trying to keep the weights (relatively) small. Adding the \(\ell^2\) regularization term results in 
+Furthermore, to penalize overfitting, a regularization term may be added to \eqref{eq:logic_cost}. This terms adds a penalty for large weights, trying to keep the weights (relatively) small. Adding the \(\ell^2\) regularization term results in
 \begin{align}
 	C(\bm\beta)=-\frac1n\sum_{i=1}^n\left(y_i \ln(\hat y_i)+(1-y_i)\ln(1-\hat y_i) \right) + \lambda\sum\limits_{i=1}^{n}w_{j}^{2}.
 \end{align}
 
 \subsection{Resampling Methods}
-Resampling methods are used to estimate the accuracy of predictive models by splitting the data into training and testing sets or by generating multiple datasets. Common techniques include cross-validation and bootstrapping. In cross-validation, the data is split into $k$ folds, and the model is trained on $k-1$ folds and tested on the remaining fold. This process is repeated $k$ times, and the average accuracy is computed. Bootstrapping involves sampling with replacement from the dataset to create multiple training sets. These methods help assess model stability and generalizability on unseen data. For more details see \cite{project1}.
+Resampling methods are used to estimate the accuracy of predictive models by splitting the data into training and testing sets or by generating multiple datasets. A resampling method that we will use is bootstrapping. This involves sampling with replacement from the dataset to create multiple training sets. This helps assess model stability and generalizability on unseen data. For more details see \cite{project1}.
 
 \subsection{Gradient Descent}	\label{sec:gradient_descent}
 Gradient descent (GD) is an essential optimization algorithm in machine learning, commonly used to minimize cost functions by adjusting model parameters iteratively. Given model parameters $\theta$ and a cost function $C(\theta)$, the GD update rule adjusts parameters in the opposite direction of the gradient:
