@@ -1199,7 +1199,7 @@ def create_data(x:np.ndarray, y:np.ndarray, method:str, epochs:int, learning_rat
     analyzer_Ridge.save_data(filename_Ridge, overwrite=overwrite)
 
 def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_regression="Linear",
-                      ask_me_werd_stuff_in_the_terminal=True, plot=True, xaxis_fontsize=None, yaxis_fontsize=None) -> Tuple[dict, dict]:
+                      ask_me_werd_stuff_in_the_terminal=True, plot=True, xaxis_fontsize=None, yaxis_fontsize=None, ylabel=r"$\eta$") -> Tuple[dict, dict]:
     
     
     methods = ["PlaneGradient", "Adagrad", "RMSprop", "Adam"]
@@ -1225,7 +1225,18 @@ def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_reg
     lmbdas = data_Ridge["lambdas"]
     learning_rates = data_Ridge["learning_rates"]
 
-    learning_rates = [float(x) for x in learning_rates]
+    try:
+        learning_rates = [float(x) for x in learning_rates]
+    
+    except: # callable learning rate
+        learning_rates_new = []
+        for x in learning_rates:
+            tmp = x.split(",")[1]; tmp = tmp.split(")")[0]
+            learning_rates_new.append(float(tmp))
+        
+        learning_rates = learning_rates_new
+        
+        # learning_rates = [float(x.split(",").split(")")[0]) for x in learning_rates]
 
     OLS_metric = data_OLS[key]
     Ridge_metric = data_Ridge[key]
@@ -1237,7 +1248,7 @@ def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_reg
     if plot:
         fig, ax = plt.subplots(1, figsize=(12,7))
         ax.plot(learning_rates, OLS_metric)
-        ax.set_xlabel(r"$\eta$")
+        ax.set_xlabel(ylabel)
         ax.set_yscale("log")
         ax.set_ylabel(f"{key}")
         ax.set_title(f"{method} using OLS cost function")
@@ -1253,7 +1264,7 @@ def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_reg
         sns.heatmap(Ridge_metric, ax=ax, cmap="viridis", annot=True, xticklabels=xtick_labels, yticklabels=ytick_labels, fmt=".3g")
         sns.set(font_scale=0.5)
         ax.set_xlabel(r'$\lambda$')
-        ax.set_ylabel(r'$\eta$')
+        ax.set_ylabel(ylabel)
         ax.set_title(f"{method} using Ridge cost function")
         plt.tight_layout()
         plt.show()
@@ -1280,13 +1291,13 @@ def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_reg
                     if x.upper() in ["NO", "N", ""]:
                         less_than = False; msg = msg_great; ask_happy = False
                     else:
-                        plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(x), xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize, xlim=xlim, ylim=ylim)
+                        plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(x), xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize, xlim=xlim, ylim=ylim, ylabel=ylabel)
                         plt.show()
                 else:
                     if x.upper() in ["NO", "N", ""]:
                         less_than = True; msg = msg_less; ask_happy = False
                     else:
-                        plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_greater_than=float(x), xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize, xlim=xlim, ylim=ylim)
+                        plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_greater_than=float(x), xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize, xlim=xlim, ylim=ylim, ylabel=ylabel)
                         plt.show()
                     
                 if ask_happy:
@@ -1297,9 +1308,9 @@ def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_reg
                         latex_fonts()
                         
                         if less_than:
-                            plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(x), title=title, savefig=True, filename=filename, xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize, xlim=xlim, ylim=ylim)
+                            plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(x), title=title, savefig=True, filename=filename, xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize, xlim=xlim, ylim=ylim, ylabel=ylabel)
                         else:
-                            plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_greater_than=float(x), title=title, savefig=True, filename=filename, xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize, xlim=xlim, ylim=ylim)
+                            plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_greater_than=float(x), title=title, savefig=True, filename=filename, xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize, xlim=xlim, ylim=ylim, ylabel=ylabel)
 
                         # plt.show()
                         return data_OLS, data_Ridge
@@ -1335,7 +1346,8 @@ def plot_2D_parameter_lambda_eta(
         xaxis_fontsize=None,
         yaxis_fontsize=None,
         xlim=None,
-        ylim=None
+        ylim=None,
+        ylabel=r"$\eta$"
         ):
     """
     Plots a 2D heatmap with lambda and eta as inputs.
@@ -1423,7 +1435,7 @@ def plot_2D_parameter_lambda_eta(
         plt.title(title)
     
     plt.xlabel(r'$\lambda$', fontsize=xaxis_fontsize or 12)
-    plt.ylabel(r'$\eta$', fontsize=yaxis_fontsize or 12)
+    plt.ylabel(ylabel, fontsize=yaxis_fontsize or 12)
 
     # plt.xlim(0, len(lambdas))
     # plt.ylim(0, len(etas))
@@ -1431,3 +1443,4 @@ def plot_2D_parameter_lambda_eta(
 
     if savefig:
         plt.savefig(f'../Figures/{filename}.pdf')
+

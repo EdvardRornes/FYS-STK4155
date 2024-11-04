@@ -102,7 +102,7 @@ aps,
 \date{\today}
 
 \begin{abstract}
-	In recent years, neural networks have become increasingly important for advancements in various scientific fields. In this report, we develop a program\footnote{\href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project1}{Github}} that consists of both linear and logistic regression methods and a feed-forward neural network. In particular, the program implements gradient descent, stochastic gradient descent, and a simple feed-forward neural network with backpropagation. The neural network is evaluated against linear regression on the Franke function and against logistic regression using sklearn's breast cancer data, where it identifies malignant tumors. We explore three activation functions: Sigmoid, ReLU, and LeakyReLU. The analysis involves tuning the number of epochs, hidden nodes, and the hyperparameters $\lambda$ (regularization) and $\eta$ (learning rate) to optimal values. On the Franke function, our own implementation of the neural network achieved a peak $R^2$-score of $x$ and $y$ respectively. For the cancer data, the highest accuracies achieved with ReLU, , and Sigmoid activation functions were $97.9\%, 98.6\%$, and $97.9\%$, respectively, compared to $z\%$ for logistic regression. Notably, both the Sigmoid and LeakyReLU activation functions exhibited minimal sensitivity to variations in the hyperparameter $\lambda$ at optimal learning rates, whereas ReLU showed significant responsiveness. Overall, while LeakyReLU yielded the best performance across all tests, its improvement over the other activation functions was marginal when applied to the cancer dataset, but considerate on regression. Additionally, the Sigmoid activation function was found to be appreciably slower than the ReLU variants.
+	In recent years, neural networks have become increasingly important for advancements in various scientific fields. In this report, we develop a program\footnote{\href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project1}{Github}} that consists of both linear and logistic regression methods and a feed-forward neural network. In particular, the program implements gradient descent, stochastic gradient descent, the optimization methods AdaGrad, RMSprop and Adam, and a simple feed-forward neural network with backpropagation. The neural network is evaluated against linear regression on the Franke function and against logistic regression using sklearn's breast cancer data. We explore three activation functions: Sigmoid, ReLU, and LeakyReLU. The analysis involves tuning the number of epochs, hidden nodes, and the hyperparameters $\lambda$ (regularization) and $\eta$ (learning rate) to optimal values. On the Franke function, our own implementation of the neural network achieved a peak $R^2$-score of $x$ and $y$ respectively. For the cancer data, the highest accuracies achieved with ReLU, , and Sigmoid activation functions were $97.9\%, 98.6\%$, and $97.9\%$, respectively, compared to $z\%$ for logistic regression. Notably, both the Sigmoid and LeakyReLU activation functions exhibited minimal sensitivity to variations in the hyperparameter $\lambda$ at optimal learning rates, whereas ReLU showed significant responsiveness. Overall, while LeakyReLU yielded the best performance across all tests, its improvement over the other activation functions was marginal when applied to the cancer dataset, but considerate on the Franke function. Additionally, the Sigmoid activation function was found to be appreciably slower than the ReLU variants.
 \end{abstract}
 
 \maketitle
@@ -190,7 +190,7 @@ BGD is computationally expensive for large datasets but provides smooth converge
 
 The learning rate \(\eta\) does not necessarily need to be constant, and can change with each iteration. There are several ways to implement a varying learning rate. In this report, we either use a constant learning rate or a learning rate on the form 
 \begin{align} \label{eq:varyin_learning_rate}
-	\eta(e,i;N;b;t_0;t_1) = \frac{t_0}{e\cdot N/b + i t_1},
+	\eta(e,i;N;b;t_0;t_1) = \frac{t_0}{e\cdot N/b + i + t_1},
 \end{align}
 where \(e\) is the current epoch, \(N\) the data-size, \(b\) the batch size (see sec. \ref{sec:stochastic_gradient_descent}) and \(i\) the current batch-iteration. The parameter \(t_0\) is related to the initial magnitude of the learning rate, allowing larger learning rates at the beginning of the algorithm. Keeping this parameter fairly large can be beneficial in scenarios where multiple local minima are present, as the learning rate will `wait' a bit before it starts converging on a solution. The parameter \(t_1\) on the other hand influences how quickly the learning rate decreases over `time'. For example, in scenarios where the data is sensitive to small changes, keeping \(t_1\) small can help increase the accuracy of the model near the end of the training. 
 
@@ -299,8 +299,7 @@ The forward propagation computes the output of the network by applying the chose
 The training process includes splitting the data into training and test sets, followed by iterating through a specified number of epochs during which the network adjusts its weights to minimize the error. After training, the network can predict outputs for new data, allowing for evaluation against known values from the Franke function. The overall performance of the model is assessed using MSE for the Franke function and accuracy for the breast cancer data, reflecting the different loss functions applied during training. To test our FFNN, for the Franke function analysis we also included \texttt{tensorflow.keras} with the LReLU activation function as a benchmark for our own implementation.
 
 \subsection{Data Parameters}
-We tried various different learning rates \(\eta\) and \(\lambda\)-values. Specifically, we used \(\eta_{\text{const}}, \lambda \in[10^{-10}, 10^{1}]\). For varying learning rate, we settled on \(t_0=2\) and \(t_{1} = 2 / \eta_{\text{const}} \), see \eqref{eq:varyin_learning_rate}. We sampled \(20\) datapoints from the Franke function and looked at epoch sizes \(e \in \{10, 100\}\), and batch sizes \(b\in\{4, 5, 10\}\). 
-We used a test size of \(25\%\) throughout. 
+We tried various different learning rates \(\eta\) and \(\lambda\)-values. Specifically, we used \(\eta_{\text{const}}, \lambda \in[10^{-10}, 10^{1}]\). For varying learning rate, we settled on \(t_0=2\) and \(t_{1} = 2 / \eta_{\text{const}} \), see \eqref{eq:varyin_learning_rate}. We sampled \(20, 250\) datapoints from the Franke function and looked at epoch sizes \(e \in \{10, 100\}\), and batch sizes \(b\in\{4, 5, 10\}\). For linear regression we used \(30\) bootstraps, while for logistic regression we used \(4\). Both for linear and logisitc regression we decided to study a polynomial degree of \(5\), suggested by the results in \cite{project1}. We used a test size of \(25\%\) throughout. 
 
 On the cancer data we use StandardScaling to scale the data after splitting it to avoid data leakage, whereas the Franke function was normalized to the range $[0,1]$ using min-max scaling.
 
@@ -310,15 +309,17 @@ We represent the results and compare the various methods. The larger plots have 
 
 \subsection{Franke}
 \subsubsection{Linear Regression}
-MSE scores from linear regression for plain SGD and the three more advanced optimization methods (AdaGrad, RMSprop and Adam), for different epoch and batch sizes, and for both constant and learning rates, can be found in the \texttt{Figures}-folder, look for files on the form \emph{LinReg...pdf}. Fig \ref{fig:LinReg} is composed of one figure each for each of the optimization methods, for epochs \(N\in\{10, 100\}\) and a batch size of 4. 
+MSE scores from linear regression for plain SGD and the three more advanced optimization methods (AdaGrad, RMSprop and Adam), for different epoch and batch sizes, and for both constant and varying learning rates, can be found in the \texttt{Figures}-folder, look for files on the form \emph{LinReg...pdf}. Figs \ref{fig:LinReg}, \ref{fig:LinReg_250} are composed of one figure for each of the optimization methods, for epochs \(N\in=20, 250\) and a batch size of \(4, 50\), respectively. 
 
-For plain SGD with a varying \(\eta\), higher epoch sizes and smaller batch sizes lowered the MSE scores, suggesting a stable convergence. However, with a constant learning rate, the MSE scores blew up, implying that the algorithm skipped the global minima and continued either towards a local minimum or straight up diverged. This can be seen from plots in \texttt{Figures} (look for \emph{LinRegplainSGD\_constEta...pdf}), where all MSE scores are equal to \(\sim 0.207\). This feature was not seen in any of other optimization methods. Both RMSprop and Adam showed a clear convergence when increasing (decreasing) the epoch size (batch size). However, RMSprop did not converge for constant learning rates. For varying learning rate, RMSprop gave low MSE scores, that is, with \(t_{1} = 2/\eta_{\text{const}}\sim [2, 2\cdot 10^{2}]\). In this range, RMSprop gave quite good results, averaging an MSE score of \(\sim [0.1, 0.01]\). 
+For plain SGD with a varying \(\eta\), increasing epoch sizes and decreasing batch sizes lowered the MSE scores, suggesting a stable convergence. However, with a constant learning rate, the MSE scores blew up, implying that the algorithm skipped the global minima and diverged. This can be seen from plots in \texttt{Figures} (look for \emph{LinRegplainSGD\_constEta...pdf}), where all MSE scores are equal to \(\sim 0.207\). This feature was not seen in any of other optimization methods. Both RMSprop and Adam showed a clear convergence when increasing (decreasing) the epoch size (batch size). However, RMSprop did not converge for constant learning rates. For varying learning rate, RMSprop gave low MSE scores, that is, with \(t_{1} = 2/\eta_{\text{const}}\sim [2, 2\cdot 10^{2}]\). In this range, RMSprop gave quite good results, averaging an MSE score of \(\sim [0.1, 0.01]\). 
 
 On the other hand, Adam converged for both varying and constant learning rates, and essentially outperformed all the other algorithms by giving lesser MSE scores overall. In fact, Adam seemed to treat varying and constant learning rates the same, in the sense that for \(\eta_{\text{const}}\sim[2\cdot10^{-2}, 1]\), it averaged an MSE score of \(\lessapprox 0.1\).
 
-The odd one out was AdaGrad. Giving the largest MSE scores, AdaGrad performed the worse out of all the optimization methods. In fact, AdaGrad seemed to not converge at all, rather producing sort of random data. We found this somewhat strange, and we suggest that there could be that there is a flaw in the implementation of AdaGrad. On the other hand, AdaGrad showed good results for logistic regression (see sec. \ref{sec:cancer_data_logisit_regression}).
+The odd one out was AdaGrad. Giving the largest MSE scores, AdaGrad performed the worse out of all the optimization methods. In fact, AdaGrad seemed to not converge at all for too high batch sizes, rather producing sort of random data. We found this somewhat strange, as on the other hand, AdaGrad showed good results for logistic regression (see sec. \ref{sec:cancer_data_logisit_regression}), and for small batch sizes, e.q. \(4\) in fig. \ref{fig:LinReg25x25_epoch10_bacthS50_zoomed} it gave MSE scores \(\lessapprox 0.1\) for varying learning rates with \(t_1\sim[1.8\cdot 10^{-2}, 3.5]\).
 
 Together, the results show an overall better performance for varying learning rate, compared to that of a constant learning rate. Plain SGD is especially effected by this, compared to Adam which seems to converge for both varying and constant learning rates. Common for all optimization methods, except plain SGD, was that an increase (decrease) in number of epochs (batch size) gave better MSE scores.
+
+\subsubsection{Comparison}
 
 \subsubsection{Neural Network}
 The results for the MSE and $R^2$ as a function of the learning rate $\eta$ with 1000 epochs are given in Fig. \ref{fig:NN_Franke_LR_1000}. Here we show our own FFNN with different activation functions and \texttt{keras} NN with the LReLU activation function, all using the Adam optimizer. In this particular plot we are not using any regularization terms. The reason for this is simply due to \texttt{keras} being very slow, but we still wanted to include it as a reference. The optimal learning rates for $\lambda=0$ can easily be read off this plot: $\{10^{-3},10^{-3},3\times10^{-3},2\times 10^{-2}\}$ for \{ReLU, Sigmoid, LReLU, \texttt{keras}\}.
@@ -337,7 +338,7 @@ Further we plotted the predictions of the four variants in Fig. \ref{fig:3D_Fran
 	\label{fig:NN_Franke_Epochs}
 \end{figure}
 
-We then did the above again, but now with a regularization parameter $\lambda$ and excluded \texttt{keras} due to time constraints. The MSE with 250 epochs for various combinations of $\eta$ and $\lambda$ are given in Fig. \ref{fig:FFNN_Franke_heatmaps}. The best results from here are then picked to once again plot the MSE over epochs given in Fig. \ref{fig:best_MSE_Franke_Epochs} and another 3D plot to visualize the results in Fig. \ref{fig:NN_noKeras_3D_Franke_Epochs250}. Clearly the sigmoid activation function performs worse overall once again, whilst ReLU and LReLU have a close competition between them. The convergence is much faster here, and we same performance with ReLU and LReLU after only $150$ epochs. The sigmoid function converges much slower, but this is expected due to it being suited for binary classification and not regression. The much faster convergence does suggest that the regularization parameter is improving our performance significantly.
+We then did the above again, but now with a regularization parameter $\lambda$ and excluded \texttt{keras} due to time constraints. The MSE with 250 epochs for various combinations of $\eta$ and $\lambda$ are given in Fig. \ref{fig:FFNN_Franke_heatmaps}. The best results from here are then picked to once again plot the MSE over epochs given in Fig. \ref{fig:best_MSE_Franke_Epochs} and another 3D plot to visualize the results in Fig. \ref{fig:NN_noKeras_3D_Franke_Epochs250}. Clearly the sigmoid activation function performs worse overall once again, whilst ReLU and LReLU have a close competition between them. The convergence is much faster here, and we achieve similar performance with ReLU and LReLU after only $150$ epochs. The sigmoid function converges much slower, but this is expected due to it being suited for binary classification and not regression. The much faster convergence does suggest that the regularization parameter is improving our performance significantly.
 \begin{figure}[ht!]
 	\includegraphics[width=0.5\textwidth]{Figures/Best_MSE_vs_Epochs250.pdf}
 	\caption{The MSE regression results for the FFNN as a function of number of epochs for ReLU, LReLU, Sigmoid with the best performing combination of $\lambda$ and $\eta$.}
@@ -356,6 +357,8 @@ Sigmoid activation generally performs poorly across much of the parameter space,
 The results suggest that ReLU and LReLU handle a wider range of learning rates and regularization strengths more effectively, likely because their piecewise linear nature prevents gradient vanishing issues, which often affect Sigmoid under aggressive learning rates. This shows the importance of choosing the right activation function for each task. 
 
 Additionally, inputs to the Sigmoid function were clipped to prevent overflow, which might have impacted its accuracy. The slightly higher accuracy of LReLU over ReLU suggests it may provide an advantage by maintaining small gradients for negative inputs, offering a more stable training process. However, this difference, amounting to just one correct guess, may simply reflect statistical variance.
+
+\subsubsection{Comparison}
 
 \section{Conclusion}
 On the Franke function, we found that Sigmoid is not overly sensitive to changes in the learning rate and hyperparameter $\lambda$, but also struggles to get good results. On the other hand ReLU has the ability to get great results, but only for very specific combinations of $\eta$ and $\lambda$. LReLU seems to be the best of both worlds, being relatively insensitive to getting the exact right combination of $\eta$ and $\lambda$, whilst still managing to obtain very good MSE scores like ReLU.
@@ -379,29 +382,57 @@ A selection of figures, more can be found in the \texttt{Figures} folder.
 \begin{figure*}
 	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Figures/LinRegSGD_25x25_epoch10_batchS4.pdf}
-		\caption{MSE score using SGD for franke data with \(10\) epochs, batch size \(4\).}
+		\caption{MSE score using SGD for franke data.}
 		\label{fig:LinReg25x25_epoch10_bacthS50}
 	\end{subfigure}
 	\hfill
 	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Figures/LinRegAdaGrad_25x25_epoch10_batchS4.pdf}
-		\caption{MSE score using AdaGrad for franke data with \(10\) epochs, batch size \(4\).}
+		\caption{MSE score using AdaGrad for franke data.}
 		\label{fig:LinReg25x25_epoch10_bacthS50_zoomed}
 	\end{subfigure}
 \hfill\newline
 	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Figures/LinRegRMSprop_25x25_epoch10_batchS4.pdf}
-		\caption{MSE score using RMSprop for franke data with \(10\) epochs, batch size \(4\).}
+		\caption{MSE score using RMSprop for franke data.}
 		\label{fig:LinReg25x25_epoch100_bacthS50}
 	\end{subfigure}
 	\hfill
 	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Figures/LinRegAdam_25x25_epoch10_batchS4_zoomed.pdf}
-		\caption{MSE score using Adam for franke data with \(10\) epochs, batch size \(4\).}
+		\caption{MSE score using Adam for franke data.}
 		\label{fig:LinReg25x25_epoch100_bacthS50_zoomed}
 	\end{subfigure}
-	\caption{Accuracy score for logistic regression, for number of epochs \(N=10\) (left), \(N=100\) (right). The figures to the right are zoomed in versions of the ones to the left.}
+	\caption{MSE scores for linear regression on \(20\) data samples from the Franke function, for number of epochs \(N=10\) and a batch size of \(4\). A varying learning rate is used, and the \(y\)-axis denotes \(\eta_{\text{const}}\), which is used to set \(t_1\) in \eqref{eq:varyin_learning_rate}.}
 	\label{fig:LinReg}
+\end{figure*}
+
+\begin{figure*}
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Figures/LinRegPlainSGD_250epochs_batchS50.pdf}
+		\caption{MSE score using SGD for franke data.}
+		\label{fig:LinReg25x25_epoch10_bacthS50}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Figures/LinRegAdaGrad_250epochs_batchS50.pdf}
+		\caption{MSE score using AdaGrad for franke data.}
+		\label{fig:LinReg25x25_epoch10_bacthS50_zoomed}
+	\end{subfigure}
+\hfill\newline
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Figures/LinRegRMSprop_250epochs_batchS50.pdf}
+		\caption{MSE score using RMSprop for franke data.}
+		\label{fig:LinReg25x25_epoch100_bacthS50}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Figures/LinRegAdam_250epochs_batchS50.pdf}
+		\caption{MSE score using Adam for franke data.}
+		\label{fig:LinReg25x25_epoch100_bacthS50_zoomed}
+	\end{subfigure}
+	\caption{MSE scores for linear regression on \(250\) data samples from the Franke function, for number of epochs \(N=250\) and a batch size of \(50\). A varying learning rate is used, and the \(y\)-axis denotes \(t_1 = 2/\eta_{\text{const}}\) in \eqref{eq:varyin_learning_rate}.}
+	\label{fig:LinReg_250}
 \end{figure*}
 
 %%%%%%%%% Neural Network different acitivation functions %%%%%%%%%
