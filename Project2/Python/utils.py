@@ -192,6 +192,7 @@ class LearningRate:
             if const is None:
                 self.name = f"callable({t0}, {t1})"
             else:
+                print("hei")
                 self.name = str(const)
 
         self.t0 = t0; self.t1 = t1
@@ -1257,9 +1258,13 @@ def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_reg
         plt.tight_layout()
         plt.show()
 
+    xlim = None; ylim = None
     if ask_me_werd_stuff_in_the_terminal:
         # Saving
         save = input("Save (y/n)? ")
+        print(f"{data_Ridge["optimizer_name"]}, epochs: {data_Ridge["epochs"]}, batch_size: {data_Ridge["batch_size"]}")
+        print(f"Learning rates: [{data_Ridge["learning_rates"][0]}...{data_Ridge["learning_rates"][-1]}]")
+        print(f"lambdas: [{data_Ridge["lambdas"][0]}...{data_Ridge["lambdas"][-1]}]")
         if save.upper() in ["Y", "YES", "YE"]:
             msg_less = "Show values less than (type no for show values greater than)"; less_than = True 
             msg_great = "Show values greater than (type no for show values less than)"
@@ -1267,40 +1272,54 @@ def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_reg
             while True:
                 x =  input(f"{msg}: ")
                 ask_happy = True 
+
+                if x.upper() in ["Q", "X", "QUIT"]:
+                    sys.exit()
+                
                 if less_than:
                     if x.upper() in ["NO", "N", ""]:
                         less_than = False; msg = msg_great; ask_happy = False
                     else:
-                        plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(x), xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
+                        plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(x), xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize, xlim=xlim, ylim=ylim)
                         plt.show()
                 else:
                     if x.upper() in ["NO", "N", ""]:
                         less_than = True; msg = msg_less; ask_happy = False
                     else:
-                        plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_greater_than=float(x), xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
+                        plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_greater_than=float(x), xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize, xlim=xlim, ylim=ylim)
                         plt.show()
                     
                 if ask_happy:
-                    happy = input("Happy (y/n)? ")
+                    happy = input("Happy (y/n) (type lim for limits)? ")
                     if happy.upper() in ["Y", "YES", "YE"]:
                         title = input("Title: ") 
                         filename = input("Filename: ")
                         latex_fonts()
                         
                         if less_than:
-                            plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(x), title=title, savefig=True, filename=filename, xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
+                            plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(x), title=title, savefig=True, filename=filename, xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize, xlim=xlim, ylim=ylim)
                         else:
-                            plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_greater_than=float(x), title=title, savefig=True, filename=filename, xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
+                            plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_greater_than=float(x), title=title, savefig=True, filename=filename, xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize, xlim=xlim, ylim=ylim)
 
-                        plt.show()
-                        exit()
+                        # plt.show()
+                        return data_OLS, data_Ridge
                     
+                    elif happy.upper() == "LIM":
+                        xlim = input("xlim (x0, x1): ")
+                        xlim = xlim.split(","); xlim = [float(xlim[0]), float(xlim[1])]
+
+                        ylim = input("ylim (x0, x1): ")
+                        ylim = ylim.split(","); ylim = [float(ylim[0]), float(ylim[1])]
+                        
                     elif happy.upper() in ["Q", "QUIT", "X"]:
-                        exit()
+                        sys.exit()
+
+        elif save.upper() in ["Q", "X", "QUIT"]:
+            sys.exit()
 
     return data_OLS, data_Ridge
 
-def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False, annot=True, only_less_than=None, only_greater_than=None, xaxis_fontsize=None, yaxis_fontsize=None):
+def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False, annot=True, only_less_than=None, only_greater_than=None, xaxis_fontsize=None, yaxis_fontsize=None, xlim=None, ylim=None):
     """
     Plots a 2D heatmap with lambda and eta as inputs.
 
@@ -1330,6 +1349,22 @@ def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, 
     fig, ax = plt.subplots(figsize = (12, 7))
     tick = ticker.ScalarFormatter(useOffset=False, useMathText=True)
     tick.set_powerlimits((0, 0))
+    
+    lambda_indices = np.array([True]*len(lambdas))
+    eta_indices = np.array([True]*len(etas))
+
+    
+    if not (xlim is None):
+        xmin = xlim[0]; xmax = xlim[1]
+        lambda_indices = [i for i, l in enumerate(lambdas) if xmin <= l <= xmax]
+        
+    if not (ylim is None):
+        ymin = ylim[0]; ymax = ylim[1]
+        eta_indices = [i for i, e in enumerate(etas) if ymin <= e <= ymax]
+    
+    lambdas = np.array(lambdas)[lambda_indices]
+    etas = np.array(etas)[eta_indices]
+    value = value[np.ix_(eta_indices, lambda_indices)]
     
     if x_log:
         t_x = [u'${}$'.format(tick.format_data(lambd)) for lambd in lambdas]
@@ -1373,8 +1408,8 @@ def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, 
     plt.xlabel(r'$\lambda$', fontsize=xaxis_fontsize or 12)
     plt.ylabel(r'$\eta$', fontsize=yaxis_fontsize or 12)
 
-    plt.xlim(0, len(lambdas))
-    plt.ylim(0, len(etas))
+    # plt.xlim(0, len(lambdas))
+    # plt.ylim(0, len(etas))
     plt.tight_layout()
 
     if savefig:

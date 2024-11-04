@@ -288,13 +288,18 @@ Linear and Logistic Regression was used to study data from the Franke function a
 
 After an optimization algorithm has been chosen, the class \texttt{DescentSolver} is used together with a chosen gradient, the Ridge-gradient (linear regression) or a logistic-gradient (logistic regression), to compute GD or SGD. To analyze the results of \texttt{DescentSolver}, the class \texttt{DescentAnalyzer} is used. This class computes metrics, MSE/\(R^2\) (linear regression) or accuracy score (logistic regression), for an (equally sized) grid of \(\lambda\), \(\eta\)-values. The metrics, together with all other parameters, are saved as pickle-files, which can be read at a later time from \texttt{DescentAnalyzer.load\_data} giving a dictionary of the data. 
 
+\subsection{Neural Network}
 Further, the \texttt{FFNN} class was implemented to analyze both the Franke function and the breast cancer data. The FFNN is structured with an input layer, one or more hidden layers, and an output layer, with each layer utilizing an activation function, and currently only supports the Adam optimizer. This was due to unknown performance issues when trying to incorporate the \texttt{Optimize} class. The architecture is defined by specifying the input size, the number of neurons in hidden layers, and the output size. In the case of the Franke function, the input layer is size 2, one for \(x\) and one for \(y\), while for the breast cancer data, the input layer corresponds to the number of features, i.e., \(30\), representing several properties of the tumor, such as circumference, density, etc.
 
 We tested various configurations for layering the hidden layers. Ultimately, for the Franke function, we settled on a pyramid-like architecture for the hidden layers \([4,8,16,32,16,8,4,2]\), while for the breast cancer data, we used \([15,30,15,8,4,2]\). These choices were based on the sizes of both the input and output layers, where the output layer is \(1\) in both cases. The weights and biases are initialized using random values scaled by the number of input neurons, which aids in faster convergence during training. The network supports ReLU, Sigmoid, and Leaky ReLU as activation functions. 
 
 The forward propagation computes the output of the network by applying the chosen activation function to the weighted sum of inputs at each layer. Depending on the task, the FFNN uses mean squared error (MSE) as the loss function for regression tasks (like the Franke function) and binary cross-entropy (BCE) for classification tasks (like breast cancer data). The backward propagation algorithm updates the weights and biases using gradient descent, which considers the specific loss function being used. We also implement regularization techniques to mitigate overfitting.
 
-The training process includes splitting the data into training and test sets, followed by iterating through a specified number of epochs during which the network adjusts its weights to minimize the error. The test size used throughout is \(25\%\). After training, the network can predict outputs for new data, allowing for evaluation against known values from the Franke function. The overall performance of the model is assessed using MSE for the Franke function and accuracy for the breast cancer data, reflecting the different loss functions applied during training.
+The training process includes splitting the data into training and test sets, followed by iterating through a specified number of epochs during which the network adjusts its weights to minimize the error. After training, the network can predict outputs for new data, allowing for evaluation against known values from the Franke function. The overall performance of the model is assessed using MSE for the Franke function and accuracy for the breast cancer data, reflecting the different loss functions applied during training.
+
+\subsection{Data Parameters}
+We tried various different learning rates \(\eta\) and \(\lambda\)-values. Specifically, we used \(\eta_{\text{const}}, \lambda \in[10^{-10}, 10^{1}]\). For varying learning rate, we settled on \(t_0=2\) and \(t_{1} = 2 / \eta_{\text{const}} \), see \eqref{eq:varyin_learning_rate}. We sampled \(20\) datapoints from the Franke function and looked at epoch sizes \(e \in \{10, 100\}\), and batch sizes \(b\in\{4, 5, 10\}\). 
+We used a test size of \(25\%\) throughout. 
 
 On the cancer data we use StandardScaling to scale the data after splitting it to avoid data leakage, whereas the Franke function was normalized to the range $[0,1]$ using min-max scaling. On the Franke function we also implemented \texttt{tensorflow.keras} to compare its results with our own FFNN.
 
@@ -304,7 +309,13 @@ We represent the results and compare the various methods. The larger plots have 
 
 \subsection{Franke}
 \subsubsection{Linear Regression}
+MSE scores from linear regression for plane SGD and the three more advanced optimization methods (AdaGrad, RMSprop and Adam), for different epoch and batch sizes, and for both constant and learning rates, are shown in figs. \ref{fig:PlangeSGD_varyEta}, \ref{fig:PlangeSGD_constEta}, \ref{fig:RMSprop_varyEta}, \ref{fig:RMSprop_constEta}, \ref{fig:AdaGrad_varyEta}, \ref{fig:AdaGrad_constEta}, \ref{fig:Adam_varyEta} and \ref{fig:Adam_constEta}. For plane SGD with a varying \(\eta\), higher epoch size and smaller batch sizes lowered the MSE scores, suggesting a stable convergence. However, with a constant learning rate, the MSE scores blew up, implying that the algorithm skipped the global minima and continued either towards a local minima or straight up diverged. This can be seen from (b) and (d) in fig. \ref{fig:PlangeSGD_constEta}, where all MSE scores are equal to \(\sim 0.207\). This feature was not seen in any of other optimization methods. Both RMSprop and Adam showed a clear convergence when increasing (decreasing) the epoch size (batch size). However, RMSprop did not converge for constant learning rates. For varying learning rate, RMSprop gave low MSE scores, that is, with \(t_{1} = 2/\eta_{\text{const}}\sim [2\cdot 10^{2}, 2]\). In this range, RMSprop gave quite good results, averaging an MSE score of \(\sim [0.1, 0.01]\). 
 
+On the other hand, Adam converged for both varying and constant learning rates, and essentially outperformed all the other algorithms by giving lesser MSE scores overall. 
+
+The odd one out was AdaGrad. Giving the largest MSE scores, AdaGrad performed the worse out of all the optimization methods. In fact, AdaGrad seemed to not converge at all, rather producing sort of random data, see fig. \ref{fig:AdaGrad_varyEta} and \ref{fig:AdaGrad_constEta}. We found this somewhat strange, and have concluded that there could be that there is a flaw in the implementation of AdaGrad. 
+
+The results show an overall better performance for varying learning rate, compared to that of a constant learning rate. 
 
 \subsubsection{Neural Network}
 The results for the MSE and $R^2$ as a function of the learning rate $\eta$ with 1000 epochs with our own FFNN with different activation functions and keras NN with the sigmoid activation function are given in Fig. \ref{fig:NN_Franke_LR_1000}. In this particular plot we are not using any regularization terms. The reason for this is simply due to \texttt{keras} being very slow, but we still wanted to include it as a reference. The optimal learning rates for $\lambda=0$ can easily be read off this plot: $\{10^{-3},10^{-3},3\times10^{-3},2\times 10^{-2}\}$ for \{ReLU, Sigmoid, LReLU, \texttt{keras}\}.
@@ -467,5 +478,240 @@ A step forward would for example be testing out different values of $a$ in LReLU
 	\label{fig:FFNN_cancer_heatmaps}
 \end{figure*}
 
-	
+%%%%%%%%%%%%%%%% Bunch of different MSE plots, linear regression %%%%%%%%%%%%%%%%
+
+% PlaneSGD with varying learning rate
+\begin{figure*}
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegPlaneSGD_varyEta_10epochs_5batchS.pdf}
+		\caption{\(10\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegPlaneSGD_varyEta_10epochs_5batchS}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegPlaneSGD_varyEta_100epochs_5batchS.pdf}
+		\caption{\(100\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegPlaneSGD_varyEta_100epochs_5batchS}
+	\end{subfigure}
+\hfill\newline
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegPlaneSGD_varyEta_10epochs_10batchS.pdf}
+	\caption{\(10\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegPlaneSGD_varyEta_10epochs_5batchS}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegPlaneSGD_varyEta_100epochs_10batchS.pdf}
+	\caption{\(100\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegPlaneSGD_varyEta_100epochs_5batchS}
+\end{subfigure}
+\caption{MSE scores using plane SGD with a varying learning rate; see \eqref{eq:varyin_learning_rate}, \(t_0=2\) and \(t_1=\eta\), where \(\eta\) can be read from the y-axis.}
+\label{fig:PlangeSGD_varyEta}
+\end{figure*}
+
+% PlaneSGD with constant learning rate
+\begin{figure*}
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegPlaneSGD_constEta_10epochs_5batchS.pdf}
+		\caption{\(10\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegPlaneSGD_constEta_10epochs_5batchS}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegPlaneSGD_constEta_100epochs_batchS10.pdf}
+		\caption{\(100\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegPlaneSGD_constEta_100epochs_5batchS}
+	\end{subfigure}
+\hfill\newline
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegPlaneSGD_constEta_10epochs_10batchS.pdf}
+	\caption{\(10\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegPlaneSGD_constEta_10epochs_5batchS}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegPlaneSGD_constEta_100epochs_batchS10.pdf}
+	\caption{\(100\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegPlaneSGD_constEta_100epochs_5batchS}
+\end{subfigure}
+\caption{MSE scores using plane SGD with a constant learning rate.}
+\label{fig:PlangeSGD_constEta}
+\end{figure*}
+
+
+% RMSprop with varying learning rate
+\begin{figure*}
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegRMSprop_varyEta_10epochs_batchS5.pdf}
+		\caption{\(10\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegRMSprop_varyEta_10epochs_5batchS}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegRMSprop_varyEta_100epochs_batchS5.pdf}
+		\caption{\(100\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegRMSprop_varyEta_100epochs_5batchS}
+	\end{subfigure}
+\hfill\newline
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegRMSprop_varyEta_10epochs_batchS10.pdf}
+	\caption{\(10\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegRMSprop_varyEta_10epochs_5batchS}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegRMSprop_varyEta_100epochs_batchS10.pdf}
+	\caption{\(100\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegRMSprop_varyEta_100epochs_5batchS}
+\end{subfigure}
+\caption{MSE scores using RMSprop with a varying learning rate; see \eqref{eq:varyin_learning_rate}, \(t_0=2\) and \(t_1=\eta\), where \(\eta\) can be read from the y-axis.}
+\label{fig:RMSprop_varyEta}
+\end{figure*}
+
+% RMSprop with constant learning rate
+\begin{figure*}
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegRMSprop_constEta_10epochs_batchS5.pdf}
+		\caption{\(10\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegRMSprop_constEta_10epochs_5batchS}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegRMSprop_constEta_100epochs_batchS5.pdf}
+		\caption{\(100\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegRMSprop_constEta_100epochs_5batchS}
+	\end{subfigure}
+\hfill\newline
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegRMSprop_constEta_10epochs_batchS10.pdf}
+	\caption{\(10\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegRMSprop_constEta_10epochs_5batchS}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegRMSprop_constEta_100epochs_batchS10.pdf}
+	\caption{\(100\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegRMSprop_constEta_100epochs_5batchS}
+\end{subfigure}
+\caption{MSE scores using RMSprop with a constant learning rate.}
+\label{fig:RMSprop_constEta}
+\end{figure*}
+
+
+% AdaGrad with varying learning rate
+\begin{figure*}
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegAdaGrad_varyEta_10epochs_batchS5.pdf}
+		\caption{\(10\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegAdaGrad_varyEta_10epochs_5batchS}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegAdaGrad_varyEta_100epochs_batchS5.pdf}
+		\caption{\(100\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegAdaGrad_varyEta_100epochs_5batchS}
+	\end{subfigure}
+\hfill\newline
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegAdaGrad_varyEta_10epochs_batchS10.pdf}
+	\caption{\(10\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegAdaGrad_varyEta_10epochs_5batchS}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegAdaGrad_varyEta_100epochs_batchS10.pdf}
+	\caption{\(100\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegAdaGrad_varyEta_100epochs_5batchS}
+\end{subfigure}
+\caption{MSE scores using AdaGrad with a varying learning rate; see \eqref{eq:varyin_learning_rate}, \(t_0=2\) and \(t_1=\eta\), where \(\eta\) can be read from the y-axis.}
+\label{fig:AdaGrad_varyEta}
+\end{figure*}
+
+% AdaGrad with constant learning rate
+\begin{figure*}
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegAdaGrad_constEta_10epochs_batchS5.pdf}
+		\caption{\(10\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegAdaGrad_constEta_10epochs_5batchS}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegAdaGrad_constEta_100epochs_batchS5.pdf}
+		\caption{\(100\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegAdaGrad_constEta_100epochs_5batchS}
+	\end{subfigure}
+\hfill\newline
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegAdaGrad_constEta_10epochs_batchS10.pdf}
+	\caption{\(10\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegAdaGrad_constEta_10epochs_5batchS}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegAdaGrad_constEta_100epochs_batchS10.pdf}
+	\caption{\(100\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegAdaGrad_constEta_100epochs_5batchS}
+\end{subfigure}
+\caption{MSE scores using AdaGrad with a constant learning rate.}
+\label{fig:AdaGrad_constEta}
+\end{figure*}
+
+% Adam with varying learning rate
+\begin{figure*}
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegAdam_varyEta_10epochs_batchS5.pdf}
+		\caption{\(10\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegAdam_varyEta_10epochs_5batchS}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegAdam_varyEta_100epochs_batchS5.pdf}
+		\caption{\(100\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegAdam_varyEta_100epochs_5batchS}
+	\end{subfigure}
+\hfill\newline
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegAdam_varyEta_10epochs_batchS10.pdf}
+	\caption{\(10\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegAdam_varyEta_10epochs_5batchS}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegAdam_varyEta_100epochs_batchS10.pdf}
+	\caption{\(100\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegAdam_varyEta_100epochs_5batchS}
+\end{subfigure}
+\caption{MSE scores using Adam with a varying learning rate; see \eqref{eq:varyin_learning_rate}, \(t_0=2\) and \(t_1=\eta\), where \(\eta\) can be read from the y-axis.}
+\label{fig:Adam_varyEta}
+\end{figure*}
+
+% Adam with constant learning rate
+\begin{figure*}
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegAdam_constEta_10epochs_batchS5.pdf}
+		\caption{\(10\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegAdam_constEta_10epochs_5batchS}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Python/Figures/LinRegAdam_constEta_100epochs_batchS5.pdf}
+		\caption{\(100\) epochs and a batch size of \(5\).}
+		\label{fig:LinRegAdam_constEta_100epochs_5batchS}
+	\end{subfigure}
+\hfill\newline
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegAdam_constEta_10epochs_batchS10.pdf}
+	\caption{\(10\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegAdam_constEta_10epochs_5batchS}
+\end{subfigure}
+\hfill
+\begin{subfigure}{0.41\textwidth}
+	\includegraphics[width=\textwidth]{Python/Figures/LinRegAdam_constEta_100epochs_batchS10.pdf}
+	\caption{\(100\) epochs and a batch size of \(10\).}
+	\label{fig:LinRegAdam_constEta_100epochs_5batchS}
+\end{subfigure}
+\caption{MSE scores using Adam with a constant learning rate.}
+\label{fig:Adam_constEta}
+\end{figure*}
+
 \end{document}

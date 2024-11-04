@@ -27,35 +27,38 @@ if __name__ == "__main__":
     varying_learing_rates = [True, False]
 
     ######## Single run ########
-    learning_rate = [LearningRate(2, 2/learning_rates[i], N, b, str(learning_rates[i])) for i in range(len(learning_rates))]
-    create_data(x, y, methods_name[0], epochs[0], learning_rate, lmbdas, batch_size=batch_size[0], overwrite=False, scaling="no scaling")
+    learning_rate = [LearningRate(2, 2/learning_rates[i], N, batch_size[0]) for i in range(len(learning_rates))]
+
+    # create_data(x, y, methods_name[0], epochs[0], learning_rate, lmbdas, batch_size=batch_size[1], overwrite=False, scaling="no scaling", N_bootstraps=10)
     
     ######## Large data ########
-    start_time = time.time()
-    for method_index in range(len(methods_name)):
-        for varying_learing_rate in varying_learing_rates:
-            for e in epochs:
-                for b in batch_size:
-                    method = methods_name[method_index]; GD_SGD = "SGD"
+    # start_time = time.time()
+    # for method_index in range(len(methods_name)):
+    #     for varying_learing_rate in varying_learing_rates:
+    #         for e in epochs:
+    #             for b in batch_size:
+    #                 method = methods_name[method_index]; GD_SGD = "SGD"
                     
-                    if varying_learing_rate:                    
-                        learning_rate = [LearningRate(2, 2/learning_rates[i], N, b, str(learning_rates[i])) for i in range(len(learning_rates))]
-                    else:
-                        learning_rate = learning_rates
+    #                 if varying_learing_rate:                    
+    #                     learning_rate = [LearningRate(2, 2/learning_rates[i], N, b) for i in range(len(learning_rates))]
+    #                 else:
+    #                     learning_rate = learning_rates
 
-                    create_data(x, y, method, e, learning_rate, lmbdas, batch_size=b, overwrite=False, scaling="no scaling")
+    #                 create_data(x, y, method, e, learning_rate, lmbdas, batch_size=b, overwrite=False, scaling="no scaling")
         
-        print(f"{method} completed, time taken: {(time.time() - start_time)/60:1f} min.")
+    #     print(f"{method} completed, time taken: {(time.time() - start_time)/60:1f} min.")
 
-    print(f"Total duration: {(time.time() - start_time)/60:1f} min.") # 386.653960 min.
+    # print(f"Total duration: {(time.time() - start_time)/60:1f} min.") # 386.653960 min.
 
     ######## Reads data ########
-    for method_index in range(len(methods_name)):
+    for method_index in range(3, len(methods_name)):
         method = methods_name[method_index]
-        index = 0
+        index = 7
         while True:
-            try:
-                data_OLS, data_Ridge = analyze_save_data(method, size, index, ask_me_werd_stuff_in_the_terminal=True, plot=True)
-                index += 1
-            except:
-                break
+            data_OLS, data_Ridge = analyze_save_data(method, size, index, ask_me_werd_stuff_in_the_terminal=True, plot=True)
+            index += 1
+            # try:
+            #     data_OLS, data_Ridge = analyze_save_data(method, size, index, ask_me_werd_stuff_in_the_terminal=True, plot=True)
+            #     index += 1
+            # except:
+            #     break
