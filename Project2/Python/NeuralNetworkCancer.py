@@ -21,7 +21,7 @@ save = True
 
 # Load the dataset
 cancer = load_breast_cancer()
-X_train, X_test, y_train, y_test = train_test_split(cancer.data, cancer.target.reshape(-1, 1), random_state=42, test_size=0.25)
+X_train, X_test, y_train, y_test = train_test_split(cancer.data, cancer.target.reshape(-1, 1), random_state=1, test_size=0.25)
 scaler = StandardScaler()
 scaler.fit(X_train)
 X_train = scaler.transform(X_train)
@@ -117,7 +117,7 @@ for epoch in epochs:
             x_log=True,
             y_log=True,
             savefig=save,
-            filename=fr'Cancer_Accuracy_Heatmap_{activation}_Epochs{epoch}_randomstate42',
+            filename=fr'Cancer_Accuracy_Heatmap_{activation}_Epochs{epoch}_randomstate1',
             Reverse_cmap=True
         )
 
@@ -153,11 +153,12 @@ for activation in activations:
     plt.figure(figsize=(8, 8))
     sns.heatmap(cm, annot=annotated_cm, fmt='', cmap='Blues', cbar=False,
                 xticklabels=['Negative', 'Positive'],
-                yticklabels=['Negative', 'Positive'])
+                yticklabels=['Negative', 'Positive'],
+                annot_kws={"size": 30})
     plt.xlabel('Predicted')
     plt.ylabel('Actual')
     plt.title(f"FFNN Confusion Matrix: {activation} Activation\n"+fr"$\lambda={best_params[epoch][activation][0]:.1e}, \eta={best_params[epoch][activation][1]:.1e}$")
     if save:
-        plt.savefig(f'../Figures/ConfusionMatrixFFNN_{activation}_Epochs{epoch}_randomstate42.pdf')
+        plt.savefig(f'../Figures/ConfusionMatrixFFNN_{activation}_Epochs{epoch}_randomstate1.pdf')
 plt.show()
 

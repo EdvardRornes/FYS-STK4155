@@ -1070,11 +1070,7 @@ class FFNN:
 
         output = self.activations[-1]
         
-        # Compute delta based on the loss function
-        if self.loss_function == 'mse':
-            delta = output - y
-        elif self.loss_function == 'bce':
-            delta = output - y  # This is correct for binary cross-entropy
+        delta = output - y
         self.t += 1  # Increment time step
 
         for i in reversed(range(len(self.weights))):
