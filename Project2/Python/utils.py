@@ -10,7 +10,7 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, accuracy_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
-
+from sklearn.preprocessing import minmax_scale
 
 import sys, os
 import time 
@@ -18,6 +18,7 @@ import pickle
 import copy
 from typing import Tuple, List
 
+############ Utility functions ############
 # Disable print
 def blockPrint():
     sys.stdout = open(os.devnull, 'w')
@@ -80,88 +81,6 @@ class Activation:
     def Lrelu_derivative(z, alpha=0.01):
         """Derivative of Leaky ReLU activation function."""
         return np.where(z > 0, 1, alpha)
-    
-############ Cost/gradient functions ############
-def gradientOLS(X, y, beta):
-    n=len(y)
-
-    return 2.0/n*X.T @ (X @ (beta)-y)
-
-def CostOLS(X, y, theta):
-    n=len(y)
-    return 1/n * anp.sum((y-X @ theta)**2)
-
-def CostRidge(X, y, theta, lmbda):
-    n = len(y)
-    return (1.0 / n) * anp.sum((y-X @ theta) ** 2) + lmbda / n * anp.sum(theta**2)
-
-# def sigmoid(x):
-#     return 1/(1+anp.exp(-x))
-
-# def logistic_reg(x,w):
-#     return sigmoid(anp.dot(x,w))
-
-# def logistic_cost(x, t, w, lmbda):
-#     pred = logistic_reg(x,w)
-#     cost_inner = anp.log(pred) * t + anp.log(1 - pred) * (1 - t)
-#     return -1 / len(t) * anp.sum(cost_inner) + lmbda*anp.sum(w**2)
-
-class LogisticCost:
-
-    def __init__(self, exp_clip=1e3, log_clip=1e-13, hypothesis=Activation.sigmoid):
-        """
-        Logistic cost function which removes too high values for exp/too low for log.
-        """
-        self.exp_clip = exp_clip; self.log_clip = log_clip
-        self.hypothesis_func = hypothesis
-
-    def __call__(self, x, y, w, lmbda):
-
-        # computing hypothesis
-        z = anp.dot(x,w)
-        z = anp.clip(z, -self.exp_clip, self.exp_clip)
-        h = self.hypothesis_func(z)
-
-        cost = (-1 / len(y)) * anp.sum(y * anp.log(h + self.log_clip) + (1 - y) * anp.log(1 - h + self.log_clip))
-        reg_term = lmbda * anp.sum(w[1:] ** 2)
-
-        # Compute total cost
-        return cost + reg_term
-    
-class AutoGradCostFunction:
-
-    def __init__(self, cost_function:callable, argument_index=2, elementwise=False):
-        """
-        Creates callable gradient of given cost function. The cost function is a property of the class, and so changing it will change the gradient.
-        Assumes that the cost_function has a function call on the form cost_function(X, y, theta).
-
-        Arguments 
-            * cost_function:        callable cost function 
-            * argument_index:       index of argument to take gradient over
-        """
-        self._gradient = grad(cost_function, argument_index)
-        if elementwise:
-            self._gradient = elementwise_grad(cost_function, argument_index)
-        self._cost_function = cost_function
-        self._argument_index = argument_index
-        self.elementwise = elementwise
-
-    @property
-    def cost_function(self):
-        return self._cost_function
-    
-    @cost_function.setter 
-    def cost_function(self, new_cost_function):
-        self._cost_function = new_cost_function 
-        self._gradient = grad(new_cost_function, self._argument_index)
-        if self.elementwise:
-            self._gradient = elementwise_grad(new_cost_function, self._argument_index)
-
-    def __call__(self, X, y, theta, lmbda):
-        """
-        Returns gradient of current cost function.
-        """
-        return self._gradient(X, y, theta, lmbda)
 
 ############ Design Matrix ############
 def create_Design_Matrix(*args):
@@ -295,7 +214,7 @@ class LearningRate:
     
     def __str__(self):
         return self.name 
-    
+ 
 class Optimizer:
     """
     Arguments
@@ -479,6 +398,77 @@ class Adam(Optimizer):
     def __str__(self):
         return f"Adam: eta: {self._str_learning_rate}, eps: {self.momentum}, beta1 = {self.beta1}, beta2 = {self.beta2}"
 
+############ Cost/gradient functions ############
+def gradientOLS(X, y, beta):
+    n=len(y)
+
+    return 2.0/n*X.T @ (X @ (beta)-y)
+
+def CostOLS(X, y, theta):
+    n=len(y)
+    return 1/n * anp.sum((y-X @ theta)**2)
+
+def CostRidge(X, y, theta, lmbda):
+    n = len(y)
+    return (1.0 / n) * anp.sum((y-X @ theta) ** 2) + lmbda / n * anp.sum(theta**2)
+
+class LogisticCost:
+
+    def __init__(self, exp_clip=1e3, log_clip=1e-13, hypothesis=Activation.sigmoid):
+        """
+        Logistic cost function which removes too high values for exp/too low for log.
+        """
+        self.exp_clip = exp_clip; self.log_clip = log_clip
+        self.hypothesis_func = hypothesis
+
+    def __call__(self, x, y, w, lmbda):
+
+        # computing hypothesis
+        z = anp.dot(x,w)
+        z = anp.clip(z, -self.exp_clip, self.exp_clip)
+        h = self.hypothesis_func(z)
+
+        cost = (-1 / len(y)) * anp.sum(y * anp.log(h + self.log_clip) + (1 - y) * anp.log(1 - h + self.log_clip))
+        reg_term = lmbda * anp.sum(w[1:] ** 2)
+
+        # Compute total cost
+        return cost + reg_term
+    
+class AutoGradCostFunction:
+
+    def __init__(self, cost_function:callable, argument_index=2, elementwise=False):
+        """
+        Creates callable gradient of given cost function. The cost function is a property of the class, and so changing it will change the gradient.
+        Assumes that the cost_function has a function call on the form cost_function(X, y, theta).
+
+        Arguments 
+            * cost_function:        callable cost function 
+            * argument_index:       index of argument to take gradient over
+        """
+        self._gradient = grad(cost_function, argument_index)
+        if elementwise:
+            self._gradient = elementwise_grad(cost_function, argument_index)
+        self._cost_function = cost_function
+        self._argument_index = argument_index
+        self.elementwise = elementwise
+
+    @property
+    def cost_function(self):
+        return self._cost_function
+    
+    @cost_function.setter 
+    def cost_function(self, new_cost_function):
+        self._cost_function = new_cost_function 
+        self._gradient = grad(new_cost_function, self._argument_index)
+        if self.elementwise:
+            self._gradient = elementwise_grad(new_cost_function, self._argument_index)
+
+    def __call__(self, X, y, theta, lmbda):
+        """
+        Returns gradient of current cost function.
+        """
+        return self._gradient(X, y, theta, lmbda)
+      
 ############ Descent ############
 class DescentSolver:
 
@@ -884,22 +874,30 @@ class DescentAnalyzer:
         accuracy_score_train_tmp = np.zeros(N_bootstraps)
 
         for k in range(N_bootstraps):
-            blockPrint()
+            # Sampling with replacement from the training data:
+            indices = np.random.choice(len(X_train), size=len(X_train), replace=True)
+            X_train_bootstrap = X_train[indices]
+            z_train_bootstrap = z_train[indices]
 
             w = np.random.randn(self.X.shape[1], 1)*1e-2
 
-            w = self.descentSolver(X_train, z_train, self.epochs, self.lambdas[j], self.batch_size, theta=w)
+            blockPrint()
+            # Training:
+            w = self.descentSolver(X_train_bootstrap, z_train_bootstrap, self.epochs, self.lambdas[j], self.batch_size, theta=w)
             enablePrint()
 
+            # Predicting:
             z_test_expo = X_test @ w
             z_test_pred = self.activation_function(z_test_expo)
 
             z_train_expo = X_train @ w
             z_train_pred = self.activation_function(z_train_expo)
 
+            # Coverting to binary:
             z_train_pred = np.where(z_train_pred >= 0.5, 1, 0)
             z_test_pred = np.where(z_test_pred >= 0.5, 1, 0)
 
+            # Storing metrics:
             accuracy_score_test_tmp[k] = accuracy_score(z_test_pred, z_test)
             accuracy_score_train_tmp[k] = accuracy_score(z_train_pred, z_train)
 
@@ -915,19 +913,26 @@ class DescentAnalyzer:
         MSE_train_tmp = np.zeros(N_bootstraps); R2_train_tmp = np.zeros(N_bootstraps)
 
         for k in range(N_bootstraps):
-            blockPrint()
+            # Sampling with replacement from the training data:
+            indices = np.random.choice(len(X_train), size=len(X_train), replace=True)
+            X_train_bootstrap = X_train[indices]
+            z_train_bootstrap = z_train[indices]
 
             theta = np.random.randn(self.X.shape[1], 1)
             
-            theta = self.descentSolver(X_train, z_train, self.epochs, self.lambdas[j], self.batch_size, theta=theta)
+            blockPrint()
+            # Training:
+            theta = self.descentSolver(X_train_bootstrap, z_train_bootstrap, self.epochs, self.lambdas[j], self.batch_size, theta=theta)
             enablePrint()
 
+            # Predicting
             z_predict_test = X_test @ theta 
             z_predict_train = X_train @ theta 
 
             z_predict_test = np.nan_to_num(z_predict_test)
             z_predict_train = np.nan_to_num(z_predict_train)
 
+            # Storing metrics:
             MSE_test_tmp[k] = MSE(z_test, z_predict_test)
             MSE_train_tmp[k] = MSE(z_train, z_predict_train)
 
@@ -966,166 +971,7 @@ class DescentAnalyzer:
     def _no_scaling(self, X_train, X_test):
         return X_train, X_test
 
-############ Analyzing/creating data ############
-def create_data(x:np.ndarray, y:np.ndarray, method:str, epochs:int, learning_rates:list, lmbdas:list, 
-                cost_function=CostRidge, batch_size=None, N_bootstraps=30, overwrite=False, X=None, type_regression="Linear", degree=5, scaling="standard") -> None:
-
-    # Choose method:
-    methods = [PlaneGradient, Adagrad, RMSprop, Adam]
-    methods_name = ["PlaneGradient", "Adagrad", "RMSprop", "Adam"]
-    methods_name_upper = ["PLANEGRADIENT", "ADAGRAD", "RMSPROP", "ADAM"]
-    if method.upper() in methods_name_upper:
-        method_index = methods_name_upper.index(method.upper())
-    else:
-        raise TypeError(f"What is '{method}'?")
-    
-    method = methods[method_index]
-    GD_SGD = "SGD"
-    if batch_size is None:
-        GD_SGD = "GD"
-
-    # Saving parameters:
-    if not (type_regression in ["Linear", "Logistic"]):
-        raise TypeError(f"What is '{type_regression}'.")
-    
-    file_path = f"../Data/{type_regression}/{methods_name[method_index]}"
-    os.makedirs(file_path, exist_ok=True)
-    size = len(lmbdas)
-    filename_OLS = file_path + f"/OLS{size}x{size}"
-    filename_Ridge = file_path + f"/Ridge{size}x{size}"
-
-    # Making sure there are as many lmdas as learning_rates
-    assert len(lmbdas) == len(learning_rates), f"The length og 'lmbdas' need to be the same as 'learning_rates'."
-
-    # Setting up optimizer:
-    method = method()
-
-    # Analyzer setup
-    analyzer_OLS = DescentAnalyzer(x, y, degree, epochs,
-        batch_size=batch_size,
-        GD_SGD=GD_SGD,
-        X=X, scaler=scaling)
-    
-    analyzer_Ridge = DescentAnalyzer(x, y, degree, epochs,
-        batch_size=batch_size,
-        GD_SGD=GD_SGD,
-        X=X, scaler=scaling)
-
-    ############## OLS ##############
-    print("Running for OLS:")
-    analyzer_OLS.run_analysis(method, cost_function, learning_rates, 0, N_bootstraps)
-    print()
-
-    ############## Ridge ##############
-    print("Running for Ridge:")
-    analyzer_Ridge.run_analysis(method, cost_function, learning_rates, lmbdas, N_bootstraps)
-
-    analyzer_OLS.save_data(filename_OLS, overwrite=overwrite)
-    analyzer_Ridge.save_data(filename_Ridge, overwrite=overwrite)
-
-def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_regression="Linear",
-                      ask_me_werd_stuff_in_the_terminal=True, plot=True, xaxis_fontsize=None, yaxis_fontsize=None) -> Tuple[dict, dict]:
-    
-    
-    methods = ["PlaneGradient", "Adagrad", "RMSprop", "Adam"]
-    methods_name_upper = ["PLANEGRADIENT", "ADAGRAD", "RMSPROP", "ADAM"]
-    if method.upper() in methods_name_upper:
-        method_index = methods_name_upper.index(method.upper())
-    else:
-        raise TypeError(f"What is '{method}'?")
-    
-    method = methods[method_index]
-
-    if not (type_regression in ["Linear", "Logistic"]):
-        raise TypeError(f"What is '{type_regression}'.")
-    
-    file_path = f"../Data/{type_regression}/{method}"
-
-    with open(f"{file_path}/OLS{size}x{size}_{index}.pkl", 'rb') as f:
-        data_OLS = pickle.load(f)
-
-    with open(f"{file_path}/Ridge{size}x{size}_{index}.pkl", 'rb') as f:
-        data_Ridge = pickle.load(f)
-
-    lmbdas = data_Ridge["lambdas"]
-    learning_rates = data_Ridge["learning_rates"]
-
-    learning_rates = [float(x) for x in learning_rates]
-
-    OLS_metric = data_OLS[key]
-    Ridge_metric = data_Ridge[key]
-
-    epochs = data_Ridge["epochs"]; batch_size = data_Ridge["batch_size"]
-    print(f"{epochs} epochs, batch size: {batch_size}")
-
-    ############# Plotting #############
-    if plot:
-        fig, ax = plt.subplots(1, figsize=(12,7))
-        ax.plot(learning_rates, OLS_metric)
-        ax.set_xlabel(r"$\eta$")
-        ax.set_yscale("log")
-        ax.set_ylabel(f"{key}")
-        ax.set_title(f"{method} using OLS cost function")
-
-
-        tick = ticker.ScalarFormatter(useOffset=False, useMathText=True)
-        tick.set_powerlimits((0,0))
-
-        xtick_labels = [f"{l:.1e}" for l in lmbdas]
-        ytick_labels = [f"{l:.1e}" for l in learning_rates]
-
-        fig, ax = plt.subplots(figsize = (12, 7))
-        sns.heatmap(Ridge_metric, ax=ax, cmap="viridis", annot=True, xticklabels=xtick_labels, yticklabels=ytick_labels, fmt=".3g")
-        sns.set(font_scale=0.5)
-        ax.set_xlabel(r'$\lambda$')
-        ax.set_ylabel(r'$\eta$')
-        ax.set_title(f"{method} using Ridge cost function")
-        plt.tight_layout()
-        plt.show()
-
-    if ask_me_werd_stuff_in_the_terminal:
-        # Saving
-        save = input("Save (y/n)? ")
-        if save.upper() in ["Y", "YES", "YE"]:
-            msg_less = "Show values less than (type no for show values greater than)"; less_than = True 
-            msg_great = "Show values greater than (type no for show values less than)"
-            msg = msg_less 
-            while True:
-                x =  input(f"{msg}: ")
-                ask_happy = True 
-                if less_than:
-                    if x.upper() in ["NO", "N", ""]:
-                        less_than = False; msg = msg_great; ask_happy = False
-                    else:
-                        plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(x), xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
-                        plt.show()
-                else:
-                    if x.upper() in ["NO", "N", ""]:
-                        less_than = True; msg = msg_less; ask_happy = False
-                    else:
-                        plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_greater_than=float(x), xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
-                        plt.show()
-                    
-                if ask_happy:
-                    happy = input("Happy (y/n)? ")
-                    if happy.upper() in ["Y", "YES", "YE"]:
-                        title = input("Title: ") 
-                        filename = input("Filename: ")
-                        latex_fonts()
-                        
-                        if less_than:
-                            plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(x), title=title, savefig=True, filename=filename, xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
-                        else:
-                            plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_greater_than=float(x), title=title, savefig=True, filename=filename, xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
-
-                        plt.show()
-                        exit()
-                    
-                    elif happy.upper() in ["Q", "QUIT", "X"]:
-                        exit()
-
-    return data_OLS, data_Ridge
-
+############ Feed-forward neural network ############
 class FFNN:
     def __init__(self, input_size, hidden_layers, output_size, activation='relu', alpha=0.01, lambda_reg=0.0, 
                  beta1=0.9, beta2=0.999, epsilon=1e-8, loss_function='mse'):
@@ -1293,7 +1139,166 @@ class FFNN:
             return np.mean(predicted_classes.flatten() == y.flatten())
         else:
             return np.mean(np.round(predictions) == y.flatten())
+        
+############ Analyzing/creating data ############
+def create_data(x:np.ndarray, y:np.ndarray, method:str, epochs:int, learning_rates:list, lmbdas:list, 
+                cost_function=CostRidge, batch_size=None, N_bootstraps=30, overwrite=False, X=None, type_regression="Linear", degree=5, scaling="standard") -> None:
 
+    # Choose method:
+    methods = [PlaneGradient, Adagrad, RMSprop, Adam]
+    methods_name = ["PlaneGradient", "Adagrad", "RMSprop", "Adam"]
+    methods_name_upper = ["PLANEGRADIENT", "ADAGRAD", "RMSPROP", "ADAM"]
+    if method.upper() in methods_name_upper:
+        method_index = methods_name_upper.index(method.upper())
+    else:
+        raise TypeError(f"What is '{method}'?")
+    
+    method = methods[method_index]
+    GD_SGD = "SGD"
+    if batch_size is None:
+        GD_SGD = "GD"
+
+    # Saving parameters:
+    if not (type_regression in ["Linear", "Logistic"]):
+        raise TypeError(f"What is '{type_regression}'.")
+    
+    file_path = f"../Data/{type_regression}/{methods_name[method_index]}"
+    os.makedirs(file_path, exist_ok=True)
+    size = len(lmbdas)
+    filename_OLS = file_path + f"/OLS{size}x{size}"
+    filename_Ridge = file_path + f"/Ridge{size}x{size}"
+
+    # Making sure there are as many lmdas as learning_rates
+    assert len(lmbdas) == len(learning_rates), f"The length og 'lmbdas' need to be the same as 'learning_rates'."
+
+    # Setting up optimizer:
+    method = method()
+
+    # Analyzer setup
+    analyzer_OLS = DescentAnalyzer(x, y, degree, epochs,
+        batch_size=batch_size,
+        GD_SGD=GD_SGD,
+        X=X, scaler=scaling)
+    
+    analyzer_Ridge = DescentAnalyzer(x, y, degree, epochs,
+        batch_size=batch_size,
+        GD_SGD=GD_SGD,
+        X=X, scaler=scaling)
+
+    ############## OLS ##############
+    print("Running for OLS:")
+    analyzer_OLS.run_analysis(method, cost_function, learning_rates, 0, N_bootstraps)
+    print()
+
+    ############## Ridge ##############
+    print("Running for Ridge:")
+    analyzer_Ridge.run_analysis(method, cost_function, learning_rates, lmbdas, N_bootstraps)
+
+    analyzer_OLS.save_data(filename_OLS, overwrite=overwrite)
+    analyzer_Ridge.save_data(filename_Ridge, overwrite=overwrite)
+
+def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_regression="Linear",
+                      ask_me_werd_stuff_in_the_terminal=True, plot=True, xaxis_fontsize=None, yaxis_fontsize=None) -> Tuple[dict, dict]:
+    
+    
+    methods = ["PlaneGradient", "Adagrad", "RMSprop", "Adam"]
+    methods_name_upper = ["PLANEGRADIENT", "ADAGRAD", "RMSPROP", "ADAM"]
+    if method.upper() in methods_name_upper:
+        method_index = methods_name_upper.index(method.upper())
+    else:
+        raise TypeError(f"What is '{method}'?")
+    
+    method = methods[method_index]
+
+    if not (type_regression in ["Linear", "Logistic"]):
+        raise TypeError(f"What is '{type_regression}'.")
+    
+    file_path = f"../Data/{type_regression}/{method}"
+
+    with open(f"{file_path}/OLS{size}x{size}_{index}.pkl", 'rb') as f:
+        data_OLS = pickle.load(f)
+
+    with open(f"{file_path}/Ridge{size}x{size}_{index}.pkl", 'rb') as f:
+        data_Ridge = pickle.load(f)
+
+    lmbdas = data_Ridge["lambdas"]
+    learning_rates = data_Ridge["learning_rates"]
+
+    learning_rates = [float(x) for x in learning_rates]
+
+    OLS_metric = data_OLS[key]
+    Ridge_metric = data_Ridge[key]
+
+    epochs = data_Ridge["epochs"]; batch_size = data_Ridge["batch_size"]
+    print(f"{epochs} epochs, batch size: {batch_size}")
+
+    ############# Plotting #############
+    if plot:
+        fig, ax = plt.subplots(1, figsize=(12,7))
+        ax.plot(learning_rates, OLS_metric)
+        ax.set_xlabel(r"$\eta$")
+        ax.set_yscale("log")
+        ax.set_ylabel(f"{key}")
+        ax.set_title(f"{method} using OLS cost function")
+
+
+        tick = ticker.ScalarFormatter(useOffset=False, useMathText=True)
+        tick.set_powerlimits((0,0))
+
+        xtick_labels = [f"{l:.1e}" for l in lmbdas]
+        ytick_labels = [f"{l:.1e}" for l in learning_rates]
+
+        fig, ax = plt.subplots(figsize = (12, 7))
+        sns.heatmap(Ridge_metric, ax=ax, cmap="viridis", annot=True, xticklabels=xtick_labels, yticklabels=ytick_labels, fmt=".3g")
+        sns.set(font_scale=0.5)
+        ax.set_xlabel(r'$\lambda$')
+        ax.set_ylabel(r'$\eta$')
+        ax.set_title(f"{method} using Ridge cost function")
+        plt.tight_layout()
+        plt.show()
+
+    if ask_me_werd_stuff_in_the_terminal:
+        # Saving
+        save = input("Save (y/n)? ")
+        if save.upper() in ["Y", "YES", "YE"]:
+            msg_less = "Show values less than (type no for show values greater than)"; less_than = True 
+            msg_great = "Show values greater than (type no for show values less than)"
+            msg = msg_less 
+            while True:
+                x =  input(f"{msg}: ")
+                ask_happy = True 
+                if less_than:
+                    if x.upper() in ["NO", "N", ""]:
+                        less_than = False; msg = msg_great; ask_happy = False
+                    else:
+                        plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(x), xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
+                        plt.show()
+                else:
+                    if x.upper() in ["NO", "N", ""]:
+                        less_than = True; msg = msg_less; ask_happy = False
+                    else:
+                        plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_greater_than=float(x), xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
+                        plt.show()
+                    
+                if ask_happy:
+                    happy = input("Happy (y/n)? ")
+                    if happy.upper() in ["Y", "YES", "YE"]:
+                        title = input("Title: ") 
+                        filename = input("Filename: ")
+                        latex_fonts()
+                        
+                        if less_than:
+                            plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_less_than=float(x), title=title, savefig=True, filename=filename, xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
+                        else:
+                            plot_2D_parameter_lambda_eta(lmbdas, learning_rates, Ridge_metric, only_greater_than=float(x), title=title, savefig=True, filename=filename, xaxis_fontsize=xaxis_fontsize, yaxis_fontsize=yaxis_fontsize)
+
+                        plt.show()
+                        exit()
+                    
+                    elif happy.upper() in ["Q", "QUIT", "X"]:
+                        exit()
+
+    return data_OLS, data_Ridge
 
 def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False, annot=True, only_less_than=None, only_greater_than=None, xaxis_fontsize=None, yaxis_fontsize=None):
     """
@@ -1375,99 +1380,3 @@ def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, 
     if savefig:
         plt.savefig(f'Figures/{filename}.pdf')
     plt.show()
-
-# def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False, annot=True, only_less_than=None, only_greater_than=None, xaxis_fontsize=None, yaxis_fontsize=None):
-#     """
-#     Plots a 2D heatmap with lambda and eta as inputs.
-
-#     Arguments:
-#         lambdas: array-like
-#             Values for the regularization parameter (lambda) on the x-axis.
-#         etas: array-like
-#             Values for the learning rate (eta) on the y-axis.
-#         value: 2D array-like
-#             Values for each combination of lambda and eta.
-#         title: str
-#             Title of the plot.
-#         x_log: bool
-#             If True, x-axis is logarithmic.
-#         y_log: bool
-#             If True, y-axis is logarithmic.
-#         savefig: bool
-#             If True, saves the plot as a PDF. Don't include file extension
-#         filename: str
-#             Name for the saved file if savefig is True.
-#         Reverse_cmap: bool
-#             If True, reverses the color map. Useful for comparison between MSE (low = good) and accuracy (high = good).
-#     """
-#     cmap = 'plasma'
-#     if Reverse_cmap == True:
-#         cmap = 'plasma_r'
-#     fig, ax = plt.subplots(figsize = (12, 7))
-#     tick = ticker.ScalarFormatter(useOffset=False, useMathText=True)
-#     tick.set_powerlimits((0, 0))
-#     if x_log:
-#         t_x = [u'${}$'.format(tick.format_data(lambd)) for lambd in lambdas]
-#     else:
-#         t_x = [fr'${lambd}$' for lambd in lambdas]
-#     if y_log:
-#         t_y = [u'${}$'.format(tick.format_data(eta)) for eta in etas]
-#     else:
-#         t_y = [fr'${eta}$' for eta in etas]
-
-    
-#     if only_less_than is not None and (only_greater_than is None):
-#         annot_data = np.where(value < only_less_than, np.round(value, 3).astype(str), "")
-#         sns.heatmap(
-#             data=value,
-#             ax=ax,
-#             cmap=cmap,
-#             annot=annot_data,  # Use the formatted conditional annotations
-#             fmt="",  # Set fmt to an empty string as annotations are pre-formatted
-#             annot_kws={"size": 6.5},
-#         )
-#         x_labels = [f"{float(label):.1e}" for label in lambdas]
-#         y_labels = [f"{float(label):.1e}" for label in etas]
-
-#         # Apply the formatted labels with rotation and font adjustments
-#         ax.set_xticklabels(x_labels, rotation=45, ha='right', fontsize=14)
-#         ax.set_yticklabels(y_labels, rotation=0, fontsize=14)
-    
-#     elif only_greater_than is not None and (only_less_than is None):
-#         annot_data = np.where(value > only_greater_than, np.round(value, 3).astype(str),"")
-#         sns.heatmap(
-#             data=value,
-#             ax=ax,
-#             cmap=cmap,
-#             annot=annot_data,  # Use the formatted conditional annotations
-#             fmt="",  # Set fmt to an empty string as annotations are pre-formatted
-#             annot_kws={"size": 6.5},
-#         )
-#         x_labels = [f"{float(label):.1e}" for label in lambdas]
-#         y_labels = [f"{float(label):.1e}" for label in etas]
-
-#         # Apply the formatted labels with rotation and font adjustments
-#         ax.set_xticklabels(x_labels, rotation=45, ha='right', fontsize=14)
-#         ax.set_yticklabels(y_labels, rotation=0, fontsize=14)
-
-#     else:
-#         sns.heatmap(data = value, ax = ax, cmap = cmap, annot=annot, fmt=".3f",  xticklabels=t_x, yticklabels=t_y)
-
-#     if title is not None:
-#         plt.title(title)
-
-#     if xaxis_fontsize is None:
-#         plt.xlabel(r'$\lambda$')
-#     else:
-#         plt.xlabel(r'$\lambda$', fontsize=xaxis_fontsize)
-
-#     if yaxis_fontsize is None:
-#         plt.ylabel(r'$\eta$')
-#     else:
-#         plt.ylabel(r'$\eta$', fontsize=yaxis_fontsize)
-
-#     plt.xlim(0, len(lambdas))
-#     plt.ylim(0, len(etas))
-#     plt.tight_layout()
-#     if savefig:
-#         plt.savefig(f'Figures/{filename}.pdf')
