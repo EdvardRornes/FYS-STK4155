@@ -112,7 +112,7 @@ Over the last few years, machine learning and neural networks have become an inc
 
 Neural networks excel at handling complex, nonlinear relationships in data. Their flexibility in approximating intricate patterns has made them indispensable across diverse fields, including biology, engineering, finance, and physics. For just a few examples, see \cite{dawid2023modernapplicationsmachinelearning,thapar2023applicationsmachinelearningmodelling,mohammadi2022applicationsmachinelearninghealthcare}.
 
-The main goal of this project is to gain a deeper understanding of neural networks by first exploring the fundamentals of linear and logistic regression. To achieve this, we implement and experiment with various optimization techniques, comparing the performance of linear and logisitic regression to that of neural networks. We use data generated from the Franke function to evaluate linear regression, and the binary breast cancer dataset from \texttt{sklearn}'s datasets \cite{sklearn} to assess logistic regression. The project first introduces the theory behind linear/logisitic regression and neural networks, before proceeding to explain how this is implemented. Results are then presented, and the performance of linear/logistic regression is compared to the performance of the implemented neural network, and the known neural network of \texttt{sklearn}'s \texttt{keras}.
+The main goal of this project is to gain a deeper understanding of neural networks by first exploring the fundamentals of linear and logistic regression. To achieve this, we implement and experiment with various optimization techniques, comparing the performance of linear and logistic regression to that of neural networks. We use data generated from the Franke function to evaluate linear regression, and the binary breast cancer dataset from \texttt{sklearn}'s datasets \cite{sklearn} to assess logistic regression. The project first introduces the theory behind linear/logistic regression and neural networks, before proceeding to explain how this is implemented. Results are then presented, and the performance of linear/logistic regression is compared to the performance of the implemented neural network, and the known neural network of \texttt{sklearn}'s \texttt{keras}.
 
 \section{Methods}
 In this section we present the various methods used in this report. For reference, the Franke function which we will be using to test our linear regression methods is:
@@ -305,17 +305,17 @@ On the cancer data we use StandardScaling to scale the data after splitting it t
 
 
 \section{Results \& Discussion}
-We represent the results and compare the various methods. The larger plots have been placed in Appendix \ref{Appendix:A} to preserve space for the sake of readability.
+We represent the results and compare the various methods. The larger plots have been placed in Appendix \ref{Appendix:A} to preserve space for the sake of readability. More figures can be found in the \texttt{Figures} folder.
 
 \subsection{Franke}
 \subsubsection{Linear Regression}
-MSE scores from linear regression for plain SGD and the three more advanced optimization methods (AdaGrad, RMSprop and Adam), for different epoch and batch sizes, and for both constant and learning rates, can be found in the \texttt{Figures}-folder. Fig \ref{fig:LinReg} is composed of one figure each for each of the optimization methods, for epochs \(N\in\{10, 100\}\) and a batch size of 4. 
+MSE scores from linear regression for plain SGD and the three more advanced optimization methods (AdaGrad, RMSprop and Adam), for different epoch and batch sizes, and for both constant and learning rates, can be found in the \texttt{Figures}-folder, look for files on the form \emph{LinReg...pdf}. Fig \ref{fig:LinReg} is composed of one figure each for each of the optimization methods, for epochs \(N\in\{10, 100\}\) and a batch size of 4. 
 
-For plain SGD with a varying \(\eta\), higher epoch size and smaller batch sizes lowered the MSE scores, suggesting a stable convergence. However, with a constant learning rate, the MSE scores blew up, implying that the algorithm skipped the global minima and continued either towards a local minimum or straight up diverged. This can be seen from plots in \texttt{Figures} (look for \emph{LinRegPlainSGD\_constEta...pdf}), where all MSE scores are equal to \(\sim 0.207\). This feature was not seen in any of other optimization methods. Both RMSprop and Adam showed a clear convergence when increasing (decreasing) the epoch size (batch size). However, RMSprop did not converge for constant learning rates. For varying learning rate, RMSprop gave low MSE scores, that is, with \(t_{1} = 2/\eta_{\text{const}}\sim [2\cdot 10^{2}, 2]\). In this range, RMSprop gave quite good results, averaging an MSE score of \(\sim [0.1, 0.01]\). 
+For plain SGD with a varying \(\eta\), higher epoch sizes and smaller batch sizes lowered the MSE scores, suggesting a stable convergence. However, with a constant learning rate, the MSE scores blew up, implying that the algorithm skipped the global minima and continued either towards a local minimum or straight up diverged. This can be seen from plots in \texttt{Figures} (look for \emph{LinRegplainSGD\_constEta...pdf}), where all MSE scores are equal to \(\sim 0.207\). This feature was not seen in any of other optimization methods. Both RMSprop and Adam showed a clear convergence when increasing (decreasing) the epoch size (batch size). However, RMSprop did not converge for constant learning rates. For varying learning rate, RMSprop gave low MSE scores, that is, with \(t_{1} = 2/\eta_{\text{const}}\sim [2, 2\cdot 10^{2}]\). In this range, RMSprop gave quite good results, averaging an MSE score of \(\sim [0.1, 0.01]\). 
 
 On the other hand, Adam converged for both varying and constant learning rates, and essentially outperformed all the other algorithms by giving lesser MSE scores overall. In fact, Adam seemed to treat varying and constant learning rates the same, in the sense that for \(\eta_{\text{const}}\sim[2\cdot10^{-2}, 1]\), it averaged an MSE score of \(\lessapprox 0.1\).
 
-The odd one out was AdaGrad. Giving the largest MSE scores, AdaGrad performed the worse out of all the optimization methods. In fact, AdaGrad seemed to not converge at all, rather producing sort of random data. We found this somewhat strange, and have concluded that there could be that there is a flaw in the implementation of AdaGrad. 
+The odd one out was AdaGrad. Giving the largest MSE scores, AdaGrad performed the worse out of all the optimization methods. In fact, AdaGrad seemed to not converge at all, rather producing sort of random data. We found this somewhat strange, and we suggest that there could be that there is a flaw in the implementation of AdaGrad. On the other hand, AdaGrad showed good results for logistic regression (see sec. \ref{sec:cancer_data_logisit_regression}).
 
 Together, the results show an overall better performance for varying learning rate, compared to that of a constant learning rate. Plain SGD is especially effected by this, compared to Adam which seems to converge for both varying and constant learning rates. Common for all optimization methods, except plain SGD, was that an increase (decrease) in number of epochs (batch size) gave better MSE scores.
 
@@ -344,9 +344,8 @@ We then did the above again, but now with a regularization parameter $\lambda$ a
 \end{figure}
 
 \subsection{Cancer Data}
-We then test both logistic regression and the NN on the cancer data from \texttt{sklearn}. This data-set consist of 572 samples, each of which contains 30 features. Due to us using $25\%$ of our data for testing, we thus have $143$ test-points to work with.
-
-\subsubsection{Logistic Regression}
+\subsubsection{Logistic Regression} \label{sec:cancer_data_logisit_regression}
+Fig. \ref{fig:LogReg} shows the accuracy score of (plain stochastic) logistic regression for batch size \(N\in\{10, 100\}\) and a batch size \(b=50\), more figures can be found in the \texttt{Figures} folder. Note that the figures to the right in fig. \ref{fig:LogReg} are zoomed in versions of the one to the right, and the varying learning rate has been used. This figure shows an average accuracy score of \(\sim 0.97\) for \(t_1 = 2/\eta_{\text{const}} \sim[10^{-2}, 10^{-1}]\). The more advanced optimization methods were briefly looked into, showing similar results. However, Adam diverged for \(N=100\), and AdaGrad showed promising results (accuracy scores above \(0.9\)), the opposite behavior of what we saw for linear regression.
 
 \subsubsection{Neural Network}  
 The accuracy of the FFNN using three activation function across different values of $\eta$ and $\lambda$ is presented in Fig \ref{fig:FFNN_cancer_heatmaps}. 
@@ -371,6 +370,7 @@ There are plentiful of avenues to pursue here to extend and improve our analysis
 \appendix
 \section{Large Figures}
 \label{Appendix:A}
+A selection of figures, more can be found in the \texttt{Figures} folder.
 
 %%%%%%%%%%%%%% Franke %%%%%%%%%%%%%%
 
@@ -463,7 +463,7 @@ There are plentiful of avenues to pursue here to extend and improve our analysis
 		\caption{Logistic regression for cancer data with \(100\) epochs, batch size \(50\).}
 		\label{fig:LogReg25x25_epoch100_bacthS50_zoomed}
 	\end{subfigure}
-	\caption{Accuracy score for logistic regression, for number of epochs \(N=10\) (left), \(N=100\) (right). The figures to the right are zoomed in versions of the ones to the left.}
+	\caption{Accuracy score for logistic regression, for number of epochs \(N=10\) (left), \(N=100\) (right). The figures to the right are zoomed in versions of the ones to the left. A varying learning rate has been used, with \(t_0=2\), \(t_{1} = 2/\eta_{\text{const}} \in [10^{-10}, 1]\)}
 	\label{fig:LogReg}
 \end{figure*}
 
@@ -491,59 +491,59 @@ There are plentiful of avenues to pursue here to extend and improve our analysis
 
 %%%%%%%%%%%%%%%% Bunch of different MSE plots, linear regression %%%%%%%%%%%%%%%%
 
-% % PlainSGD with varying learning rate
+% % plainSGD with varying learning rate
 % \begin{figure*}
 % 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegPlaneSGD_varyEta_10epochs_5batchS.pdf}
+% 		\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_varyEta_10epochs_5batchS.pdf}
 % 		\caption{\(10\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegPlaneSGD_varyEta_10epochs_5batchS}
+% 		\label{fig:LinRegplainSGD_varyEta_10epochs_5batchS}
 % 	\end{subfigure}
 % 	\hfill
 % 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegPlaneSGD_varyEta_100epochs_5batchS.pdf}
+% 		\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_varyEta_100epochs_5batchS.pdf}
 % 		\caption{\(100\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegPlaneSGD_varyEta_100epochs_5batchS}
+% 		\label{fig:LinRegplainSGD_varyEta_100epochs_5batchS}
 % 	\end{subfigure}
 % \hfill\newline
 % \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegPlaneSGD_varyEta_10epochs_10batchS.pdf}
+% 	\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_varyEta_10epochs_10batchS.pdf}
 % 	\caption{\(10\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegPlaneSGD_varyEta_10epochs_5batchS}
+% 	\label{fig:LinRegplainSGD_varyEta_10epochs_5batchS}
 % \end{subfigure}
 % \hfill
 % \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegPlaneSGD_varyEta_100epochs_10batchS.pdf}
+% 	\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_varyEta_100epochs_10batchS.pdf}
 % 	\caption{\(100\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegPlaneSGD_varyEta_100epochs_5batchS}
+% 	\label{fig:LinRegplainSGD_varyEta_100epochs_5batchS}
 % \end{subfigure}
 % \caption{MSE scores using plain SGD with a varying learning rate; see \eqref{eq:varyin_learning_rate}, \(t_0=2\) and \(t_1=\eta\), where \(\eta\) can be read from the y-axis.}
 % \label{fig:PlangeSGD_varyEta}
 % \end{figure*}
 
-% % PlaneSGD with constant learning rate
+% % plainSGD with constant learning rate
 % \begin{figure*}
 % 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegPlaneSGD_constEta_10epochs_5batchS.pdf}
+% 		\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_constEta_10epochs_5batchS.pdf}
 % 		\caption{\(10\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegPlaneSGD_constEta_10epochs_5batchS}
+% 		\label{fig:LinRegplainSGD_constEta_10epochs_5batchS}
 % 	\end{subfigure}
 % 	\hfill
 % 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegPlaneSGD_constEta_100epochs_batchS10.pdf}
+% 		\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_constEta_100epochs_batchS10.pdf}
 % 		\caption{\(100\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegPlaneSGD_constEta_100epochs_5batchS}
+% 		\label{fig:LinRegplainSGD_constEta_100epochs_5batchS}
 % 	\end{subfigure}
 % \hfill\newline
 % \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegPlaneSGD_constEta_10epochs_10batchS.pdf}
+% 	\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_constEta_10epochs_10batchS.pdf}
 % 	\caption{\(10\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegPlaneSGD_constEta_10epochs_5batchS}
+% 	\label{fig:LinRegplainSGD_constEta_10epochs_5batchS}
 % \end{subfigure}
 % \hfill
 % \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegPlaneSGD_constEta_100epochs_batchS10.pdf}
+% 	\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_constEta_100epochs_batchS10.pdf}
 % 	\caption{\(100\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegPlaneSGD_constEta_100epochs_5batchS}
+% 	\label{fig:LinRegplainSGD_constEta_100epochs_5batchS}
 % \end{subfigure}
 % \caption{MSE scores using plain SGD with a constant learning rate.}
 % \label{fig:PlangeSGD_constEta}
