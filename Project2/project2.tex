@@ -140,7 +140,7 @@ Regularization is a technique to prevent overfitting by adding a penalty to the 
 
 The two common regularization methods that we inspected previously are Ridge and Lasso regularization. In this project, we will only be considering Ridge regularization, where the cost function is given by
 \begin{align}
-	C_\text{Ridge}(\bm \beta)=C_\text{OLS}(\bm\beta)+\lambda\bm\beta_2^2,
+	C_\text{Ridge}(\bm \beta)=C_\text{OLS}(\bm\beta)+\lambda\|\bm\beta\|_2^2,
 \end{align}
 where \(C_\text{OLS}(\bm\beta)\) is the ordinary least squares cost function, \(\bm\beta\) represents the model parameters, and the hyperparameter \(\lambda\) controls the magnitude of the penalty to large coefficients. For more details on regularization in linear regression, see \cite{project1}.
 
@@ -181,7 +181,7 @@ Gradient descent (GD) is an essential optimization algorithm in machine learning
 \begin{align}
 	\theta_i^{(j+1)}=\theta_i^{(j)}-\eta\pdv{C}{\theta_i},
 \end{align}
-where $\eta$ is the learning rate. Batch gradient descent (BGD) calculates the gradient over the entire dataset:
+where $\eta$ is the \textbf{learning rate}. Batch gradient descent (BGD) calculates the gradient over the entire dataset:
 \begin{align}
 	\theta^{(j+1)}=\theta^{(j)}-\eta\nabla_\theta C.
 \end{align}
