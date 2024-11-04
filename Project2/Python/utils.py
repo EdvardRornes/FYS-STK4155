@@ -1269,9 +1269,9 @@ def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_reg
     if ask_me_werd_stuff_in_the_terminal:
         # Saving
         save = input("Save (y/n)? ")
-        print(f"{data_Ridge["optimizer_name"]}, epochs: {data_Ridge["epochs"]}, batch_size: {data_Ridge["batch_size"]}")
-        print(f"Learning rates: [{data_Ridge["learning_rates"][0]}...{data_Ridge["learning_rates"][-1]}]")
-        print(f"lambdas: [{data_Ridge["lambdas"][0]}...{data_Ridge["lambdas"][-1]}]")
+        print(f"{data_Ridge['optimizer_name']}, epochs: {data_Ridge['epochs']}, batch_size: {data_Ridge['batch_size']}")
+        print(f"Learning rates: [{data_Ridge['learning_rates'][0]}...{data_Ridge['learning_rates'][-1]}]")
+        print(f"lambdas: [{data_Ridge['lambdas'][0]}...{data_Ridge['lambdas'][-1]}]")
         if save.upper() in ["Y", "YES", "YE"]:
             msg_less = "Show values less than (type no for show values greater than)"; less_than = True 
             msg_great = "Show values greater than (type no for show values less than)"

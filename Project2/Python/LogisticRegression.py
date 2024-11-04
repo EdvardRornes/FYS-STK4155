@@ -1,5 +1,6 @@
 from utils import *
 from sklearn.datasets import load_breast_cancer
+from sklearn.metrics import confusion_matrix
 
 """
 This codes stores and saves data calling it data_OLS and data_Ridge. This has nothing to do with OLS or Ridge, just a refering to the 
@@ -60,18 +61,13 @@ if __name__ == "__main__":
     # print(f"Total duration: {(time.time() - start_time)/60:1f} min.") # 229.338515 min.
 
     ######## Reads data ########
-    for method_index in range(3, len(methods_name)):
-        method = methods_name[method_index]
-        index = 7
-        while True:
-            try:
-                data_OLS, data_Ridge = analyze_save_data(method, size, index, type_regression="Logistic", ask_me_werd_stuff_in_the_terminal=True, plot=True, key="accuracy_test", xaxis_fontsize=14, yaxis_fontsize=14)
+    # for method_index in range(3, len(methods_name)):
+    #     method = methods_name[method_index]
+    #     index = 7
+    #     while True:
+    #         try:
+    #             data_OLS, data_Ridge = analyze_save_data(method, size, index, type_regression="Logistic", ask_me_werd_stuff_in_the_terminal=True, plot=True, key="accuracy_test", xaxis_fontsize=14, yaxis_fontsize=14)
 
-                index += 1
-            except:
-                break
-
-    """
-    Accuracy score for Adam (const $\eta$, 100 epochs, batch size: 150)
-    LogRegAdam_constEta_100epochs_batchS150
-    """
+    #             index += 1
+    #         except:
+    #             break
