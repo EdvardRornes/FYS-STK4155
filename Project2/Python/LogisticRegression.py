@@ -41,28 +41,28 @@ if __name__ == "__main__":
 
 
     ######## Large data ########
-    start_time = time.time()
-    for method_index in range(len(methods_name)):
-        for varying_learing_rate in varying_learing_rates:
-            for e in epochs:
-                for b in batch_size:
-                    method = methods_name[method_index]; GD_SGD = "SGD"
+    # start_time = time.time()
+    # for method_index in range(len(methods_name)):
+    #     for varying_learing_rate in varying_learing_rates:
+    #         for e in epochs:
+    #             for b in batch_size:
+    #                 method = methods_name[method_index]; GD_SGD = "SGD"
                     
-                    if varying_learing_rate:                    
-                        learning_rate = [LearningRate(2, 2/learning_rates[i], N, b, str(learning_rates[i])) for i in range(len(learning_rates))]
-                    else:
-                        learning_rate = learning_rates
+    #                 if varying_learing_rate:                    
+    #                     learning_rate = [LearningRate(2, 2/learning_rates[i], N, b, str(learning_rates[i])) for i in range(len(learning_rates))]
+    #                 else:
+    #                     learning_rate = learning_rates
 
-                    create_data(None, y, method, e, learning_rates, lmbdas, batch_size=b, X=x, type_regression="Logistic", cost_function=costfunction, overwrite=False, N_bootstraps=4)
+    #                 create_data(None, y, method, e, learning_rates, lmbdas, batch_size=b, X=x, type_regression="Logistic", cost_function=costfunction, overwrite=False, N_bootstraps=4)
         
-        print(f"{method} completed, time taken: {(time.time() - start_time)/60:1f} min.")
+    #     print(f"{method} completed, time taken: {(time.time() - start_time)/60:1f} min.")
 
-    print(f"Total duration: {(time.time() - start_time)/60:1f} min.") # 229.338515 min.
+    # print(f"Total duration: {(time.time() - start_time)/60:1f} min.") # 229.338515 min.
 
     ######## Reads data ########
-    for method_index in range(len(methods_name)):
+    for method_index in range(3, len(methods_name)):
         method = methods_name[method_index]
-        index = 0
+        index = 7
         while True:
             try:
                 data_OLS, data_Ridge = analyze_save_data(method, size, index, type_regression="Logistic", ask_me_werd_stuff_in_the_terminal=True, plot=True, key="accuracy_test", xaxis_fontsize=14, yaxis_fontsize=14)
@@ -70,3 +70,8 @@ if __name__ == "__main__":
                 index += 1
             except:
                 break
+
+    """
+    Accuracy score for Adam (const $\eta$, 100 epochs, batch size: 150)
+    LogRegAdam_constEta_100epochs_batchS150
+    """
