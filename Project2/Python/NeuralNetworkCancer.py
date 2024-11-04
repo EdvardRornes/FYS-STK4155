@@ -17,11 +17,11 @@ warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow enc
 np.random.seed(1)
 
 latex_fonts()
-save = True
+save = False
 
 # Load the dataset
 cancer = load_breast_cancer()
-X_train, X_test, y_train, y_test = train_test_split(cancer.data, cancer.target.reshape(-1, 1), random_state=1, test_size=0.25)
+X_train, X_test, y_train, y_test = train_test_split(cancer.data, cancer.target.reshape(-1, 1), test_size=0.25, random_state=42)
 scaler = StandardScaler()
 scaler.fit(X_train)
 X_train = scaler.transform(X_train)
@@ -29,7 +29,7 @@ X_test = scaler.transform(X_test)
 
 # Hyperparameter ranges
 hidden_layers = [15, 30, 15, 8, 4, 2]
-epochs = [100]
+epochs = [5]
 batchsize = 50
 # Tighter logspace needed for etas, nicer values for plotting.
 eta_lower = -4
@@ -61,7 +61,6 @@ best_predictions = {}
 for epoch in epochs:
     for activation in activations:
         # Initialize variables to track the best parameters and predictions
-        best_mse = float('inf')
         best_accuracy = 0
         best_lambda = None
         best_eta = None
@@ -82,7 +81,7 @@ for epoch in epochs:
                 y_pred_binary = (y_pred > 0.5).astype(int).flatten()
                 # Calculate accuracy
                 accuracy = accuracy_score(y_test, y_pred_binary)
-                # Store the MSE in the matrix
+                # Store the accuracy in the matrix
                 accuracy_matrix[i, j] = accuracy
                 # Store the results
                 results[(activation, lambd, eta)] = {'accuracy': accuracy}
@@ -105,10 +104,10 @@ for epoch in epochs:
                     best_y_pred_binary = y_pred_binary
 
         # Save the best parameters and predictions for each activation function
-        best_params[epoch][activation] = (best_lambda, best_eta, best_mse, best_accuracy)
+        best_params[epoch][activation] = (best_lambda, best_eta, best_accuracy)
         best_predictions[activation] = (best_y_pred_binary, y_test)
 
-        # 2D map of MSE
+        # 2D map of the accuracy
         plot_2D_parameter_lambda_eta(
             lambdas=lambdas,
             etas=etas,
@@ -122,10 +121,10 @@ for epoch in epochs:
         )
 
 # Best parameters for each activation function for each epoch count
-# for epoch, activations_dict in best_params.items():
-#     for activation, (lambd, eta, accuracy) in activations_dict.items():
-#         print(f"Best combination for activation '{activation}' at {epoch} epochs: "
-#               f"Lambda = {lambd:.2e}, Learning Rate = {eta:.2e}, Accuracy = {100*accuracy:.1f}%")
+for epoch, activations_dict in best_params.items():
+    for activation, (lambd, eta, accuracy) in activations_dict.items():
+        print(f"Best combination for activation '{activation}' at {epoch} epochs: "
+              f"Lambda = {lambd:.2e}, Learning Rate = {eta:.2e}, Accuracy = {100*accuracy:.1f}%")
 
 
 # Plotting the confusion matrix for the best predictions
