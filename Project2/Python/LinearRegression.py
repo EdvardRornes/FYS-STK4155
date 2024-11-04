@@ -40,7 +40,8 @@ if __name__ == "__main__":
     lmbdas = np.logspace(-10, 1, size)
     learning_rates = np.logspace(np.log10(1e-10), np.log10(1e0), size)
     start_time = time.time()
-    for method_index in range(len(methods_name)):
+    for method_index in range(3, len(methods_name)):
+        
         for varying_learing_rate in varying_learing_rates:
             for e in epochs:
                 for b in batch_size:

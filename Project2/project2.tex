@@ -102,7 +102,7 @@ aps,
 \date{\today}
 
 \begin{abstract}
-	In recent years, neural networks have become increasingly important for advancements in various scientific fields. In this report, we develop a program\footnote{\href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project1}{Github}} that consists of both linear and logistic regression methods and a feed-forward neural network. In particular, the program implements gradient descent, stochastic gradient descent, and a simple feed-forward neural network with backpropagation. The neural network is evaluated against linear regression on the Franke function and against logistic regression using sklearn's breast cancer data, where it identifies malignant tumors. We explore three activation functions: Sigmoid, ReLU, and LeakyReLU. The analysis involves tuning the number of epochs, hidden nodes, and the hyperparameters $\lambda$ (regularization) and $\eta$ (learning rate) to optimal values. On the Franke function, our own implementation of the neural network achieved a peak $R^2$-score of $x$ and $y$ respectively. For the cancer data, the highest accuracies achieved with ReLU, , and Sigmoid activation functions were $97.9\%, 98.6\%$, and $97.9\%$, respectively, compared to $z\%$ for logistic regression. Notably, both the Sigmoid and LeakyReLU activation functions exhibited minimal sensitivity to variations in the hyperparameter $\lambda$ at optimal learning rates, whereas ReLU showed significant responsiveness. Overall, while LeakyReLU yielded the best performance across all tests, its improvement over the other activation functions was marginal when applied to the cancer dataset, but considerate on the Franke function. Additionally, the Sigmoid activation function was found to be appreciably slower than the ReLU variants.
+	In recent years, neural networks have become increasingly important for advancements in various scientific fields. In this report, we develop a program\footnote{\href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project1}{Github}} that consists of both linear and logistic regression methods and a feed-forward neural network. In particular, the program implements gradient descent, stochastic gradient descent, the optimization methods AdaGrad, RMSprop and Adam, and a simple feed-forward neural network with backpropagation. The neural network is evaluated against linear regression on the Franke function and against logistic regression using sklearn's breast cancer data. We explore three activation functions: Sigmoid, ReLU, and LeakyReLU. The analysis involves tuning the number of epochs, hidden nodes, and the hyperparameters $\lambda$ (regularization) and $\eta$ (learning rate) to optimal values. On the Franke function, our own implementation of the neural network achieved a peak $R^2$-score of $x$ and $y$ respectively. For the cancer data, the highest accuracies achieved with ReLU, , and Sigmoid activation functions were $97.9\%, 98.6\%$, and $97.9\%$, respectively, compared to $z\%$ for logistic regression. Notably, both the Sigmoid and LeakyReLU activation functions exhibited minimal sensitivity to variations in the hyperparameter $\lambda$ at optimal learning rates, whereas ReLU showed significant responsiveness. Overall, while LeakyReLU yielded the best performance across all tests, its improvement over the other activation functions was marginal when applied to the cancer dataset, but considerate on the Franke function. Additionally, the Sigmoid activation function was found to be appreciably slower than the ReLU variants.
 \end{abstract}
 
 \maketitle
@@ -308,7 +308,7 @@ We represent the results and compare the various methods. The larger plots have 
 
 \subsection{Franke}
 \subsubsection{Linear Regression}
-MSE scores from linear regression for plain SGD and the three more advanced optimization methods (AdaGrad, RMSprop and Adam), for different epoch and batch sizes, and for both constant and varying learning rates, can be found in the \texttt{Figures}-folder, look for files on the form \emph{LinReg...pdf}. Fig \ref{fig:LinReg} is composed of one figure for each of the optimization methods, for epochs \(N\in\{10, 100\}\) and a batch size of 4. 
+MSE scores from linear regression for plain SGD and the three more advanced optimization methods (AdaGrad, RMSprop and Adam), for different epoch and batch sizes, and for both constant and varying learning rates, can be found in the \texttt{Figures}-folder, look for files on the form \emph{LinReg...pdf}. Figs \ref{fig:LinReg}, \ref{fig:LinReg_250} are composed of one figure for each of the optimization methods, for epochs \(N\in=20, 250\) and a batch size of \(4, 50\), respectively. 
 
 For plain SGD with a varying \(\eta\), increasing epoch sizes and decreasing batch sizes lowered the MSE scores, suggesting a stable convergence. However, with a constant learning rate, the MSE scores blew up, implying that the algorithm skipped the global minima and diverged. This can be seen from plots in \texttt{Figures} (look for \emph{LinRegplainSGD\_constEta...pdf}), where all MSE scores are equal to \(\sim 0.207\). This feature was not seen in any of other optimization methods. Both RMSprop and Adam showed a clear convergence when increasing (decreasing) the epoch size (batch size). However, RMSprop did not converge for constant learning rates. For varying learning rate, RMSprop gave low MSE scores, that is, with \(t_{1} = 2/\eta_{\text{const}}\sim [2, 2\cdot 10^{2}]\). In this range, RMSprop gave quite good results, averaging an MSE score of \(\sim [0.1, 0.01]\). 
 
@@ -317,6 +317,8 @@ On the other hand, Adam converged for both varying and constant learning rates, 
 The odd one out was AdaGrad. Giving the largest MSE scores, AdaGrad performed the worse out of all the optimization methods. In fact, AdaGrad seemed to not converge at all for too high batch sizes, rather producing sort of random data. We found this somewhat strange, as on the other hand, AdaGrad showed good results for logistic regression (see sec. \ref{sec:cancer_data_logisit_regression}), and for small batch sizes, e.q. \(4\) in fig. \ref{fig:LinReg25x25_epoch10_bacthS50_zoomed} it gave MSE scores \(\lessapprox 0.1\) for varying learning rates with \(t_1\sim[1.8\cdot 10^{-2}, 3.5]\).
 
 Together, the results show an overall better performance for varying learning rate, compared to that of a constant learning rate. Plain SGD is especially effected by this, compared to Adam which seems to converge for both varying and constant learning rates. Common for all optimization methods, except plain SGD, was that an increase (decrease) in number of epochs (batch size) gave better MSE scores.
+
+\subsubsection{Comparison}
 
 \subsubsection{Neural Network}
 The results for the MSE and $R^2$ as a function of the learning rate $\eta$ with 1000 epochs with our own FFNN with different activation functions and keras NN with the sigmoid activation function are given in Fig. \ref{fig:NN_Franke_LR_1000}. In this particular plot we are not using any regularization terms. The reason for this is simply due to \texttt{keras} being very slow, but we still wanted to include it as a reference. The optimal learning rates for $\lambda=0$ can easily be read off this plot: $\{10^{-3},10^{-3},3\times10^{-3},2\times 10^{-2}\}$ for \{ReLU, Sigmoid, LReLU, \texttt{keras}\}.
@@ -355,6 +357,8 @@ The results suggest that ReLU and LReLU handle a wider range of learning rates a
 
 Additionally, inputs to the Sigmoid function were clipped to prevent overflow, which might have impacted its accuracy. The slightly higher accuracy of LReLU over ReLU suggests it may provide an advantage by maintaining small gradients for negative inputs, offering a more stable training process. However, this difference, amounting to just one correct guess, may simply reflect statistical variance.
 
+\subsubsection{Comparison}
+
 \section{Conclusion}
 On the Franke function, we found that Sigmoid is not overly sensitive to changes in the learning rate and hyperparameter $\lambda$, but also struggles to get good results. On the other hand ReLU has the ability to get great results, but only for very specific combinations of $\eta$ and $\lambda$. LReLU seems to be the best of both worlds, being relatively insensitive to getting the exact right combination of $\eta$ and $\lambda$, whilst still managing to obtain very good MSE scores like ReLU.
 
@@ -377,29 +381,57 @@ A selection of figures, more can be found in the \texttt{Figures} folder.
 \begin{figure*}
 	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Figures/LinRegSGD_25x25_epoch10_batchS4.pdf}
-		\caption{MSE score using SGD for franke data with \(10\) epochs, batch size \(4\).}
+		\caption{MSE score using SGD for franke data.}
 		\label{fig:LinReg25x25_epoch10_bacthS50}
 	\end{subfigure}
 	\hfill
 	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Figures/LinRegAdaGrad_25x25_epoch10_batchS4.pdf}
-		\caption{MSE score using AdaGrad for franke data with \(10\) epochs, batch size \(4\).}
+		\caption{MSE score using AdaGrad for franke data.}
 		\label{fig:LinReg25x25_epoch10_bacthS50_zoomed}
 	\end{subfigure}
 \hfill\newline
 	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Figures/LinRegRMSprop_25x25_epoch10_batchS4.pdf}
-		\caption{MSE score using RMSprop for franke data with \(10\) epochs, batch size \(4\).}
+		\caption{MSE score using RMSprop for franke data.}
 		\label{fig:LinReg25x25_epoch100_bacthS50}
 	\end{subfigure}
 	\hfill
 	\begin{subfigure}{0.41\textwidth}
 		\includegraphics[width=\textwidth]{Figures/LinRegAdam_25x25_epoch10_batchS4_zoomed.pdf}
-		\caption{MSE score using Adam for franke data with \(10\) epochs, batch size \(4\).}
+		\caption{MSE score using Adam for franke data.}
 		\label{fig:LinReg25x25_epoch100_bacthS50_zoomed}
 	\end{subfigure}
-	\caption{MSE scores for linear regression, for number of epochs \(N=10\) (left), \(N=100\) (right). The figures to the right are zoomed in versions of the ones to the left.}
+	\caption{MSE scores for linear regression on \(20\) data samples from the Franke function, for number of epochs \(N=10\) and a batch size of \(4\). A varying learning rate is used, and the \(y\)-axis denotes \(\eta_{\text{const}}\), which is used to set \(t_1\) in \eqref{eq:varyin_learning_rate}.}
 	\label{fig:LinReg}
+\end{figure*}
+
+\begin{figure*}
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Figures/LinRegPlainSGD_250epochs_batchS50.pdf}
+		\caption{MSE score using SGD for franke data.}
+		\label{fig:LinReg25x25_epoch10_bacthS50}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Figures/LinRegAdaGrad_250epochs_batchS50.pdf}
+		\caption{MSE score using AdaGrad for franke data.}
+		\label{fig:LinReg25x25_epoch10_bacthS50_zoomed}
+	\end{subfigure}
+\hfill\newline
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Figures/LinRegRMSprop_250epochs_batchS50.pdf}
+		\caption{MSE score using RMSprop for franke data.}
+		\label{fig:LinReg25x25_epoch100_bacthS50}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.41\textwidth}
+		\includegraphics[width=\textwidth]{Figures/LinRegAdam_250epochs_batchS50.pdf}
+		\caption{MSE score using Adam for franke data.}
+		\label{fig:LinReg25x25_epoch100_bacthS50_zoomed}
+	\end{subfigure}
+	\caption{MSE scores for linear regression on \(250\) data samples from the Franke function, for number of epochs \(N=250\) and a batch size of \(50\). A varying learning rate is used, and the \(y\)-axis denotes \(t_1 = 2/\eta_{\text{const}}\) in \eqref{eq:varyin_learning_rate}.}
+	\label{fig:LinReg_250}
 \end{figure*}
 
 %%%%%%%%% Neural Network different acitivation functions %%%%%%%%%
