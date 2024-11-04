@@ -16,14 +16,14 @@ from sklearn.model_selection import train_test_split
 
 np.random.seed(0)
 latex_fonts()
-save = True
+save = False
 
 # Sample data
-N = 400; eps = 0.0
+N = 20; eps = 0.0
 franke = Franke(N, eps)
 x = franke.x; y = franke.y; z = franke.z
-batch_size = 100
-epochs = 1000
+batch_size = 5
+epochs = 100
 hidden_layers = [4, 8, 16, 32, 16, 8, 4, 2]
 
 X = np.c_[x, y]
@@ -121,7 +121,7 @@ axs[1].legend()
 axs[1].grid()
 
 if save:
-    plt.savefig(f'Figures/NN_MSE_R2_Franke_LearningRate_Epochs{epochs}.pdf')
+    plt.savefig(f'../Figures/NN_MSE_R2_Franke_LearningRate_Epochs{epochs}.pdf')
 
 # Find the best learning rates
 best_lr_relu = learning_rates[np.argmin(mse_results["ReLU"])]
@@ -163,7 +163,7 @@ plt.title('Training Loss over Epochs')
 plt.legend()
 plt.grid()
 if save:
-    plt.savefig('Figures/NN_MSE_Franke_Epoch.pdf')
+    plt.savefig('../Figures/NN_MSE_Franke_Epoch.pdf')
 
 # 3D plot of final outputs
 # Used ChatGPT to remove redundant copy paste code
@@ -198,5 +198,5 @@ for i, (name, (model, learning_rate, color)) in enumerate(activation_functions.i
 
 plt.tight_layout()
 if save:
-    plt.savefig(f'Figures/NN_3D_Predict_Franke_Epochs{epochs}.pdf')
+    plt.savefig(f'../Figures/NN_3D_Predict_Franke_Epochs{epochs}.pdf')
 plt.show()

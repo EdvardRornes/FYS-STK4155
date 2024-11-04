@@ -1319,7 +1319,24 @@ def analyze_save_data(method:str, size:int, index:int, key="MSE_train", type_reg
 
     return data_OLS, data_Ridge
 
-def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, y_log=False, savefig=False, filename='', Reverse_cmap=False, annot=True, only_less_than=None, only_greater_than=None, xaxis_fontsize=None, yaxis_fontsize=None, xlim=None, ylim=None):
+def plot_2D_parameter_lambda_eta(
+        lambdas,
+        etas,
+        value,
+        title=None,
+        x_log=False,
+        y_log=False,
+        savefig=False,
+        filename='',
+        Reverse_cmap=False,
+        annot=True,
+        only_less_than=None,
+        only_greater_than=None,
+        xaxis_fontsize=None,
+        yaxis_fontsize=None,
+        xlim=None,
+        ylim=None
+        ):
     """
     Plots a 2D heatmap with lambda and eta as inputs.
 
@@ -1389,7 +1406,7 @@ def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, 
         cmap=cmap,
         annot=annot_data,
         fmt="",  
-        annot_kws={"size": 6.5} if annot else None,
+        # annot_kws={"size": 6.5} if annot else None,
         xticklabels=t_x,
         yticklabels=t_y,
     )
@@ -1413,5 +1430,4 @@ def plot_2D_parameter_lambda_eta(lambdas, etas, value, title=None, x_log=False, 
     plt.tight_layout()
 
     if savefig:
-        plt.savefig(f'Figures/{filename}.pdf')
-    plt.show()
+        plt.savefig(f'../Figures/{filename}.pdf')

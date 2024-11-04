@@ -179,6 +179,6 @@ for idx, (activation_type, (model, (best_lambda, best_eta))) in enumerate(activa
 plt.tight_layout(rect=[0, 0, 1, 0.95])
 fig.suptitle("3D Plots of FFNN Predictions with Optimal Parameters")
 if save:
-    plt.savefig(f'Figures/NN_noKeras_3D_Franke_Epochs{epochs}.pdf')
+    plt.savefig(f'../Figures/NN_noKeras_3D_Franke_Epochs{epochs}.pdf')
 plt.show()
 
