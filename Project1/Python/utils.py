@@ -1,54 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
-from matplotlib.ticker import LinearLocator, FormatStrFormatter
-
 import rasterio
 import time
-from pathlib import Path
+import imageio.v2 as imageio
 
+from matplotlib import cm
+from matplotlib.ticker import LinearLocator, FormatStrFormatter
+from pathlib import Path
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.utils import resample
 
-import imageio.v2 as imageio
-
-np.random.seed(4)
-
-# Saving files
-def save_plt(filename_n_path, overwrite=False, type="pdf", stop=50, fig=None) -> None:
-    filename = f"{filename_n_path}.{type}"
-    my_file = Path(filename)
-    if overwrite:
-        if fig is None:
-            plt.savefig(filename)
-        else:
-            fig.savefig(filename)
-        return
-    
-    if my_file.is_file():
-        i = 1
-        while i <= stop: # May already be additional files created
-            filename = f"{filename_n_path}{i}.{type}"
-            my_file = Path(filename)
-            if not my_file.is_file():
-                if fig is None:
-                    plt.savefig(f"{filename_n_path}{i}.{type}")
-                else:
-                    fig.savefig(f"{filename_n_path}{i}.{type}")
-                return  
-            i += 1
-    
-        print(f"You have {stop} additional files of this sort?")
-    else:
-        
-        if fig is None:
-            plt.savefig(filename)
-        else:
-            fig.savefig(filename)
-            
+np.random.seed(4) # As every file imports this file, if we need to test a seed, we do it from here       
 
 # Latex fonts
 def latex_fonts():
@@ -306,8 +271,7 @@ class PolynomialRegression:
         X, X, z_flat, z_flat = self.scale_data(X, X, z_flat, z_flat, self.scaling)
 
         beta, MSE, _, R2, _ = self.regr_model(X, X, z_flat, z_flat, lmbda)
-
-        beta = PolynomialRegression.Ridge_Reg(X, z_flat, 1e-6)
+        
         z_pred = X @ beta
         z_shape = z_meshed.shape
         z_pred = np.reshape(z_pred,z_shape)
@@ -688,9 +652,19 @@ def plot_terrain(name:str, x:np.ndarray, y:np.ndarray, terrain:np.ndarray, axes:
     
     ax2.set_aspect('equal', adjustable='box')  # Maintain aspect ratio
 
-def surface_3D(x, y, z, ax, fig,cmap=None):
+def surface_3D(x:np.ndarray, y:np.ndarray, z:np.ndarray, ax:plt.Axes, fig:plt.figure,cmap=None) -> None:
+    """
+    Creates 3D surface plot of (x,y,z).
 
-    # Plot the surface.
+    Parameters
+        * name:         name of terrain, used in title
+        * x:            longitude-data
+        * y:            latitude-data
+        * z:            terrain-data 
+        * ax:           axis to draw 3D surface
+        * fig:          figure to place 3D surface
+    """
+    
     if cmap is None:
             surf = ax.plot_surface(x, y, z, cmap=cm.coolwarm, linewidth=0, antialiased=False)
     else:
@@ -703,3 +677,45 @@ def surface_3D(x, y, z, ax, fig,cmap=None):
 
     # Add a color bar which maps values to colors.
     fig.colorbar(surf, shrink=0.5, aspect=5)
+
+# Saving files
+def save_plt(filename_n_path:str, overwrite=False, type="pdf", stop=50, fig=None) -> None:
+    """
+    Saves plt-figure in 'filename_n_path'. With overwrite set to False it adds a number at the end of the filename.
+    
+    Parameters
+        * filename_n_path:      where to store + what to call file
+        * overwrite(False):     if True: overwrites if same filename + location exists already
+        * type(pdf):            what filetype to store figure as 
+        * stop(50):             meant to tell when to stop saving files
+        * fig(None):            matplotlib.figure, if given: saves this figure (otherwises saves globally)
+    """
+    filename = f"{filename_n_path}.{type}"
+    my_file = Path(filename)
+    if overwrite:
+        if fig is None:
+            plt.savefig(filename)
+        else:
+            fig.savefig(filename)
+        return
+    
+    if my_file.is_file():
+        i = 1
+        while i <= stop: # May already be additional files created
+            filename = f"{filename_n_path}{i}.{type}"
+            my_file = Path(filename)
+            if not my_file.is_file():
+                if fig is None:
+                    plt.savefig(f"{filename_n_path}{i}.{type}")
+                else:
+                    fig.savefig(f"{filename_n_path}{i}.{type}")
+                return  
+            i += 1
+    
+        print(f"You have {stop} additional files of this sort?")
+    else:
+        
+        if fig is None:
+            plt.savefig(filename)
+        else:
+            fig.savefig(filename)
