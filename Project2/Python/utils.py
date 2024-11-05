@@ -1069,7 +1069,7 @@ class FFNN:
         y = y.reshape(-1, 1)
 
         output = self.activations[-1]
-        
+
         delta = output - y
         self.t += 1  # Increment time step
 
@@ -1121,8 +1121,8 @@ class FFNN:
             loss = self.compute_loss(y_batch, self.activations[-1])
             loss_history.append(loss)
 
-            if epoch % (epochs // 5) == 0:
-                print(f'Epoch {epoch}, Loss ({self.loss_function}): {loss:.3f}')
+            # if epoch % (epochs // 5) == 0:
+            #     print(f'Epoch {epoch}, Loss ({self.loss_function}): {loss:.3f}')
         
         return loss_history
 

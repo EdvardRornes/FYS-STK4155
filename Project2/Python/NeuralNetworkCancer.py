@@ -17,11 +17,12 @@ warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow enc
 np.random.seed(1)
 
 latex_fonts()
-save = False
+save = True
+random_state = 40
 
 # Load the dataset
 cancer = load_breast_cancer()
-X_train, X_test, y_train, y_test = train_test_split(cancer.data, cancer.target.reshape(-1, 1), test_size=0.25, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(cancer.data, cancer.target.reshape(-1, 1), test_size=0.25, random_state=random_state)
 scaler = StandardScaler()
 scaler.fit(X_train)
 X_train = scaler.transform(X_train)
@@ -29,7 +30,7 @@ X_test = scaler.transform(X_test)
 
 # Hyperparameter ranges
 hidden_layers = [15, 30, 15, 8, 4, 2]
-epochs = [5]
+epochs = [5, 25, 50]
 batchsize = 50
 # Tighter logspace needed for etas, nicer values for plotting.
 eta_lower = -4
@@ -116,7 +117,7 @@ for epoch in epochs:
             x_log=True,
             y_log=True,
             savefig=save,
-            filename=fr'Cancer_Accuracy_Heatmap_{activation}_Epochs{epoch}_randomstate1',
+            filename=fr'Cancer_Accuracy_Heatmap_{activation}_Epochs{epoch}_randomstate{random_state}',
             Reverse_cmap=True
         )
 
@@ -158,6 +159,6 @@ for activation in activations:
     plt.ylabel('Actual')
     plt.title(f"FFNN Confusion Matrix: {activation} Activation\n"+fr"$\lambda={best_params[epoch][activation][0]:.1e}, \eta={best_params[epoch][activation][1]:.1e}$")
     if save:
-        plt.savefig(f'../Figures/ConfusionMatrixFFNN_{activation}_Epochs{epoch}_randomstate1.pdf')
+        plt.savefig(f'../Figures/ConfusionMatrixFFNN_{activation}_Epochs{epoch}_randomstate{random_state}.pdf')
 plt.show()
 
