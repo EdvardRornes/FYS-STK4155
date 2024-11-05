@@ -115,7 +115,7 @@ Neural networks excel at handling complex, nonlinear relationships in data. Thei
 
 The main goal of this project is to gain a deeper understanding of neural networks by first exploring the fundamentals of linear and logistic regression. To achieve this, we implement and experiment with various optimization techniques, comparing the performance of linear and logistic regression to that of neural networks. We use data generated from the Franke function to evaluate linear regression, and the binary breast cancer dataset from \texttt{sklearn}'s datasets \cite{sklearn} to assess logistic regression. 
 
-We first introduces the theory behind linear/logistic regression, introduce various gradient decent algorithms, and then give a basic introduction to neural networks. Further, we explain how these techniques are implemented and finally look at the results. The performance of linear/logistic regression is compared to the performance of the implemented neural network with various different activation functions. Our own neural network is also tested against \texttt{tensorflow.keras} \cite{tensorflow2015-whitepaper} on the Franke function to give us an estimate of its performance.
+We first introduce the theory behind linear/logistic regression, introduce various gradient decent algorithms, and then give a basic introduction to neural networks. Further, we explain how these techniques are implemented and present the results with a discussion. Our own neural network is also tested against \texttt{tensorflow.keras} \cite{tensorflow2015-whitepaper} on the Franke function to give us an estimate of its performance. Finally, the performance of linear/logistic regression is compared to the performance of the implemented neural network with various different activation functions, and an overall assessment is made. We find that the neural network outperforms the gradient decent methods in all aspects.
 
 \section{Methods}
 In this section we present the various methods used in this report. For reference, the Franke function which we will be using to test our linear regression methods is:
@@ -356,35 +356,19 @@ All three activation functions manage to achieve an incredible maximal accuracy 
 
 Fig. \ref{fig:Confusion_FFNN} shows the confusion matrix of the best runs. This figure illuminates where the NN failed on their best runs. All 3 only fail by giving a single false positive. Previously, all three activation functions consistently had 3 false positives, yielding an accuracy of $97.9\%$. We then assumed that this was due to a few difficult outliers in the test data, or lack of similar cases in the test data for the network to train on. Realizing this, we then ran the test again with a different random state on the \texttt{train\_test\_split} function, to get the result showed here. Of course in a general application, having difficult outliers is something that a NN must deal with, but when running over multiple different random states, we still find that more often than not, the best accuracy achieved was still $99.3\%$, even achieving $100\%$ with certain seeds.
 
-\begin{figure*}[b]
-	\begin{subfigure}{0.325\textwidth}
-		\includegraphics[width=\textwidth]{Figures/ConfusionMatrixFFNN_relu_Epochs100_randomstate42.pdf}
-	\end{subfigure}
-	\hfill
-	\begin{subfigure}{0.325\textwidth}
-		\includegraphics[width=\textwidth]{Figures/ConfusionMatrixFFNN_lrelu_Epochs100_randomstate42.pdf}
-	\end{subfigure}
-	\hfill
-	\begin{subfigure}{0.325\textwidth}
-		\includegraphics[width=\textwidth]{Figures/ConfusionMatrixFFNN_sigmoid_Epochs100_randomstate42.pdf}
-	\end{subfigure}
-	\caption{Confusion matrix of the FFNN results with 100 epochs and optimal $\eta$ and $\lambda$. The vertical axis show the correct answer, whilst the horizontal axis shows the FFNN's guess for all 3 activation functions. $100\%$ accuracy corresponds to the off diagonals being $0\%$ and the diagonals summing to $100\%$.}
-	\label{fig:Confusion_FFNN}
-\end{figure*}
-
 \subsubsection{Comparison}
 When comparing the results from the GD methods to the neural networks (NNs), both methods demonstrates the ability to reach high accuracies, with SGD peaking at \(\sim 98\%\) and the NNS with ReLU or LReLU achieving relatively higher scores. Both methods showed a clear dependence on the learning rate \(\eta\), and the hyperparameter \(\lambda\). Additionally, both approaches occasionally encountered convergence issues, with the Adam optimization method diverging for large batch sizes, and the neural networks showed performance variability when using the sigmoid function, especially for higher learning rates. 
 
 The overall performance of the NN, along with a better flexibility in its parameter space, makes it clear that it is more suitable than GD for this specific task. The insensitivity of $\eta$ and $\lambda$ was especially noticeable when using ReLU and LReLU activation functions, suggesting that they can handle suboptimal parameter values, without suffering from issues like gradient vanishing; which is often a problem for GD methods.
 
 \section{Conclusion}
-On the Franke function, we found that Sigmoid is not overly sensitive to changes in the learning rate and hyperparameter $\lambda$, but also struggles to find good results. On the other hand ReLU has the ability to get great results, but only for very specific combinations of $\eta$ and $\lambda$. LReLU seems to be the best of both worlds, being relatively insensitive to getting the exact right combination of $\eta$ and $\lambda$, whilst still managing to obtain very good MSE scores like ReLU. When comparing the MSE scores to the MSE scores of the GD methods, we found that the NNs, in particular those utilizing ReLU and LReLU, consistently delivered an overall better performance. The best performing GD method; Adam showed convergence for various different parameters, and lower MSE scores compared to those of plain SGD,  AdaGrad and RMSprop. However, they were still outperformed by the FFNN. In particular, for increasing epochs, the NNs performance consistently increased, a trend which only Adam shared, though with lower metric scores.
+On the Franke function, we found that Sigmoid is not overly sensitive to changes in the learning rate and hyperparameter $\lambda$, but also struggles to find good results. On the other hand ReLU has the ability to get great results, but only for very specific combinations of $\eta$ and $\lambda$. LReLU seems to be the best of both worlds, being relatively insensitive to getting the exact right combination of $\eta$ and $\lambda$, whilst still managing to obtain very good MSE scores like ReLU. When comparing the MSE scores to the MSE scores of the GD methods, we found that the NNs, in particular those utilizing ReLU and LReLU, consistently delivered an overall better performance. The best performing GD method, Adam, showed convergence for various different parameters, and lower MSE scores compared to those of plain SGD, AdaGrad and RMSprop. However, they were still outperformed by the FFNN. In particular, for increasing epochs, the NNs performance consistently increased, a trend which only Adam shared, though with lower metric scores.
 
-For the FFNN on the cancer data, overall assessments here are similar for the Franke function. The best perfoming activation function was again LReLU, followed by ReLU and finally the Sigmoid function. The latter performed much better on this classification problem compared to regression as one would expect from its definition, but once again still falls short to the ReLU variants. It must also be noted that the inputs to the Sigmoid function were clipped to prevent overflow, which might have impacted its accuracy. The slightly higher accuracy of LReLU over ReLU suggests it may provide an advantage by maintaining small gradients for negative inputs, offering a more stable training process. 
+For the FFNN on the cancer data, overall assessments here are similar for the Franke function. The best perfoming activation function was again LReLU, followed by ReLU and finally the Sigmoid function. The latter performed much better on this classification problem compared to regression as one would expect from its definition, but once again still falls short to the ReLU variants. It must also be noted that the inputs to the Sigmoid function were clipped to prevent overflow, which might have impacted its accuracy. The slightly higher accuracy of LReLU over ReLU suggests it may provide an advantage by maintaining small gradients for negative inputs, offering a more stable training process. Plain SGD also performed well on the cancer data, showing an increase in performance for increasing epoch sizes, something it struggled with in linear regression. However, at their best, the FFNN gave accuracy scores of about \(99\%\), beating plain SGD at \(\sim 98\%\).
 
-Plain SGD showed performed well on the cancer data, showing an increase in performance for increasing epoch sizes, something it struggled with in linear regression. However, at their best, the FFNN gave accuracy scores of about \(99\%\), beating plain SGD at \(\sim 98\%\).
+When running the same parameters, the difference in runtime for the NN and GD methods was about an order of magnitude better for the NN. Overall the FFNN outperformed GD methods in practically all tasks, especially when considering the product of the performance and speed, and it is clear that it is essential technique in data analysis and when making prediction. 
 
-There are plentiful of avenues to pursue which can extend and improve our analysis. A few examples would be: testing out different values of $\alpha$ in LReLU, adjusting $\beta_1$ and $\beta_2$ and testing out different methods for initializing the weights and biases. All of these may have potential benefits, both in performance and computational efficiency. Similarly, whilst we did test different hidden layer setups, this was not done extensively. The odds of us achieving an optimal setup with relatively few attempts compared to possible combinations, is next to null. Finally, thoroughly testing out other optimizers such as Adagrad and RMSprop for the FFNN may also yield benefits, but due to time constraints we did not implement this properly. 
+There are plentiful of avenues to pursue which can extend and improve our analysis. A few examples would be: testing out different values of $\alpha$ in LReLU, adjusting $\beta_1$ and $\beta_2$ and testing out different methods for initializing the weights and biases. All of these may have potential benefits, both in performance and computational efficiency. Similarly, whilst we did test different hidden layer setups, this was not done extensively. The odds of us achieving an optimal setup with relatively few attempts compared to possible combinations, is next to null. Finally, thoroughly testing out other optimizers such as Adagrad and RMSprop for the FFNN may also yield benefits, but due to time constraints we did not implement this properly. Also, using \texttt{keras} or some similar well established NN to probe the quality of our FFNN on the breast cancer data is something we did not due. Once again this was due to \texttt{keras} running very slow which, as mentioned prior, is likely due to our own implementation of it.
 
 % Bibliography
 \bibliographystyle{JHEP}
@@ -393,7 +377,7 @@ There are plentiful of avenues to pursue which can extend and improve our analys
 \appendix
 \section{Large Figures}
 \label{Appendix:A}
-A selection of figures, more can be found in the \texttt{Figures} folder.
+In this appendix (which begins on the next page due to latex) we have placed all the large figures to make the main text easier to follow. An additional selection of figures can be found in the \texttt{Figures} folder \cite{extrafigures}.
 
 %%%%%%%%%%%%%% Franke %%%%%%%%%%%%%%
 
@@ -422,7 +406,7 @@ A selection of figures, more can be found in the \texttt{Figures} folder.
 		\caption{MSE score using Adam for franke data.}
 		\label{fig:LinReg25x25_epoch100_bacthS50_zoomed}
 	\end{subfigure}
-	\caption{MSE scores for linear regression on \(20\) data samples from the Franke function, for number of epochs \(N=10\) and a batch size of \(4\). A varying learning rate is used, and the \(y\)-axis denotes \(\eta_{\text{const}}\), which is used to set \(t_1=2/\eta_{\text{const}}\) in \eqref{eq:varyin_learning_rate}. The \(x\)-axis shows the \(\lambda\)-values for the Ridge cost function.}
+	\caption{MSE scores for linear regression on \(20\) data samples from the Franke function, for 10 epochs and a batch size of \(4\). A varying learning rate is used, and the \(y\)-axis denotes \(\eta_{\text{const}}\), which is used to set \(t_1=2/\eta_{\text{const}}\) in \eqref{eq:varyin_learning_rate}. The \(x\)-axis shows the \(\lambda\)-values for the Ridge cost function.}
 	\label{fig:LinReg}
 \end{figure*}
 
@@ -537,240 +521,20 @@ A selection of figures, more can be found in the \texttt{Figures} folder.
 	\label{fig:FFNN_cancer_heatmaps}
 \end{figure*}
 
-%%%%%%%%%%%%%%%% Bunch of different MSE plots, linear regression %%%%%%%%%%%%%%%%
-
-% % plainSGD with varying learning rate
-% \begin{figure*}
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_varyEta_10epochs_5batchS.pdf}
-% 		\caption{\(10\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegplainSGD_varyEta_10epochs_5batchS}
-% 	\end{subfigure}
-% 	\hfill
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_varyEta_100epochs_5batchS.pdf}
-% 		\caption{\(100\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegplainSGD_varyEta_100epochs_5batchS}
-% 	\end{subfigure}
-% \hfill\newline
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_varyEta_10epochs_10batchS.pdf}
-% 	\caption{\(10\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegplainSGD_varyEta_10epochs_5batchS}
-% \end{subfigure}
-% \hfill
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_varyEta_100epochs_10batchS.pdf}
-% 	\caption{\(100\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegplainSGD_varyEta_100epochs_5batchS}
-% \end{subfigure}
-% \caption{MSE scores using plain SGD with a varying learning rate; see \eqref{eq:varyin_learning_rate}, \(t_0=2\) and \(t_1=\eta\), where \(\eta\) can be read from the y-axis.}
-% \label{fig:PlangeSGD_varyEta}
-% \end{figure*}
-
-% % plainSGD with constant learning rate
-% \begin{figure*}
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_constEta_10epochs_5batchS.pdf}
-% 		\caption{\(10\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegplainSGD_constEta_10epochs_5batchS}
-% 	\end{subfigure}
-% 	\hfill
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_constEta_100epochs_batchS10.pdf}
-% 		\caption{\(100\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegplainSGD_constEta_100epochs_5batchS}
-% 	\end{subfigure}
-% \hfill\newline
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_constEta_10epochs_10batchS.pdf}
-% 	\caption{\(10\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegplainSGD_constEta_10epochs_5batchS}
-% \end{subfigure}
-% \hfill
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegplainSGD_constEta_100epochs_batchS10.pdf}
-% 	\caption{\(100\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegplainSGD_constEta_100epochs_5batchS}
-% \end{subfigure}
-% \caption{MSE scores using plain SGD with a constant learning rate.}
-% \label{fig:PlangeSGD_constEta}
-% \end{figure*}
-
-
-% % RMSprop with varying learning rate
-% \begin{figure*}
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegRMSprop_varyEta_10epochs_batchS5.pdf}
-% 		\caption{\(10\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegRMSprop_varyEta_10epochs_5batchS}
-% 	\end{subfigure}
-% 	\hfill
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegRMSprop_varyEta_100epochs_batchS5.pdf}
-% 		\caption{\(100\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegRMSprop_varyEta_100epochs_5batchS}
-% 	\end{subfigure}
-% \hfill\newline
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegRMSprop_varyEta_10epochs_batchS10.pdf}
-% 	\caption{\(10\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegRMSprop_varyEta_10epochs_5batchS}
-% \end{subfigure}
-% \hfill
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegRMSprop_varyEta_100epochs_batchS10.pdf}
-% 	\caption{\(100\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegRMSprop_varyEta_100epochs_5batchS}
-% \end{subfigure}
-% \caption{MSE scores using RMSprop with a varying learning rate; see \eqref{eq:varyin_learning_rate}, \(t_0=2\) and \(t_1=\eta\), where \(\eta\) can be read from the y-axis.}
-% \label{fig:RMSprop_varyEta}
-% \end{figure*}
-
-% % RMSprop with constant learning rate
-% \begin{figure*}
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegRMSprop_constEta_10epochs_batchS5.pdf}
-% 		\caption{\(10\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegRMSprop_constEta_10epochs_5batchS}
-% 	\end{subfigure}
-% 	\hfill
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegRMSprop_constEta_100epochs_batchS5.pdf}
-% 		\caption{\(100\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegRMSprop_constEta_100epochs_5batchS}
-% 	\end{subfigure}
-% \hfill\newline
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegRMSprop_constEta_10epochs_batchS10.pdf}
-% 	\caption{\(10\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegRMSprop_constEta_10epochs_5batchS}
-% \end{subfigure}
-% \hfill
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegRMSprop_constEta_100epochs_batchS10.pdf}
-% 	\caption{\(100\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegRMSprop_constEta_100epochs_5batchS}
-% \end{subfigure}
-% \caption{MSE scores using RMSprop with a constant learning rate.}
-% \label{fig:RMSprop_constEta}
-% \end{figure*}
-
-
-% % AdaGrad with varying learning rate
-% \begin{figure*}
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegAdaGrad_varyEta_10epochs_batchS5.pdf}
-% 		\caption{\(10\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegAdaGrad_varyEta_10epochs_5batchS}
-% 	\end{subfigure}
-% 	\hfill
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegAdaGrad_varyEta_100epochs_batchS5.pdf}
-% 		\caption{\(100\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegAdaGrad_varyEta_100epochs_5batchS}
-% 	\end{subfigure}
-% \hfill\newline
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegAdaGrad_varyEta_10epochs_batchS10.pdf}
-% 	\caption{\(10\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegAdaGrad_varyEta_10epochs_5batchS}
-% \end{subfigure}
-% \hfill
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegAdaGrad_varyEta_100epochs_batchS10.pdf}
-% 	\caption{\(100\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegAdaGrad_varyEta_100epochs_5batchS}
-% \end{subfigure}
-% \caption{MSE scores using AdaGrad with a varying learning rate; see \eqref{eq:varyin_learning_rate}, \(t_0=2\) and \(t_1=\eta\), where \(\eta\) can be read from the y-axis.}
-% \label{fig:AdaGrad_varyEta}
-% \end{figure*}
-
-% % AdaGrad with constant learning rate
-% \begin{figure*}
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegAdaGrad_constEta_10epochs_batchS5.pdf}
-% 		\caption{\(10\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegAdaGrad_constEta_10epochs_5batchS}
-% 	\end{subfigure}
-% 	\hfill
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegAdaGrad_constEta_100epochs_batchS5.pdf}
-% 		\caption{\(100\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegAdaGrad_constEta_100epochs_5batchS}
-% 	\end{subfigure}
-% \hfill\newline
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegAdaGrad_constEta_10epochs_batchS10.pdf}
-% 	\caption{\(10\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegAdaGrad_constEta_10epochs_5batchS}
-% \end{subfigure}
-% \hfill
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegAdaGrad_constEta_100epochs_batchS10.pdf}
-% 	\caption{\(100\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegAdaGrad_constEta_100epochs_5batchS}
-% \end{subfigure}
-% \caption{MSE scores using AdaGrad with a constant learning rate.}
-% \label{fig:AdaGrad_constEta}
-% \end{figure*}
-
-% % Adam with varying learning rate
-% \begin{figure*}
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegAdam_varyEta_10epochs_batchS5.pdf}
-% 		\caption{\(10\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegAdam_varyEta_10epochs_5batchS}
-% 	\end{subfigure}
-% 	\hfill
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegAdam_varyEta_100epochs_batchS5.pdf}
-% 		\caption{\(100\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegAdam_varyEta_100epochs_5batchS}
-% 	\end{subfigure}
-% \hfill\newline
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegAdam_varyEta_10epochs_batchS10.pdf}
-% 	\caption{\(10\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegAdam_varyEta_10epochs_5batchS}
-% \end{subfigure}
-% \hfill
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegAdam_varyEta_100epochs_batchS10.pdf}
-% 	\caption{\(100\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegAdam_varyEta_100epochs_5batchS}
-% \end{subfigure}
-% \caption{MSE scores using Adam with a varying learning rate; see \eqref{eq:varyin_learning_rate}, \(t_0=2\) and \(t_1=\eta\), where \(\eta\) can be read from the y-axis.}
-% \label{fig:Adam_varyEta}
-% \end{figure*}
-
-% % Adam with constant learning rate
-% \begin{figure*}
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegAdam_constEta_10epochs_batchS5.pdf}
-% 		\caption{\(10\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegAdam_constEta_10epochs_5batchS}
-% 	\end{subfigure}
-% 	\hfill
-% 	\begin{subfigure}{0.41\textwidth}
-% 		\includegraphics[width=\textwidth]{Figures/LinRegAdam_constEta_100epochs_batchS5.pdf}
-% 		\caption{\(100\) epochs and a batch size of \(5\).}
-% 		\label{fig:LinRegAdam_constEta_100epochs_5batchS}
-% 	\end{subfigure}
-% \hfill\newline
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegAdam_constEta_10epochs_batchS10.pdf}
-% 	\caption{\(10\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegAdam_constEta_10epochs_5batchS}
-% \end{subfigure}
-% \hfill
-% \begin{subfigure}{0.41\textwidth}
-% 	\includegraphics[width=\textwidth]{Figures/LinRegAdam_constEta_100epochs_batchS10.pdf}
-% 	\caption{\(100\) epochs and a batch size of \(10\).}
-% 	\label{fig:LinRegAdam_constEta_100epochs_5batchS}
-% \end{subfigure}
-% \caption{MSE scores using Adam with a constant learning rate.}
-% \label{fig:Adam_constEta}
-% \end{figure*}
+\begin{figure*}[b]
+	\begin{subfigure}{0.325\textwidth}
+		\includegraphics[width=\textwidth]{Figures/ConfusionMatrixFFNN_relu_Epochs100_randomstate42.pdf}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.325\textwidth}
+		\includegraphics[width=\textwidth]{Figures/ConfusionMatrixFFNN_lrelu_Epochs100_randomstate42.pdf}
+	\end{subfigure}
+	\hfill
+	\begin{subfigure}{0.325\textwidth}
+		\includegraphics[width=\textwidth]{Figures/ConfusionMatrixFFNN_sigmoid_Epochs100_randomstate42.pdf}
+	\end{subfigure}
+	\caption{Confusion matrix of the FFNN results with 100 epochs and optimal $\eta$ and $\lambda$. The vertical axis show the correct answer, whilst the horizontal axis shows the FFNN's guess for all 3 activation functions. $100\%$ accuracy corresponds to the off diagonals being $0\%$ and the diagonals summing to $100\%$.}
+	\label{fig:Confusion_FFNN}
+\end{figure*}
 
 \end{document}
