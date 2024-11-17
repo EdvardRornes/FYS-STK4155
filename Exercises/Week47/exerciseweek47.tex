@@ -1,0 +1,133 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{amsmath}
+\usepackage{bm}
+
+\title{Exercise Week 47}
+\author{Isak O. Rukan, Edvard B. Rørnes}
+
+\begin{document}
+\maketitle
+	
+	\section*{Exercise 1: Linear and Logistic Regression Methods}
+	
+	\begin{enumerate}
+		\item \textbf{What is the main difference between ordinary least squares and Ridge regression?} \\
+		OLS minimizes the residual sum of squares without any penalty. Ridge regression adds a regularization term proportional to the square of the model coefficients, $C_\text{OLS}+\lambda\bm\beta_i^2$.
+		
+		\item \textbf{Which kind of dataset would you use logistic regression for?} \\
+		For datasets where the dependent variable is binary or categorical, such as classification problems.
+		
+		\item \textbf{In linear regression you assume that your output is described by a continuous non-stochastic function $f(x)$. Which is the equivalent function in logistic regression?} \\
+		The sigmoid function:
+		\[f(x) = \frac{1}{1 + e^{-z}},\]
+		where $z=\sum_{i=0}^n\beta_ix_i$.
+		
+		\item \textbf{Can you find an analytic solution to a logistic regression type of problem?} \\
+		No, there is no closed-form analytic solution because the logistic regression loss function is not linear.
+		
+		\item \textbf{What kind of cost function would you use in logistic regression?} \\
+		We would use the cross-entropy cost function:
+		\[C=-\frac{1}{n}\sum_{i=1}^n\left[y_i\log(p_i)+(1-y_i) \log(1-p_i)\right],\]
+		where $p_i$ is the predicted probability for the $i$-th sample.
+	\end{enumerate}
+	
+	\section*{Exercise 2: Deep Learning}
+	
+	\begin{enumerate}
+		\item \textbf{What is an activation function and discuss the use of an activation function? Explain three different types of activation functions?} \\
+		An activation function introduces non-linearity to the neural network, allowing it to learn complex patterns.
+		\begin{itemize}
+			\item Sigmoid: Outputs values in $[0,1]$; used in binary classification.
+			\item ReLU: Outputs $f(x)=\max(0,x)$; efficient but may cause ``dead neurons.''
+			\item Leaky ReLU: A variant of ReLU, $f(x)=\max(a,x), a\ll1$ with small slopes for negative inputs, solving the ``dead neuron'' issue.
+		\end{itemize}
+		
+		\item \textbf{Describe the architecture of a typical feedforward Neural Network (NN).} \\
+		An FFNN is made up of an input layer, hidden layers, and an output layer. Information flows in one direction, and each layer consists of neurons connected to other neurons via weights.
+		
+		\item \textbf{You are using a deep neural network for a prediction task. After training your model, you notice that it is strongly overfitting the training set and that the performance on the test isn't good. What can you do to reduce overfitting?} \\
+		Techniques we considered were simply L1/L2 regularization, use more data, reduce model complexity and use cross-validation.
+		
+		\item \textbf{How would you know if your model is suffering from the problem of exploding Gradients?} \\
+		Look for \texttt{nan}, large (increasing) loss or just simply check the gradient during training.
+		
+		\item \textbf{Can you name and explain a few hyperparameters used for training a neural network?} \\
+		Learning rate, batch size, number of layers, number of neurons per layer, activation functions, regularization strength, and optimizer type.
+		
+		\item \textbf{Describe the architecture of a typical Convolutional Neural Network (CNN).} \\
+		Made up of convolutional layers, pooling layers, and fully connected layers.
+		
+		\item \textbf{What is the vanishing gradient problem in Neural Networks and how to fix it?} \\
+		Occurs when gradients become too small to update weights effectively. To solve one may use activation functions like ReLU or Leaky ReLU, or use techniques like batch normalization.
+		
+		\item \textbf{When it comes to training an artificial neural network, what could the reason be for why the cost/loss doesn’t decrease in a few epochs?} \\
+		Learning rate too high/low, vanishing/exploding gradients, insufficient epochs.
+		
+		\item \textbf{How does L1/L2 regularization affect a neural network?} \\
+		L1 regularization sets small certain weights to zero, and penalizes large coefficients. L2 regularization prevents overfitting by penalizing squared weights.
+		
+		\item \textbf{What is (are) the advantage(s) of deep learning over traditional methods like linear regression or logistic regression?} \\
+		Handles high-dimensional, unstructured data. Automatically learns complex patterns and hierarchical representations. Overall faster than closer to analytical methods.
+	\end{enumerate}
+	
+	\section*{Exercise 3: Decision Trees and Ensemble Methods}
+	
+	\begin{enumerate}
+		\item \textbf{Mention some pros and cons when using decision trees.} \\
+		Pros: Simple to interpret, handles categorical/continuous data, requires little preprocessing. \\
+		Cons: Prone to overfitting, sensitive to small data changes.
+		
+		\item \textbf{How do we grow a tree? And which are the main parameters?} \\
+		To grow a decision tree, you split the data into smaller groups step by step. At each step a rule is chosen to separate the data into two parts. This process continues until the groups are small enough or meet a stopping rule. The main parameters are:
+		\begin{itemize}
+			\item Maximum depth: How many levels the tree can have.
+			\item Minimum samples per leaf: The smallest number of data points allowed in each group.
+			\item Minimum samples to split: The smallest number of data points needed to make a split.
+		\end{itemize}
+
+		
+		\item \textbf{Mention some of the benefits with using ensemble methods (like bagging, random forests and boosting methods)?} \\
+		N/A
+		
+		\item \textbf{Why would you prefer a random forest instead of using Bagging to grow a forest?} \\
+		N/A
+		
+		\item \textbf{What is the basic philosophy behind boosting methods?} \\
+		N/A
+	\end{enumerate}
+	
+	\section*{Exercise 4: Optimization Part}
+	
+	\begin{enumerate}
+		\item \textbf{Which is the basic mathematical root-finding method behind essentially all gradient descent approaches(stochastic and non-stochastic)?} \\
+		Newton's method.
+		
+		\item \textbf{And why don’t we use it? Or stated differently, why do we introduce the learning rate as a parameter?} \\
+		Helps with convergence by controlling the step size.
+		
+		\item \textbf{What might happen if you set the momentum hyperparameter too close to 1 (e.g., 0.9999) when using an optimizer for the learning rate?} \\
+		May overshoot the minimum causing instability or divergence.
+		
+		\item \textbf{Why should we use stochastic gradient descent instead of plain gradient descent?} \\
+		Faster updates, better generalization, and reduced computation per step.
+		
+		\item \textbf{Which parameters would you need to tune when use a stochastic gradient descent approach?} \\
+		Learning rate, momentum, batch size, and regularization terms.
+	\end{enumerate}
+	
+	\section*{Exercise 5: Analysis of Results}
+	
+	\begin{enumerate}
+		\item \textbf{How do you assess overfitting and underfitting?} \\
+		Overfitting: Training error low, test error high. \\
+		Underfitting: Both training and test errors high.
+		
+		\item \textbf{Why do we divide the data in test and train and/or eventually validation sets?} \\
+		To evaluate model performance by making sure it has not already seen the data and is interpreting potential noise.
+		
+		\item \textbf{Why would you use resampling methods in the data analysis? Mention some widely popular resampling methods.} \\
+		To improve model robustness and reduce bias/variance. \\
+		Methods: Cross-validation, bootstrapping.
+	\end{enumerate}
+	
+\end{document}
