@@ -644,11 +644,8 @@ class FFNN(NeuralNetwork):
             # Calculate and store the loss
             loss = self.compute_loss(y_batch, self.activations[-1])
             loss_history.append(loss)
-
-            # if epoch % (epochs // 5) == 0:
-            #     print(f'Epoch {epoch}, Loss ({self.loss_function}): {loss:.3f}')
         
-        print(f"Training FNN, 100.0% complete, time taken: {time.time() - start_time:.1f}s         ")
+        print(f"Training FFNN, 100.0% complete, time taken: {time.time() - start_time:.1f}s         ")
         return loss_history
 
     def predict(self, X:np.ndarray):
@@ -679,6 +676,339 @@ class FFNN(NeuralNetwork):
             self.weight_optimizers[i].learning_rate = new_learning_rate
             self.bias_optimizers[i].learning_rate = new_learning_rate
 
+class RNN(NeuralNetwork):
+    def __init__(self, input_size:int, hidden_layers:list, output_size:int, optimizer:Optimizer, activation, 
+                 lambda_reg=0.0, alpha=0.1, loss_function='mse'):
+        """
+        Implements the Recurrent Neural Network (RNN).
+        
+        Positional Arguments
+        * input_size:           Number of input features.
+        * hidden_layers:        List of integers representing the size of each hidden layer.
+        * output_size:          Number of output neurons.
+        * optimizer:            Type of optimizer used for weights and biases (PlaneGradient, AdaGrad, RMSprop or Adam)
+        * activation:           Activation function to use ('relu', 'sigmoid', 'lrelu').
+
+        Keyword Arguments
+        * loss_function (str):  Loss function to use ('mse' or 'bce').
+        * alpha (float):        Leaky ReLU parameter (only for 'lrelu').
+        """
+        self.layers = [input_size] + hidden_layers + [output_size]
+        self.weights = []
+        self.biases = []
+        self.activation_func_name = activation
+        self.loss_function = loss_function  # Added loss function parameter
+        self.optimizer = optimizer
+
+        self.lambda_reg = lambda_reg
+        self.alpha = alpha
+        self.hidden_size = hidden_layers[-1]  # Define the hidden layer size
+
+        # Initialize activation functions mapping
+        self.activation_map = {
+            'relu': (Activation.relu, Activation.relu_derivative),
+            'sigmoid': (Activation.sigmoid, Activation.sigmoid_derivative),
+            'lrelu': (lambda z: Activation.Lrelu(z, self.alpha), lambda z: Activation.Lrelu_derivative(z, self.alpha))
+        }
+        
+        self.activation, self.activation_derivative = self.activation_map.get(self.activation_func_name.lower(), (Activation.relu, Activation.relu_derivative))
+        self.output_activation = self.activation
+
+        # Initialize weights, biases, and optimizers
+        self.initialize_weights_and_biases()
+
+    def initialize_weights_and_biases(self):
+        """
+        Initializes weights and biases. 
+        """
+        self.weights = []; self.weight_optimizers = []
+        self.recurrent_weights = []; self.recurrent_weight_optimizers = []
+        self.biases = []; self.bias_optimizers = []
+
+        # Initialize input to hidden layer weights and biases
+        weight_matrix = np.random.randn(self.layers[0], self.layers[1]) * np.sqrt(2. / self.layers[0])
+        self.weights.append(weight_matrix)
+        bias_vector = np.zeros((1, self.layers[1]))
+        self.biases.append(bias_vector)
+        self.weight_optimizers.append(self.optimizer.copy())
+        self.bias_optimizers.append(self.optimizer.copy())
+
+        # Initialize recurrent weights and hidden-to-hidden layer weights
+        for i in range(1, len(self.layers) - 1):
+            recurrent_weight_matrix = np.random.randn(self.layers[i], self.layers[i]) * np.sqrt(2. / self.layers[i])
+            self.recurrent_weights.append(recurrent_weight_matrix)
+
+            weight_matrix = np.random.randn(self.layers[i], self.layers[i + 1]) * np.sqrt(2. / self.layers[i])
+            self.weights.append(weight_matrix)
+            bias_vector = np.zeros((1, self.layers[i + 1]))
+            self.biases.append(bias_vector)
+            self.weight_optimizers.append(self.optimizer.copy())
+            self.bias_optimizers.append(self.optimizer.copy())
+
+            self.recurrent_weight_optimizers.append(self.optimizer.copy())
+
+        # Output layer weights and biases
+        self.output_weights = np.random.randn(self.hidden_size, self.layers[-1]) * np.sqrt(2. / self.hidden_size)
+        self.output_biases = np.zeros((1, self.layers[-1]))
+        self.output_optimizer = self.optimizer.copy()
+        self.output_bias_optimizer = self.optimizer.copy()
+    
+    def forward(self, X: np.ndarray):
+        """
+        Forward propagates through the RNN for sequential 1D time-series input X.
+        
+        Arguments:
+        * X:                Input data of shape (batch_size, sequence_length, input_size).
+        
+        Returns:
+        * Outputs:          Array of shape (batch_size, sequence_length, output_size).
+        * Hidden_states:    List of hidden states for each layer and time step.
+        """
+        batch_size, sequence_length, input_size = X.shape
+
+        # Initialize the hidden states for all layers (batch_size, hidden_size)
+        h_t = [np.zeros((batch_size, size)) for size in self.layers[1:-1]]  # List for each hidden layer
+        self.hidden_states = [[] for _ in range(len(self.layers) - 2)]  # List of lists for each layer
+        self.z_s = [[] for _ in range(len(self.layers) - 2)]            # Pre-activation values
+        self.outputs = []  # Store outputs across time steps
+
+        # Forward pass through each time step
+        for t in range(sequence_length):
+            x_t = X[:, t, :]  # Input at time step t (batch_size, input_size)
+
+            # Iterate through all hidden layers
+            for layer_idx in range(len(self.layers) - 2):
+                # Compute z for current layer
+                if layer_idx == 0:
+                    # First hidden layer: input comes from x_t and its own previous hidden state
+                    z = x_t @ self.weights[layer_idx] + h_t[layer_idx] @ self.recurrent_weights[layer_idx] + self.biases[layer_idx]
+                else:
+                    # Subsequent hidden layers: input comes from previous hidden layer's current h and their own previous hidden state
+                    z = h_prev @ self.weights[layer_idx] + h_t[layer_idx] @ self.recurrent_weights[layer_idx] + self.biases[layer_idx]
+                
+                # Apply activation function
+                h = self.activation(z)
+                
+                # Store pre-activation and activation
+                self.z_s[layer_idx].append(z)
+                self.hidden_states[layer_idx].append(h)
+                
+                # Update h_prev for next layer
+                h_prev = h
+
+                # Update the hidden state
+                h_t[layer_idx] = h
+
+            # Compute output from the last hidden layer
+            o_t = h_prev @ self.output_weights + self.output_biases
+            o_t = self.output_activation(o_t)  # Apply output activation function
+            self.outputs.append(o_t)
+
+        # Convert lists to arrays for easier handling
+        # hidden_states[layer][time] -> (batch_size, hidden_size)
+        self.hidden_states = [np.stack(layer, axis=1) for layer in self.hidden_states]  # List of arrays
+        # Outputs: list of (batch_size, output_size) -> (batch_size, sequence_length, output_size)
+        self.outputs = np.stack(self.outputs, axis=1)  # Shape: (batch_size, sequence_length, output_size)
+
+        return self.outputs, self.hidden_states
+
+
+    def backward(self, X: np.ndarray, y: np.ndarray, epoch_index: int, batch_index: int):
+        """
+        Performs backpropagation through time and updates the weights and biases.
+        
+        Arguments:
+        * X: Input data of shape (batch_size, sequence_length, input_size).
+        * y: Labels of shape (batch_size,).
+        """
+        batch_size, sequence_length, input_size = X.shape
+        hidden_size = self.hidden_size
+
+        # Initialize gradients
+        dW_xh = np.zeros_like(self.weights[0])           # Shape: (input_size, hidden_size)
+        dW_hh = np.zeros_like(self.recurrent_weights[0]) # Shape: (hidden_size, hidden_size)
+        db_h = np.zeros_like(self.biases[0])             # Shape: (1, hidden_size)
+        dW_hy = np.zeros_like(self.output_weights)       # Shape: (hidden_size, output_size)
+        db_y = np.zeros_like(self.output_biases)         # Shape: (1, output_size)
+
+        dh_next = np.zeros((batch_size, hidden_size))
+
+        for t in reversed(range(sequence_length)):
+            h_t = self.hidden_states[:, t, :]  # Shape: (batch_size, hidden_size)
+            z_t = self.z_s[t]                  # Shape: (batch_size, hidden_size)
+            x_t = X[:, t, :]                   # Shape: (batch_size, input_size)
+
+            if t == sequence_length - 1:
+                o_t = self.outputs[:, t, :]    # Shape: (batch_size, output_size)
+                # Compute gradient of loss w.r.t o_t
+                # Ensure y has shape (batch_size, output_size)
+                y_true = y[:, None]            # Shape: (batch_size, 1)
+                # Compute derivative of output activation
+                dL_do_t = (o_t - y_true) * self.output_activation_derivative(o_t)  # Shape: (batch_size, output_size)
+
+                # Gradients for output layer
+                dW_hy += h_t.T @ dL_do_t       # Shape: (hidden_size, output_size)
+                db_y += np.sum(dL_do_t, axis=0, keepdims=True)  # Shape: (1, output_size)
+
+                dh = dL_do_t @ self.output_weights.T  # Shape: (batch_size, hidden_size)
+            else:
+                dh = dh_next
+
+            dh_total = dh
+
+            # Backprop through activation function
+            dh_raw = dh_total * self.activation_derivative(z_t)  # Shape: (batch_size, hidden_size)
+
+            # Gradients for weights and biases
+            dW_xh += x_t.T @ dh_raw  # Shape: (input_size, hidden_size)
+
+            if t > 0:
+                h_prev = self.hidden_states[:, t -1, :]  # Shape: (batch_size, hidden_size)
+            else:
+                h_prev = np.zeros_like(h_t)  # Shape: (batch_size, hidden_size)
+
+            dW_hh += h_prev.T @ dh_raw      # Shape: (hidden_size, hidden_size)
+            db_h += np.sum(dh_raw, axis=0, keepdims=True)  # Shape: (1, hidden_size)
+
+            # Compute gradient for next time step
+            dh_next = dh_raw @ self.recurrent_weights[0].T  # Shape: (batch_size, hidden_size)
+
+        # Update weights and biases using optimizers
+        self.weights[0] = self.weight_optimizers[0].update(self.weights[0], dW_xh)
+        self.recurrent_weights[0] = self.recurrent_weight_optimizers[0].update(self.recurrent_weights[0], dW_hh)
+        self.biases[0] = self.bias_optimizers[0].update(self.biases[0], db_h)
+
+        self.output_weights = self.output_optimizer.update(self.output_weights, dW_hy)
+        self.output_biases = self.output_bias_optimizer.update(self.output_biases, db_y)
+
+    def compute_loss(self, y_true:np.ndarray, y_pred:np.ndarray):
+        """
+        Computes the loss using the true (y_true) output data and the predicted (y_pred) output data.
+        """
+        if self.loss_function == 'mse':
+            return np.mean((y_pred - y_true) ** 2)
+        elif self.loss_function == 'bce':
+            return -np.mean(y_true * np.log(y_pred + 1e-15) + (1 - y_true) * np.log(1 - y_pred + 1e-15))
+        else:
+            raise ValueError("Invalid loss function specified. Use 'mse' or 'bce'.")
+
+    def _create_sequences(self, t:np.ndarray, y:np.ndarray, window_size:int, step_size:int) -> list:
+        """
+        Segments the time-series data into sequences for RNN training.
+
+        Arguments:
+        * t:                Input data (1D 'time')
+        * y:                Binary labels for presence of a gravitational wave (1D array).
+        * window_size:      Number of time steps in each window (sequence length).
+        * step_size:        Number of time steps to shift the window (overlapping control).
+
+        Returns:
+        * X:                Segmented time-series data (shape: num_windows, window_size, 1).
+        * y_seq:            Labels for each window (shape: num_windows or num_windows, window_size).
+        """
+        X = []
+        y_seq = []
+
+        for i in range(0, len(t) - window_size + 1, step_size):
+            # Create a window of input data
+            window = t[i:i + window_size].reshape(-1, 1)  # Shape: (window_size, 1)
+            X.append(window)
+
+            # Create the corresponding label
+            window_label = y[i:i + window_size]  # Shape: (window_size,)
+            # Example: Label the whole window based on the presence of any gravitational wave
+            y_seq.append(int(np.any(window_label == 1)))
+
+        X = np.array(X)  # Shape: (num_windows, window_size, 1)
+        y_seq = np.array(y_seq)  # Shape: (num_windows,)
+        return X, y_seq
+
+    def train(self, t:np.ndarray, y:np.ndarray, 
+              epochs=1000, batch_size=None, window_size=None, step_size=10, shuffle=True) -> list:
+        """
+        Trains the neural network. 
+
+        Positional Arguments
+        * t:                input data (1D 'time')
+        * y:                output data 
+
+        Keyword Arguments
+        * epochs (int):     `number of iterations'
+        * batch_size (int): size of data partition
+        * shuffle (bool):   if true: shuffles the data for each epoch
+
+        Returns
+        loss history
+        """
+
+        self.initialize_weights_and_biases()
+
+        N = len(t)
+        if window_size is None:
+            window_size = int(N / 10)
+
+        X, y_seq = self._create_sequences(t, y, window_size, step_size)
+
+        loss_history = []
+        m = X.shape[0]  # Total number of windows
+        if batch_size is None:
+            batch_size = m
+
+        # For printing percentage/duration
+        start_time = time.time()
+        N = epochs * (m // batch_size + (1 if m % batch_size != 0 else 0)); counter = 0
+
+        for epoch_index in range(epochs):
+            if shuffle:
+                indices = np.random.permutation(m)
+                X, y_seq = X[indices], y_seq[indices]
+
+            for batch_index in range(0, m, batch_size):
+                X_batch = X[batch_index:batch_index + batch_size]
+                y_batch = y_seq[batch_index:batch_index + batch_size]
+
+                outputs, _ = self.forward(X_batch)
+                self.backward(X_batch, y_batch, epoch_index, batch_index)
+
+                counter += 1
+                tmp = counter / N * 100
+                print(f"Training RNN, {tmp:.1f}% complete, time taken: {time.time() - start_time:.1f}s", end="\r")
+
+            # Calculate and store the loss
+            loss = self.compute_loss(y_batch, outputs)
+            loss_history.append(loss)
+        
+        print(f"Training RNN, 100.0% complete, time taken: {time.time() - start_time:.1f}s         ")
+        return loss_history
+
+    def predict(self, X:np.ndarray):
+        """
+        Predicts on the data X.
+        """
+        return self.forward(X)
+
+    def accuracy(self, X:np.ndarray, y:np.ndarray):
+        """
+        Computes and returns the accuracy score.
+        """
+        predictions = self.predict(X)
+        if self.loss_function == 'bce':
+            predicted_classes = (predictions > 0.5).astype(int)
+            return np.mean(predicted_classes.flatten() == y.flatten())
+        else:
+            return np.mean(np.round(predictions) == y.flatten())
+        
+    @property
+    def learning_rate(self):
+        return self.weight_optimizer.learning_rate
+    
+    @learning_rate.setter
+    def learning_rate(self, new_learning_rate):
+        self.optimizer.learning_rate = new_learning_rate
+        for i in range(len(self.weight_optimizers)):
+            self.weight_optimizers[i].learning_rate = new_learning_rate
+            self.bias_optimizers[i].learning_rate = new_learning_rate
+    
 class Data:
 
     def __init__(self, neural_network:NeuralNetwork, additional_description=""):
