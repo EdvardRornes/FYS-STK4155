@@ -463,7 +463,8 @@ class Adam(Optimizer):
                               epsilon=self.epsilon, beta1=self.beta1, beta2=self.beta2, decay_rate=self.decay_rate)
         
         return optimizer
-        
+
+
 class NeuralNetwork:
 
     def __init__(self) -> None:
