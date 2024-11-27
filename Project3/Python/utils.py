@@ -114,6 +114,17 @@ class Activation:
     def Lrelu_derivative(z, alpha=0.01):
         """Derivative of Leaky ReLU activation function."""
         return np.where(z > 0, 1, alpha)
+    
+    @staticmethod
+    def tanh(z):
+        """tanh activation function."""
+        return np.tanh(z)
+    
+    @staticmethod
+    def tanh_derivative(z):
+        """Derivative of tanh activation function."""
+        return 1/np.cosh(z)**2
+
 
 ############ Cost/gradient functions ############
 def gradientOLS(X, y, beta):
@@ -463,8 +474,7 @@ class Adam(Optimizer):
                               epsilon=self.epsilon, beta1=self.beta1, beta2=self.beta2, decay_rate=self.decay_rate)
         
         return optimizer
-
-
+        
 class NeuralNetwork:
 
     def __init__(self) -> None:
