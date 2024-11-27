@@ -1019,6 +1019,7 @@ class RNN(NeuralNetwork):
         for i in range(len(self.weight_optimizers)):
             self.weight_optimizers[i].learning_rate = new_learning_rate
             self.bias_optimizers[i].learning_rate = new_learning_rate
+            
     
 class Data:
 

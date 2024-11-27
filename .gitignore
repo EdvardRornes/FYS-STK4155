@@ -215,6 +215,7 @@ sympy-plots-for-*.tex/
 
 # pythontex
 *.pytxcode
+__pycache__/
 *.pyc 
 pythontex-files-*/
 

@@ -2,6 +2,7 @@ from utils import *
 import copy
 import numpy as np
 import keras as ker
+import random
 # from keras.models import Sequential 
 # from keras.layers import Dense, SimpleRNN # type: ignore
 
@@ -12,9 +13,9 @@ class Activation:
         Creates a callable activation function corresponding to the string 'acitvation_name' given.
         """
         self.activation_functions =            [Activation.Lrelu, Activation.relu, 
-                                       Activation.sigmoid, Activation.tanh]
+                                                Activation.sigmoid, Activation.tanh]
         self.activation_functions_derivative = [Activation.Lrelu_derivative, Activation.relu_derivative, 
-                                       Activation.sigmoid_derivative, Activation.tanh_derivative]
+                                                Activation.sigmoid_derivative, Activation.tanh_derivative]
         self.activation_functions_name = ["LRELU", "RELU", "SIGMOID", "TANH"]
 
         self.acitvation_name = acitvation_name
@@ -957,65 +958,224 @@ class RNN(NeuralNetwork):
             self.weight_optimizers[i].learning_rate = new_learning_rate
             self.bias_optimizers[i].learning_rate = new_learning_rate
 
-class KerasRNN(NeuralNetwork):
+import numpy as np
+import tensorflow.keras as ker
 
+class KerasRNN(NeuralNetwork):
     def __init__(self, hidden_layers:int, dim_output:int, dim_input:int, activation_func:str, 
-                 activation_func_out=None, loss_function="mean_squared_error", optimizer="adam", scaler="standard", test_percentage=0.25, random_state=None):
+                 activation_func_out=None, loss_function="categorical_crossentropy", optimizer="adam", scaler="standard", 
+                 test_percentage=0.25, random_state=None, labels=None):
         """
-        Keyword Arguments
-        * activation_out (str): Activation function for the output layer
-        * lambda_reg (float):   L2 regularization parameter
-        * loss_function (str):  Loss function to use ('mse' or 'bce').
-        * alpha (float):        Leaky ReLU parameter (only for 'lrelu').
-        * scaler (str):         Type of scaler
+        Initializes an RNN model for multi-class classification.
         """
-        
-        # Initializes acitvation functions
         super().__init__(activation_func, activation_func_out, scaler, test_percentage, random_state)
 
         self.hidden_layers = hidden_layers
-        self.dim_output = dim_output
+        self.dim_output = dim_output  # Number of output classes
         self.dim_input = dim_input
         self.loss_function = loss_function
-        self.optimizer = optimizer 
+        self.optimizer = optimizer
+
+        # Store labels to compute class weights
+        self.labels = labels
+        self.gw_class_weights = self.compute_class_weights()
 
         self.create_data()
         self.model = ker.models.Sequential()
         self.model.add(ker.layers.SimpleRNN(self.hidden_layers, input_shape=self.dim_input, 
                         activation=activation_func))
-        if not (activation_func_out is None):
-            self.model.add(ker.layers.Dense(units=self.dim_output, activation=activation_func_out))
-        else:
-            self.model.add(ker.layers.Dense(units=self.dim_output, activation=activation_func))
-        self.model.compile(loss=self.loss_function, optimizer=self.optimizer)
+        # Output layer with softmax activation for multi-class classification
+        self.model.add(ker.layers.Dense(units=self.dim_output, activation="softmax"))
+        self.model.compile(loss=self.loss_function, optimizer=self.optimizer, metrics=['accuracy'])
     
+    def compute_class_weights(self):
+        """
+        Compute class weights for multi-class classification based on the label distribution.
+        """
+        # Count occurrences of each class (assuming labels are 1D array)
+        self.labels = self.labels.flatten()
+        class_counts = np.bincount(self.labels)
+        total_samples = len(self.labels)
+        class_weights = {i: total_samples / count if count > 0 else 1 for i, count in enumerate(class_counts)}
+        return class_weights
+
     def train(self, x:np.ndarray, y:np.ndarray, epochs:int, batch_size:int, step_length:int, verbose=1):
         self.store_train_test_from_data(x, y)
         X_train_seq, y_train_seq = self.prepare_sequences_RNN(self.X_train_scaled, self.y_train, step_length)
         X_test_seq, y_test_seq = self.prepare_sequences_RNN(self.X_test_scaled, self.y_test, step_length)
+        self.model.fit(X_train_seq, y_train_seq, epochs=epochs, batch_size=batch_size, verbose=verbose, 
+                       class_weight=self.gw_class_weights)
 
-        self.model.fit(X_train_seq, y_train_seq, epochs=epochs, batch_size=batch_size, verbose=verbose)
+        train_predict = self.model.predict(X_train_seq)
+        test_predict = self.model.predict(X_test_seq)
+
+        print(f"Training Accuracy: {self.model.evaluate(X_train_seq, y_train_seq)}")
+        print(f"Test Accuracy: {self.model.evaluate(X_test_seq, y_test_seq)}")
+
+
+class GWSignalGenerator:
+    def __init__(self, signal_length, noise_level=0.1):
+        """
+        Initialize the GWSignalGenerator with a signal length and noise level.
+        """
+        self.signal_length = signal_length
+        self.noise_level = noise_level
+        self.labels = np.zeros(signal_length, dtype=int)  # Initialize labels to 0 (background noise)
+        self.regions = []  # Store regions for visualization or further analysis
+
+    def add_gw_event(self, y, start, end, amplitude_factor=1, spike_factor=0.8):
+        """
+        Adds a simulated gravitational wave event to the signal and updates labels for its phases.
+        """
+        event_sign = np.random.choice([-1, 1])  # Random polarity for the GW event
+
+        # Inspiral phase
+        inspiral_end = int(start + 0.7 * (end - start))  # Define inspiral region as 70% of event duration
+        amplitude_increase = np.linspace(0, amplitude_factor, inspiral_end - start)
+        y[start:inspiral_end] += event_sign * amplitude_increase
+        self.labels[start:inspiral_end] = 1  # Set label to 1 for inspiral
+
+        # Merger phase
+        merge_start = inspiral_end
+        merge_end = merge_start + int(0.1 * (end - start))  # Define merger as 10% of event duration
+        y[merge_start:merge_end] += event_sign * spike_factor * np.exp(-np.linspace(3, 0, merge_end - merge_start))
+        self.labels[merge_start:merge_end] = 2  # Set label to 2 for merger
+
+        # Ringdown phase
+        dropoff_start = merge_end
+        dropoff_end = dropoff_start + int(0.2 * (end - start))  # Define ringdown as 20% of event duration
+        dropoff_curve = spike_factor * np.exp(-np.linspace(-0.5, 15, dropoff_end - dropoff_start))
+        y[dropoff_start:dropoff_end] += event_sign * dropoff_curve
+        self.labels[dropoff_start:dropoff_end] = 3  # Set label to 3 for ringdown
+
+        # Store region details for visualization or debugging
+        self.regions.append((start, end, inspiral_end, merge_start, merge_end, dropoff_start, dropoff_end))
+
+    def generate_random_events(self, num_events, event_length_min, event_length_max, scale=1):
+        """
+        Generate random gravitational wave events with no overlaps.
+        """
+        events = []
+        used_intervals = []
+
+        for _ in range(num_events):
+            while True:
+                # Randomly determine start and length of event
+                event_length = random.randint(event_length_min, event_length_max)
+                event_start = random.randint(0, self.signal_length - event_length)
+                event_end = event_start + event_length
+
+                # Ensure no overlap
+                if not any(s <= event_start <= e or s <= event_end <= e for s, e in used_intervals):
+                    used_intervals.append((event_start, event_end))
+                    break  # Valid event, exit loop
+
+            # Randomize event properties
+            amplitude_factor = random.uniform(0, 1)
+            spike_factor = random.uniform(0.2, 1.5)
+
+            events.append((event_start, event_end, amplitude_factor * scale, spike_factor * scale))
+
+        return events
+
+    def apply_events(self, y, events):
+        """
+        Apply generated events to the input signal.
+        """
+        for start, end, amplitude, spike in events:
+            self.add_gw_event(y, start, end, amplitude_factor=amplitude, spike_factor=spike)
+
+    def compute_class_weights(self):
+        """
+        Compute optimal class weights based on the distribution of labels.
+        We use the inverse frequency strategy to assign higher weights to less frequent classes.
+        """
+        # Count occurrences of each class label (ignoring the background noise class, which is labeled 0)
+        unique, counts = np.unique(self.labels[self.labels > 0], return_counts=True)
+        total_samples = len(self.labels)
         
-        train_predict = self.model.predict(self.X_train_seq)#, y_train_seq, verbose=verbose)
-        test_predict = self.model.predict(self.X_test_seq)#, y_test_seq, verbose=verbose)
-
-        print(MSE(train_predict, self.y_train))
-        print(MSE(test_predict, self.y_test))
+        # Compute the weight for each class based on the inverse frequency
+        class_weights = {}
+        for label, count in zip(unique, counts):
+            class_weight = (total_samples - count) / count
+            class_weights[label] = class_weight
         
+        return class_weights
 
-test = KerasRNN(2,1,(3,1), "tanh")
-print(test.data)
-time_steps = 1000
-x = np.sin(np.linspace(0, 50, time_steps)) + 0.5 * np.random.randn(time_steps)  # Amplitudes with noise
-y = np.zeros(time_steps)
-y[300:305] = 1  # Simulated gravitational wave event
-y[700:710] = 1  # Another event
 
-# Define parameters
-step_length = 20  # Length of sequences
-test.train(x, y, 100, 10, step_length)
 
-exit()
+# Parameters
+time_steps = 1000000
+x = np.linspace(0, 50, time_steps)
+noise = 0.02
+
+# Base signal: sine wave + noise
+y = 1e-19*(0.5 * np.sin(100 * x) - 0.5 * np.cos(60 * x)*np.sin(-5*x) + 0.3*np.cos(30*x) + 0.05*np.sin(10000*x)) #+ noise * np.random.randn(time_steps)
+y_noGW = y.copy()
+
+# Initialize generator and create events
+generator = GWSignalGenerator(signal_length=time_steps, noise_level=noise)
+events = generator.generate_random_events(2, time_steps//50, time_steps//10, scale=1e-19)
+generator.apply_events(y, events)
+
+# Plot the signal
+plt.figure(figsize=(15, 6))
+plt.plot(x * 2e4, y_noGW, label="No GW Signal", lw=0.4, color="gray", alpha=0.7)
+plt.plot(x * 2e4, y, label="Signal (with GW events)", lw=0.6, color="blue")
+
+# Highlight regions
+for i, (start, end, inspiral_end, merge_start, merge_end, dropoff_start, dropoff_end) in enumerate(generator.regions):
+    plt.axvspan(x[start] * 2e4, x[end] * 2e4, color="lightblue", alpha=0.3, label="Inspiral" if i == 0 else "")
+    plt.axvspan(x[merge_start] * 2e4, x[merge_end] * 2e4, color="orange", alpha=0.3, label="Merger" if i == 0 else "")
+    plt.axvspan(x[dropoff_start] * 2e4, x[dropoff_end] * 2e4, color="lightgreen", alpha=0.3, label="Ringdown" if i == 0 else "")
+
+
+# Add labels and legend
+plt.xlim(0, time_steps)
+plt.title("Simulated Gravitational Wave Signal with Highlighted Epochs")
+plt.xlabel("Time (ms)")
+plt.ylabel("Strain")
+plt.legend()
+plt.show()
+
+
+from sklearn.metrics import confusion_matrix
+from keras.utils import to_categorical
+
+
+y_reshaped = y.reshape((time_steps, 1, 1))  # RNN expects 3D input (samples, time steps, features)
+labels = generator.labels
+labels_reshaped = labels.reshape((time_steps, 1))  # Labels are 2D (samples, output)
+
+# Create an instance of the KerasRNN model, passing the labels for class weight computation
+test = KerasRNN(hidden_layers=5, dim_output=4, dim_input=(1, 1), activation_func="tanh", labels=labels_reshaped)
+
+# One-hot encode the labels
+labels_one_hot = to_categorical(labels_reshaped, num_classes=4)  # Update num_classes to the number of classes
+
+# Train the model with the reshaped data and class weights calculated inside KerasRNN
+test.train(x=y_reshaped, y=labels_one_hot, epochs=25, batch_size=5000, step_length=25)
+
+# Get predictions
+predictions = test.model.predict(y_reshaped)
+
+# Convert softmax probabilities to class labels (argmax for multi-class)
+predicted_labels = np.argmax(predictions, axis=1)
+
+# Compute confusion matrix
+cm = confusion_matrix(labels_reshaped, predicted_labels)
+
+# Plot confusion matrix
+plt.figure(figsize=(10, 8))
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", cbar=False, 
+            xticklabels=["Noise (0)", "Inspiral (1)", "Merger (2)", "Ringdown (3)"], 
+            yticklabels=["Noise (0)", "Inspiral (1)", "Merger (2)", "Ringdown (3)"])
+plt.title("Confusion Matrix")
+plt.xlabel("Predicted Labels")
+plt.ylabel("True Labels")
+plt.show()
+
+
 class Data:
 
     def __init__(self, neural_network:NeuralNetwork, additional_description=""):
