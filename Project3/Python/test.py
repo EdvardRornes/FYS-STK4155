@@ -1,7 +1,42 @@
 from utils import * 
+import copy
 import numpy as np
+import keras as ker
+# from keras.models import Sequential 
+# from keras.layers import Dense, SimpleRNN # type: ignore
 
 class Activation:
+
+    def __init__(self, acitvation_name:str, is_derivative=False):
+        """
+        Creates a callable activation function corresponding to the string 'acitvation_name' given.
+        """
+        self.activation_functions =            [Activation.Lrelu, Activation.relu, 
+                                       Activation.sigmoid, Activation.tanh]
+        self.activation_functions_derivative = [Activation.Lrelu_derivative, Activation.relu_derivative, 
+                                       Activation.sigmoid_derivative, Activation.tanh_derivative]
+        self.activation_functions_name = ["LRELU", "RELU", "SIGMOID", "TANH"]
+
+        self.acitvation_name = acitvation_name
+        try:
+            index = self.activation_functions_name.index(acitvation_name.upper())
+            self.activation_func, self.activation_func_derivative  = self.activation_functions[index], self.activation_functions_derivative[index]
+        except:
+            raise TypeError(f"Did not recognize '{acitvation_name}' as an activation function.")
+
+        self._call = self.activation_func
+        if is_derivative:   # Then call-method will return derivative instead
+            self._call = self.activation_func_derivative
+
+    def __call__(self, z):
+        return self._call(z)
+
+    def __str__(self):
+        return self.acitvation_name
+    
+    def derivative(self) -> Activation:
+        return Activation(self.acitvation_name, True)
+    
     @staticmethod
     def sigmoid(z):
         """Sigmoid activation function."""
@@ -32,6 +67,14 @@ class Activation:
     def Lrelu_derivative(z, alpha=0.01):
         """Derivative of Leaky ReLU activation function."""
         return np.where(z > 0, 1, alpha)
+    
+    @staticmethod
+    def tanh(z):
+        return np.tanh(z)
+    
+    @staticmethod
+    def tanh_derivative(z):
+        return 1 / np.cosh(z)**2
     
 class Optimizer:
     """
@@ -276,34 +319,323 @@ class Adam(Optimizer):
                               epsilon=self.epsilon, beta1=self.beta1, beta2=self.beta2, decay_rate=self.decay_rate)
         
         return optimizer
+
+class Scalers:
+
+    def __init__(self, scaler_name:str):
+        scaler_names = ["STANDARD", "MINMAX"]
+        scalers = [Scalers.standard_scaler, Scalers.minmax_scaler]
+
+        try:
+            index = scaler_names.index(scaler_name.upper())
+            self._call = scalers[index]
+        except:
+            raise TypeError(f"Did not recognize '{scaler_name}' as a scaler type, available: ['standard', 'minmax']")
         
+        self.scaler_name = scaler_name
+
+    def __call__(self, X_train:np.ndarray, X_test:np.ndarray) -> list[np.ndarray, np.ndarray]:
+        return self._call(X_train, X_test)
+    
+    def __str__(self):
+        return self.scaler_name
+    
+    @staticmethod
+    def standard_scaler(X_train, X_test):
+        scaler = StandardScaler()
+        scaler.fit(X_train)
+        X_train = scaler.transform(X_train)
+        X_test = scaler.transform(X_test)
+        
+        return X_train, X_test
+    
+    @staticmethod
+    def minmax_scaler(X_train, X_test):
+        scaler = MinMaxScaler()
+        scaler.fit(X_train)
+        X_train = scaler.transform(X_train)
+        X_test = scaler.transform(X_test)
+        
+        return X_train, X_test
+          
 class NeuralNetwork:
+    
+    data = {}
 
-    def __init__(self) -> None:
-        self.input_size =           None
-        self.hidden_layers =        None
-        self.output_size =          None
-        self.layers =               None
-        self.weights =              None
-        self.biases =               None
-        self.activation_func_name = None
-        self.loss_function =        None
-        self.optimizer =            None
+    def __init__(self, activation_func:str, activation_func_output:str, scaler:str, 
+                 test_percentage:float, random_state:int):
+        self.activation_func = Activation(activation_func)
+        self.activation_func_derivative = self.activation_func.derivative()
+        self.test_percentage = test_percentage
+        self.random_state = random_state
 
-        self.lambda_reg =           None
-        self.alpha =                None
-
-        # Initialize activation functions mapping
-        self.activation_map =       None 
+        if activation_func_output is None:
+            self.activation_func_out = Activation(activation_func)
+            self.activation_func__out_derivative = self.activation_func_out.derivative()
         
-        self.activation, self.activation_derivative = None, None
+        else:
+            self.activation_func_out = Activation(activation_func_output)
+            self.activation_func__out_derivative = self.activation_func_out.derivative()
+        
+        self._scaler = Scalers(scaler)
 
-import numpy as np
-import time
+    @staticmethod
+    def get_var_name(var):
+        for name, value in globals().items():
+            if value is var:
+                return name
+            
+    def create_data(self):
+        self.data = copy.deepcopy(vars(self))
+        for key in self.data.keys():
+            self.data[key] = str(self.data[key])
+
+        # Property variables need to be handles seperatly:
+        del self.data["_scaler"]
+        self.data["scaler"] = str(self._scaler)
+
+    def store_train_test_from_data(self, x:np.ndarray, y:np.ndarray) -> None:
+        """
+        Converts data into a training and a testing set. Applies the scaling assicated with the instance of the class.
+        """
+
+        if self.random_state is None:
+            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=self.test_percentage)
+        else: 
+            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=self.test_percentage, random_state=self.random_state)
+        
+        X_train = np.reshape(X_train, (len(X_train), 1))
+        X_test = np.reshape(X_test, (len(X_test), 1))
+        self.y_train = y_train; self.y_test = y_test
+        self.X_train_scaled, self.X_test_scaled = self._scaler(X_train, X_test)
+
+    def prepare_sequences_RNN(self, X:np.ndarray, y:np.ndarray, step_length:int):
+        """
+        Converts data into sequences for RNN training.
+        
+        Parameters:
+        X:              1D array of scaled data.
+        y:              Output data.
+        step_length:    Length of each sequence.
+        
+        Returns:
+        tuple:          Sequences (3D array) and corresponding labels (1D array).
+        """
+        sequences = []
+        labels = []
+
+        for i in range(len(X) - step_length + 1):
+            seq = X[i:i + step_length]
+            sequences.append(seq)
+            label = y[i + step_length - 1]
+            labels.append(label)
+
+        X_seq, y_seq = np.array(sequences).reshape(-1, step_length, 1), np.array(labels)
+        return X_seq, y_seq
+
+    @property
+    def scaler(self):
+        return self._scaler
+    
+    @scaler.setter
+    def scaler(self, new_scaler:str):
+        self._scaler = Scalers(new_scaler)
+        self.data["scaler"] = str(self._scaler)
+
+
+
+class FFNN(NeuralNetwork):
+    def __init__(self, input_size:int, hidden_layers:list, output_size:int, optimizer:Optimizer, activation:str, 
+                 activation_out=None, lambda_reg=0.0, alpha=0.1, loss_function='mse', scaler="standard"):
+        """
+        Implements the Feedforward Neural Network (FFNN).
+        
+        Positional Arguments
+        * input_size:           Number of input features.
+        * hidden_layers:        List of integers representing the size of each hidden layer.
+        * output_size:          Number of output neurons.
+        * optimizer:            Type of optimizer used for weights and biases (PlaneGradient, AdaGrad, RMSprop or Adam)
+        * activation:           Activation function to use ('relu', 'sigmoid', 'lrelu').
+
+        Keyword Arguments
+        * activation_out (str): Activation function for the output layer
+        * lambda_reg (float):   L2 regularization parameter
+        * loss_function (str):  Loss function to use ('mse' or 'bce').
+        * alpha (float):        Leaky ReLU parameter (only for 'lrelu').
+        * scaler (str):         Type of scaler.
+        """
+
+        # Initializes acitvation functions
+        super().__init__(activation, activation_out, scaler)
+        self.layers = [input_size] + hidden_layers + [output_size]
+        self.weights = []
+        self.biases = []
+        self.activation_func_name = activation
+        self.loss_function = loss_function  # Added loss function parameter
+        self.optimizer = optimizer
+
+        self.lambda_reg = lambda_reg
+        self.alpha = alpha
+
+        self.create_data()
+
+        # Initialize weights, biases, and Adam parameters
+        self.initialize_weights_and_biases()
+
+    def initialize_weights_and_biases(self):
+        """
+        Initializes weights and biases. 
+        """
+        self.weights = []; self.weight_optimizers = []
+        self.biases = []; self.bias_optimizers = []
+        for i in range(len(self.layers) - 1):
+            weight_matrix = np.random.randn(self.layers[i], self.layers[i + 1]) * np.sqrt(2. / self.layers[i])
+            self.weights.append(weight_matrix)
+            bias_vector = np.zeros((1, self.layers[i + 1]))
+            self.biases.append(bias_vector)
+            
+            self.weight_optimizers.append(self.optimizer.copy())
+            self.bias_optimizers.append(self.optimizer.copy())
+    
+    def forward(self, X:np.ndarray):
+        """
+        Forward propagating through the network, computing the output from the input (X).
+        """
+
+        self.activations = [X]
+        self.z_values = []
+        A = X
+
+        for i in range(len(self.weights) - 1):
+            Z = A @ self.weights[i] + self.biases[i]
+            self.z_values.append(Z)
+            A = self.activation(Z)
+            A = np.clip(A, -1e10, 1e10)
+            self.activations.append(A)
+
+        Z = A @ self.weights[-1] + self.biases[-1]
+        self.z_values.append(Z)
+        if self.loss_function.lower() == 'mse':
+            # Linear activation of regression
+            A_output = self.activation(Z)
+        else:
+            # Sigmoid activation for classification
+            A_output = Activation.sigmoid(Z)
+        self.activations.append(A_output)
+        return A_output
+
+    def compute_loss(self, y_true:np.ndarray, y_pred:np.ndarray):
+        """
+        Computes the loss using the true (y_true) output data and the predicted (y_pred) output data.
+        """
+        if self.loss_function == 'mse':
+            return np.mean((y_pred - y_true) ** 2)
+        elif self.loss_function == 'bce':
+            # Adding a small epsilon to avoid log(0)
+            return -np.mean(y_true * np.log(y_pred + 1e-15) + (1 - y_true) * np.log(1 - y_pred + 1e-15))
+        else:
+            raise ValueError("Invalid loss function specified. Use 'mse' or 'bce'.")
+
+    def backward(self, X:np.ndarray, y:np.ndarray, epoch_index:int, batch_index:int):
+        """
+        Propagating backwards through the network, updating the weights and biases.
+        """
+        m = X.shape[0]
+        y = y.reshape(-1, 1)
+
+        output = self.activations[-1]
+
+        delta = output - y
+
+        for i in reversed(range(len(self.weights))):
+            dw = (self.activations[i].T @ delta) / m
+            db = np.sum(delta, axis=0, keepdims=True) / m
+            dw += (self.lambda_reg / m) * self.weights[i]
+
+            self.weights[i] = self.weight_optimizers[i](self.weights[i], dw, epoch_index, batch_index)
+            self.biases[i] = self.bias_optimizers[i](self.biases[i], db, epoch_index, batch_index)
+
+            if i > 0:
+                delta = (delta @ self.weights[i].T) * self.activation_derivative(self.z_values[i - 1])
+
+    def train(self, X:np.ndarray, y:np.ndarray, epochs=1000, batch_size=None, shuffle=True) -> list:
+        """
+        Trains the neural network. 
+
+        Positional Arguments
+        * X:                input data
+        * y:                output data
+
+        Keyword Arguments
+        * epochs (int):     `number of iterations'
+        * batch_size (int): size of data partition
+        * shuffle (bool):   if true: shuffles the data for each epoch
+
+        Returns
+        loss history
+        """
+        self.initialize_weights_and_biases()
+        loss_history = []
+        m = X.shape[0]
+        if batch_size is None:
+            batch_size = m
+
+        start_time = time.time()
+        N = epochs * (m // batch_size + (1 if m % batch_size != 0 else 0)); counter = 0
+        for epoch_index in range(epochs):
+            if shuffle:
+                indices = np.random.permutation(m)
+                X, y = X[indices], y[indices]
+
+            for batch_index in range(0, m, batch_size):
+                X_batch = X[batch_index:batch_index + batch_size]
+                y_batch = y[batch_index:batch_index + batch_size]
+
+                self.forward(X_batch)
+                self.backward(X_batch, y_batch, epoch_index, batch_index)
+
+                counter += 1
+                tmp = counter/N*100
+                print(f"Training FNN, {tmp:.1f}% complete, time taken: {time.time() - start_time:.1f}s", end="\r")
+
+            # Calculate and store the loss
+            loss = self.compute_loss(y_batch, self.activations[-1])
+            loss_history.append(loss)
+        
+        print(f"Training FFNN, 100.0% complete, time taken: {time.time() - start_time:.1f}s         ")
+        return loss_history
+
+    def predict(self, X:np.ndarray):
+        """
+        Predicts on the data X.
+        """
+        return self.forward(X)
+
+    def accuracy(self, X:np.ndarray, y:np.ndarray):
+        """
+        Computes and returns the accuracy score.
+        """
+        predictions = self.predict(X)
+        if self.loss_function == 'bce':
+            predicted_classes = (predictions > 0.5).astype(int)
+            return np.mean(predicted_classes.flatten() == y.flatten())
+        else:
+            return np.mean(np.round(predictions) == y.flatten())
+        
+    @property
+    def learning_rate(self):
+        return self.weight_optimizer.learning_rate
+    
+    @learning_rate.setter
+    def learning_rate(self, new_learning_rate):
+        self.optimizer.learning_rate = new_learning_rate
+        for i in range(len(self.weight_optimizers)):
+            self.weight_optimizers[i].learning_rate = new_learning_rate
+            self.bias_optimizers[i].learning_rate = new_learning_rate
 
 class RNN(NeuralNetwork):
-    def __init__(self, input_size: int, hidden_layers: list, output_size: int, optimizer: Optimizer, activation,
-                 lambda_reg=0.0, alpha=0.1, loss_function='mse'):
+    def __init__(self, input_size: int, hidden_layers: list, output_size: int, optimizer: Optimizer, activation:str,
+                 activation_out=None, lambda_reg=0.0, alpha=0.1, loss_function='mse', scaler="standard"):
         """
         Implements the Recurrent Neural Network (RNN).
         
@@ -315,10 +647,15 @@ class RNN(NeuralNetwork):
         * activation:           Activation function to use ('relu', 'sigmoid', 'lrelu').
 
         Keyword Arguments
+        * activation_out (str): Activation function for the output layer
+        * lambda_reg (float):   L2 regularization parameter
         * loss_function (str):  Loss function to use ('mse' or 'bce').
         * alpha (float):        Leaky ReLU parameter (only for 'lrelu').
+        * scaler (str):         Type of scaler
         """
-        super().__init__()
+
+        # Initializes acitvation functions
+        super().__init__(activation, activation_out, scaler)
         self.layers = [input_size] + hidden_layers + [output_size]
         self.weights = []
         self.biases = []
@@ -330,15 +667,7 @@ class RNN(NeuralNetwork):
         self.alpha = alpha
         self.hidden_size = hidden_layers[-1]
 
-        # Initialize activation functions mapping
-        self.activation_map = {
-            'relu': (Activation.relu, Activation.relu_derivative),
-            'sigmoid': (Activation.sigmoid, Activation.sigmoid_derivative),
-            'lrelu': (lambda z: Activation.Lrelu(z, self.alpha), lambda z: Activation.Lrelu_derivative(z, self.alpha))
-        }
-
-        self.activation, self.activation_derivative = self.activation_map.get(self.activation_func_name.lower(), (Activation.relu, Activation.relu_derivative))
-        self.output_activation = self.activation
+        self.create_data()
 
         # Initialize weights, biases, and optimizers
         self.initialize_weights_and_biases()
@@ -628,6 +957,109 @@ class RNN(NeuralNetwork):
             self.weight_optimizers[i].learning_rate = new_learning_rate
             self.bias_optimizers[i].learning_rate = new_learning_rate
 
+class KerasRNN(NeuralNetwork):
+
+    def __init__(self, hidden_layers:int, dim_output:int, dim_input:int, activation_func:str, 
+                 activation_func_out=None, loss_function="mean_squared_error", optimizer="adam", scaler="standard", test_percentage=0.25, random_state=None):
+        """
+        Keyword Arguments
+        * activation_out (str): Activation function for the output layer
+        * lambda_reg (float):   L2 regularization parameter
+        * loss_function (str):  Loss function to use ('mse' or 'bce').
+        * alpha (float):        Leaky ReLU parameter (only for 'lrelu').
+        * scaler (str):         Type of scaler
+        """
+        
+        # Initializes acitvation functions
+        super().__init__(activation_func, activation_func_out, scaler, test_percentage, random_state)
+
+        self.hidden_layers = hidden_layers
+        self.dim_output = dim_output
+        self.dim_input = dim_input
+        self.loss_function = loss_function
+        self.optimizer = optimizer 
+
+        self.create_data()
+        self.model = ker.models.Sequential()
+        self.model.add(ker.layers.SimpleRNN(self.hidden_layers, input_shape=self.dim_input, 
+                        activation=activation_func))
+        if not (activation_func_out is None):
+            self.model.add(ker.layers.Dense(units=self.dim_output, activation=activation_func_out))
+        else:
+            self.model.add(ker.layers.Dense(units=self.dim_output, activation=activation_func))
+        self.model.compile(loss=self.loss_function, optimizer=self.optimizer)
+    
+    def train(self, x:np.ndarray, y:np.ndarray, epochs:int, batch_size:int, step_length:int, verbose=1):
+        self.store_train_test_from_data(x, y)
+        X_train_seq, y_train_seq = self.prepare_sequences_RNN(self.X_train_scaled, self.y_train, step_length)
+        X_test_seq, y_test_seq = self.prepare_sequences_RNN(self.X_test_scaled, self.y_test, step_length)
+
+        self.model.fit(X_train_seq, y_train_seq, epochs=epochs, batch_size=batch_size, verbose=verbose)
+        
+        train_predict = self.model.predict(self.X_train_seq)#, y_train_seq, verbose=verbose)
+        test_predict = self.model.predict(self.X_test_seq)#, y_test_seq, verbose=verbose)
+
+        print(MSE(train_predict, self.y_train))
+        print(MSE(test_predict, self.y_test))
+        
+
+test = KerasRNN(2,1,(3,1), "tanh")
+print(test.data)
+time_steps = 1000
+x = np.sin(np.linspace(0, 50, time_steps)) + 0.5 * np.random.randn(time_steps)  # Amplitudes with noise
+y = np.zeros(time_steps)
+y[300:305] = 1  # Simulated gravitational wave event
+y[700:710] = 1  # Another event
+
+# Define parameters
+step_length = 20  # Length of sequences
+test.train(x, y, 100, 10, step_length)
+
+exit()
+class Data:
+
+    def __init__(self, neural_network:NeuralNetwork, additional_description=""):
+        self.data = neural_network.data
+        if not (additional_description == ""):
+            self.data["additional_description"] = additional_description
+    
+    def store(self, filename_and_path:str, overwrite=False, stop=50):
+        """Saves the analysis data to a file.
+
+        Args:
+            * filename:         name of the file to save the data to
+            * overwrite         whether to overwrite the file if it exists
+            * stop:             if 50 files for this 'type' of data exists, stop
+        """
+        filename_full = f"{filename_and_path}_{0}.pkl"
+
+        if not overwrite:
+            if os.path.exists(filename_full):
+                i = 1
+                while i <= stop: # May already be additional files created
+                    filename_full = f"{filename_and_path}_{i}.pkl"
+                    if not os.path.exists(filename_full):
+                        with open(filename_full, 'wb') as f:
+                            pickle.dump(self.data, f)
+                        
+                        return 
+                    i += 1
+            
+                raise ValueError(f"You have {stop} additional files of this sort?")
+                
+        with open(filename_full, 'wb') as f:
+            pickle.dump(self.data, f)
+    
+    def load_data(self, filename_and_path:str) -> dict:
+        """Loads analysis data from a file.
+
+        Args:
+            * filename:         The name of the file to load the data from.
+        """
+        with open(filename_and_path, 'rb') as f:
+            self.data = pickle.load(f)
+
+        return self.data
 
 
 # Generate synthetic time-series data
