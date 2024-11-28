@@ -84,7 +84,17 @@ def read_save_GW(filename_n_path:str, gravitational_wave_end_UTC:str, duration:f
         random_crop_left_index = np.argmin(np.abs(t - random_crop_left))
         random_crop_right_index = np.argmin(np.abs(t - random_crop_right))
         
+        y = np.random.randint(0,2)
+        if y== 0:
+            noise = data[random_crop_right_index:]
+        else:
+            noise = data[0:random_crop_left_index]
+
+
         data = data[random_crop_left_index:random_crop_right_index]
+        N = len(data); N = np.min([len(noise), N])
+        noise = noise[0:N]
+
         t = t[random_crop_left_index:random_crop_right_index]
 
         t_event_start_index = np.argmin(np.abs(t - t_event_start))
@@ -92,9 +102,11 @@ def read_save_GW(filename_n_path:str, gravitational_wave_end_UTC:str, duration:f
         new_data = {"data" :                data,
                     "t":                    t - t_zero, 
                     "data_event_indices" :  [t_event_start_index, t_event_end_index],
-                    "UTC_start_time" :      t_zero,
+                    "UTC_event_end_time":   t_event_end,
                     "dt" :                  dt,
-                    "duration" : duration}
+                    "duration" :            duration,
+                    "noise":                noise,
+                    "detector":             file["meta"]["Detector"][()].decode("utf-8")}
     
     if not(store_as is None):
         if "." in store_as:
@@ -124,7 +136,7 @@ def ask_for_event():
         
         index = np.random.randint(0, N)
         event_name = all_events[index] 
-        return event_name
+        return event_name, None
     
     elif x.upper() in ["", "NO"]:
 
@@ -145,16 +157,16 @@ def ask_for_event():
                     else:
                         while True:
                             x = input("Event name: ")
-                            y = input("Version (v1, v2 or v3): ")
+                            y = input("Version (v1, v2 , v3 or v4): ")
 
                             x = x + f"-{y}"
                             if x in all_events:
-                                return x
+                                return x, detector_type
                             
                             else:
                                 print(f"Did not find {x}, try again.")
 
-                    return event_name
+                    return event_name, detector_type
                 else:
                     print(f"Did not recognize {x}, try again.")
         
@@ -170,30 +182,75 @@ def ask_for_event():
 
             index = np.random.randint(0, N)
             event_name = all_events[index] 
-            return event_name
+            return event_name, None
     
     else:
         while True:
-            y = input("Version (v1, v2 or v3): ")
+            event_name = x 
+            detector_type = input("Detector ('H1', 'L1' or 'V1'): ")
+            if detector_type.upper() in ["H1", "L1", "V1"]:
+                all_events = find_datasets(detector=detector_type, type="event"); N = len(all_events)
 
-            x = x + f"-{y}"
-            if x in all_events:
-                return x
-            
+                while True:
+                    y = input("Version (v1, v2 , v3 or v4): ")
+                    event_name = event_name + f"-{y}"
+                    if event_name in all_events:
+                        return event_name, detector_type
+                    
+                    else:
+                        print(f"Did not find {event_name}, try again.")
+                        event_name = input("Event name: ")
+
             else:
-                print(f"Did not find {x}, try again.")
+                print(f"Did not recognize {x}, try again.")
                 x = input("Event name: ")
+
+
 def ask_for_GW(folder_path=""):
-    event_name = ask_for_event()
+    event_name, detector_type = ask_for_event()
 
     x = input("Download (y/n)? ")
     if x.upper() in ["Y", "YES"]:
         urls = get_event_urls(event_name)
-        for url in urls:
-            response = requests.get(url)
-            with open(f"{folder_path}{event_name}.hdf5", 'wb') as f:
-                f.write(response.content)
-            print(f"Downloaded {folder_path}{event_name}.hdf5")
+        
+        if not (detector_type is None): # Detector type is given, now limiting urls:
+            urls_new = []
+            for i in range(len(urls)):
+                if detector_type in urls[i]:
+                    urls_new.append(urls[i])
+            
+            if len(urls_new) == 0:  # No detector of this sort or for this event
+                raise TypeError(f"Did not find the event '{event_name}' measured by detector {detector_type}.")
+            
+            if len(urls_new) != 1: # Multiple possible urls
+                print("Found multiple possible links. Choose one of these (by python-index): ")
+                for i in range(len(urls_new)-1):
+                    print(urls_new[i])
+                
+                url = input(urls_new[-1] + " ")
+                while True:
+                    try:
+                        url = int(url)
+                        if url in range(0, len(urls_new)):
+                            url = urls_new[url]
+                            break
+                        else:
+                            url = input(f"Out of range(0, {len(urls_new)}), try again: ")
+                        
+                    except:
+                        url = input("That was not a integer, try again: ")
+                
+                
+            else:      # Only one url (great!)
+                url = urls_new[0]
+            
+        else:   # Apparently doesn't matter what detector you use?
+            url = urls[np.random.randint(0,len(urls))]
+
+        response = requests.get(url)
+        with open(f"{folder_path}{event_name}.hdf5", 'wb') as f:
+            f.write(response.content)
+        print(f"Downloaded {folder_path}{event_name}.hdf5")
         
         return event_name
     
@@ -207,7 +264,7 @@ def ask_for_GW(folder_path=""):
         
         return x
 
-def analyze_and_store_GW(filenamePath_and_event_name:str, max_duration_crop_outside_event=60*1.5):
+def analyze_and_store_GW(filenamePath_and_event_name:str, max_duration_crop_outside_event=60*2):
     """
     Filename and event name must be the same!
     """
