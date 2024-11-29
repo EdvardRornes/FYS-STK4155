@@ -1153,7 +1153,7 @@ y_noGW = y.copy()
 generator = GWSignalGenerator(signal_length=time_steps, noise_level=noise)
 # events = generator.generate_random_events(1, time_steps//3, time_steps//2, scale=1e-19)
 # generator.apply_events(y, events)
-GWSignalGenerator.add_gw_event(generator, y, time_steps//2, 5*time_steps//6, spin_start=3, spin_end=15, spike_factor=2, scale=1e-19)
+GWSignalGenerator.add_gw_event(generator, y, time_steps//2, 5*time_steps//6, spin_start=3, spin_end=15, spike_factor=2, scale=1)
 
 # Plot the signal
 plt.figure(figsize=(15, 6))
@@ -1208,18 +1208,18 @@ y_test_noGW = y_test.copy()
 test_generator = GWSignalGenerator(signal_length=time_steps, noise_level=noise)
 # test_events = test_generator.generate_random_events(1, time_steps//3, time_steps//2, scale=1e-19)
 # test_generator.apply_events(y_test, test_events)
-GWSignalGenerator.add_gw_event(test_generator, y_test, time_steps//3, 2*time_steps//3, spin_start=4, spin_end=7, spike_factor=1.5, scale=1e-19)
+GWSignalGenerator.add_gw_event(test_generator, y_test, time_steps//3, 2*time_steps//3, spin_start=4, spin_end=7, spike_factor=1.5, scale=1)
 
 
-y_test_reshaped = 1e19*y_test.reshape((time_steps, 1, 1))  # RNN expects 3D input (samples, time steps, features)
+y_test_reshaped = y_test.reshape((time_steps, 1, 1))  # RNN expects 3D input (samples, time steps, features)
 labels = generator.labels
 labels_reshaped = labels.reshape((time_steps, 1))  # Labels are 2D (samples, output)
 
 # Create an instance of the KerasRNN model, passing the labels for class weight computation
-test = KerasRNN(hidden_layers=5, dim_output=1, dim_input=(1, 1), activation_func="sigmoid", labels=labels_reshaped, gw_class_early_boost=1)
+test = KerasRNN(hidden_layers=5, dim_output=1, dim_input=(1, 1), activation_func="sigmoid", labels=labels_reshaped, gw_class_early_boost=1.3)
 
 # Train the model with the reshaped data and class weights calculated inside KerasRNN
-test.train(x=y_test_reshaped, y=labels, epochs=50, batch_size=250, step_length=100)
+test.train(x=y_test_reshaped, y=labels, epochs=25, batch_size=250, step_length=2000)
 
 # Get predictions
 predictions = test.model.predict(y_test_reshaped)
