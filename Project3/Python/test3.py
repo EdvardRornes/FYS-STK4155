@@ -1,28 +1,37 @@
+
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import numpy as np
 import random
-from sklearn.model_selection import KFold
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.layers import SimpleRNN, Dense
-import matplotlib.pyplot as plt
-import os
-from utils import latex_fonts
-
-import numpy as np
-import tensorflow.keras as ker
-from keras.callbacks import ModelCheckpoint
-
-from keras.regularizers import l2
-from keras.optimizers import Adam, SGD, RMSprop
 import time
+import matplotlib.pyplot as plt
+import tensorflow.keras as ker # type: ignore
+import pickle
+import tensorflow as tf
+import copy
+
+from sklearn.model_selection import KFold, train_test_split
+from keras.models import Sequential, load_model # type: ignore
+from keras.optimizers import Adam, SGD, RMSprop # type: ignore
+from keras.layers import SimpleRNN, Dense, Input # type: ignore
+from keras.callbacks import ModelCheckpoint # type: ignore
+from keras.regularizers import l2 # type: ignore
+from utils import latex_fonts
+from tensorflow.keras import mixed_precision # type: ignore
+# policy = mixed_precision.Policy('mixed_float16')
+# mixed_precision.set_global_policy(policy)
+
+tf.config.threading.set_intra_op_parallelism_threads(12)  # Adjust number of threads
+tf.config.threading.set_inter_op_parallelism_threads(12)
 
 latex_fonts()
+savefigs = True
 
 class KerasRNN:
     def __init__(self, hidden_layers: list, dim_output: int, dim_input: int,  
                  loss_function="binary_crossentropy", optimizer="adam", labels=None, 
-                 gw_class_early_boost=1, learning_rate=1e-2, l2_regularization=0.0):
+                 gw_class_early_boost=1, learning_rate=1e-2, l2_regularization=0.0, activation_func='tanh'):
         """
         Initializes an RNN model for multi-class classification.
         """
@@ -35,30 +44,36 @@ class KerasRNN:
         self.labels = labels
         self.learning_rate = learning_rate
         self.l2_regularization = l2_regularization
+        self.activation_func = activation_func
 
         # Initialize the RNN model
-        self.model = ker.models.Sequential()
+        self.model = self.create_model()  # Call create_model during initialization to set up the model
+
+    def create_model(self):
+        """
+        Creates and returns a fresh RNN model with the specified configurations.
+        """
+        model = ker.models.Sequential()
+
+        # Add the input layer (input shape)
+        model.add(Input(shape=(self.dim_input, 1)))  # Specify input shape here
 
         # Add RNN layers with optional L2 regularization
-        for units in hidden_layers:
-            if self.model.layers:
-                self.model.add(SimpleRNN(units, 
-                                         return_sequences=True if units != hidden_layers[-1] else False, 
-                                         kernel_regularizer=l2(l2_regularization)))
-            else:
-                self.model.add(SimpleRNN(units, 
-                                         return_sequences=True if units != hidden_layers[-1] else False, 
-                                         input_shape=(dim_input, 1),
-                                         kernel_regularizer=l2(l2_regularization)))
+        for idx, units in enumerate(self.hidden_layers):
+            model.add(SimpleRNN(units, activation=self.activation_func,
+                                return_sequences=True if units != self.hidden_layers[-1] else False, 
+                                kernel_regularizer=l2(self.l2_regularization)))
 
         # Output layer
-        self.model.add(ker.layers.Dense(units=self.dim_output, activation="sigmoid",
-                                        kernel_regularizer=l2(l2_regularization)))
+        model.add(Dense(units=self.dim_output, activation="sigmoid",
+                        kernel_regularizer=l2(self.l2_regularization)))
 
-        # Compile the model with the selected optimizer
-        self.compile_model()
+        # Compile the model
+        self.compile_model(model)
 
-    def compile_model(self):
+        return model
+
+    def compile_model(self, model):
         """
         Compiles the model with the selected optimizer and learning rate.
         """
@@ -71,7 +86,7 @@ class KerasRNN:
         if self.optimizer not in optimizers:
             raise ValueError(f"Unsupported optimizer: {self.optimizer}. Choose from {list(optimizers.keys())}.")
 
-        self.model.compile(
+        model.compile(
             loss=self.loss_function, 
             optimizer=optimizers[self.optimizer], 
             metrics=['accuracy']
@@ -80,26 +95,12 @@ class KerasRNN:
     def prepare_sequences_RNN(self, X: np.ndarray, y: np.ndarray, step_length: int):
         """
         Converts data into sequences for RNN training.
-        
-        Parameters:
-        X:              1D array of scaled data.
-        y:              Output data.
-        step_length:    Length of each sequence.
-        
-        Returns:
-        tuple:          Sequences (3D array) and corresponding labels (1D array).
         """
-        sequences = []
-        labels = []
-
-        for i in range(len(X) - step_length + 1):
-            seq = X[i:i + step_length]
-            sequences.append(seq)
-            label = y[i + step_length - 1]
-            labels.append(label)
-
-        X_seq, y_seq = np.array(sequences).reshape(-1, step_length, 1), np.array(labels)
+        n_samples = len(X) - step_length + 1
+        X_seq = np.array([X[i:i + step_length] for i in range(n_samples)]).reshape(-1, step_length, 1)
+        y_seq = y[step_length-1:]
         return X_seq, y_seq
+
     
     def compute_class_weights(self, epoch: int, total_epochs: int):
         """
@@ -114,51 +115,74 @@ class KerasRNN:
             print("Labels required for training, exiting")
             exit()
 
-    def train(self, X_train: np.ndarray, y_train: np.ndarray, epochs: int, batch_size: int, step_length: int, verbose=1):
+
+    def train(self, X_train: np.ndarray, y_train: np.ndarray, epochs: int, batch_size: int, step_length: int, verbose=1, verbose1=1):
         """
-        Train the RNN model using the dynamically computed class weights.
+        Train the RNN model using dynamically computed class weights, keeping the best model in memory.
+        The model is carried over through epochs, but is reinitialized between parameter runs.
         """
+        # Split training data into a validation set
+        X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
+
         # Prepare sequences for RNN input
         X_train_seq, y_train_seq = self.prepare_sequences_RNN(X_train, y_train, step_length)
+        X_val_seq, y_val_seq = self.prepare_sequences_RNN(X_val, y_val, step_length)
+
+        # Reinitialize model (this ensures no previous weights are carried over between parameter runs)
+        self.model = self.create_model()  # Recreate a fresh model
+
+        # Initialize variables to track the best model and validation loss
+        best_val_loss = float('inf')
+        best_weights = None  # Keep track of the best model's weights, not the entire model
 
         # Compute class weights dynamically based on training labels
         for epoch in range(epochs):
             class_weights = self.compute_class_weights(epoch, epochs)
 
-            # Create a folder for saving model weights (if it doesn't exist)
-            checkpoint_dir = 'model_checkpoints'
-            os.makedirs(checkpoint_dir, exist_ok=True)  # creates the folder if it doesn't exist
-
-            # Create a checkpoint callback with a file path inside the specified folder
-            if epoch != 0:
-                checkpoint = ModelCheckpoint(os.path.join(checkpoint_dir, f"model_epoch_{epoch}.keras"), 
-                                             monitor='val_loss', save_best_only=True, mode='min', verbose=1)
-
-            # Then pass this callback to the fit function
-            self.model.fit(
+            # Fit the model for one epoch and save the history
+            history = self.model.fit(
                 X_train_seq, y_train_seq,
                 epochs=1,
                 batch_size=batch_size,
                 verbose=verbose,
                 class_weight=class_weights,
-                callbacks=[checkpoint] if epoch != 0 else None  # Save model after each epoch
+                validation_data=(X_val_seq, y_val_seq)
             )
+
+            # Extract val_loss for the current epoch
+            current_val_loss = history.history['val_loss'][0]
+
+            # Check if this is the best val_loss so far
+            if current_val_loss < best_val_loss:
+                best_weights = self.model.get_weights()  # Save the best weights
+                if verbose1==1:
+                    print(f"Epoch {epoch + 1} - val_loss improved from {best_val_loss:.3f} to {current_val_loss:.3f}. Best model updated.")
+                best_val_loss = current_val_loss
+            else:
+                if verbose1==1:
+                    print(f"Epoch {epoch + 1} - val_loss did not improve ({current_val_loss:.3f} >= {best_val_loss:.3f}).")
+
+        # After all epochs, restore the best model weights (so model doesn't carry over worse performance)
+        if best_weights is not None:
+            self.model.set_weights(best_weights)  # Set the model's weights to the best found during training
+
 
     def predict(self, X_test, y_test, step_length, verbose=1):
         """
         Generate predictions for test data.
         """
         X_test_seq, y_test_seq = self.prepare_sequences_RNN(X_test, y_test, step_length)
-        return self.model.predict(X_test_seq, verbose=verbose)
+        prediction = self.model.predict(X_test_seq, verbose=verbose)
+        loss, accuracy = self.model.evaluate(X_test_seq, y_test_seq, verbose=verbose)
+        return prediction, loss, accuracy
 
 
-        
 
 
 class GWSignalGenerator:
     def __init__(self, signal_length: int):
         """
-        Initialize the GWSignalGenerator with a signal length and noise level.
+        Initialize the GWSignalGenerator with a signal length.
         """
         self.signal_length = signal_length
         self.labels = np.zeros(signal_length, dtype=int)  # Initialize labels to 0 (background noise)
@@ -168,6 +192,19 @@ class GWSignalGenerator:
         """
         Adds a simulated gravitational wave event to the signal and updates labels for its phases.
         Includes a spin factor that increases during the inspiral phase.
+
+        Parameters:
+        y:                Signal to append GW event to.
+        start:            Start index for GW event.
+        end:              End index for GW event.
+        amplitude_factor: Peak of the oscillating signal in the insipral phase.
+        spike_factor:     Peak of the signal in the merge phase.
+        spin_start:       Oscillation frequency of the start of the inspiral phase.
+        spin_end:         Oscillation frequency of the end of the inspiral phase.
+        scale:            Scale the amplitude of the entire event.
+
+        returns:
+        Various parameters to be used by apply_events function
         """
         event_sign = np.random.choice([-1, 1])  # Random polarity for the GW event
 
@@ -199,6 +236,8 @@ class GWSignalGenerator:
         y[dropoff_start:dropoff_end] += event_sign * dropoff_curve
         # self.labels[dropoff_start:dropoff_end] = 3  # Set label to 3 for ringdown
 
+        # We cut off 2/3rds of the ringdown event due to the harsh exponential supression.
+        # It is not expected that the NN will detect anything past this and may cause confusion for the program.
         self.labels[start:(2*dropoff_start+dropoff_end)//3] = 1
 
         # Store region details for visualization or debugging
@@ -240,35 +279,41 @@ class GWSignalGenerator:
 
     def apply_events(self, y, events):
         """
-        Apply generated events to the input signal.
+        Apply generated events generated by add_gw_signal function to the input signal.
+        Can be manually created using this function 
         """
         for start, end, amplitude, spike, spin_start, spin_end in events:
             self.add_gw_event(y, start, end, amplitude_factor=amplitude, spike_factor=spike, spin_start=spin_start, spin_end=spin_end)
 
 
 # Create the GWSignalGenerator instance
-time_steps = 10000
+time_steps = 5000
 time_for_1_sample = 50
 x = np.linspace(0, time_for_1_sample, time_steps)
 num_samples = 5
-step_length = time_steps//1000//(num_samples-1)
-batch_size = time_steps//100
-epochs = 25
+step_length = time_steps//100//(num_samples-1)
+batch_size = time_steps//50*(num_samples-1)
+learning_rates = [1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]
+regularization_values = np.logspace(-10, 0, 11)
+gw_earlyboosts = np.linspace(1, 1.5, 6)
+epoch_list = [10, 25, 50, 100]
+SNR = 100
 
 y = []
 events = []
 labels = []
 
 y = [
-    0.5 * np.sin(100 * x) - 0.5 * np.cos(60 * x) * np.sin(-5 * x) + 0.3 * np.cos(30 * x) + 0.05 * np.sin(10000 * x),  # Original
-    0.5 * np.sin(50 * x) - 0.5 * np.cos(80 * x) * np.sin(-10 * x) + 0.3 * np.cos(40 * x) + 0.05 * np.sin(5000 * x),  # Lower frequency, similar amplitude
-    0.5 * np.sin(200 * x) - 0.5 * np.cos(120 * x) * np.sin(-10 * x) + 0.3 * np.cos(60 * x) + 0.1 * np.sin(20000 * x),  # Higher frequency, similar amplitude
-    0.7 * np.sin(300 * x) - 0.4 * np.cos(150 * x) * np.sin(-15 * x) + 0.4 * np.cos(80 * x) + 0.05 * np.sin(12000 * x),  # Higher amplitude, high frequency
-    0.1 * np.sin(80 * x) - 0.4 * np.cos(50 * x) * np.sin(-3 * x) + 0.3 * np.cos(20 * x) + 0.02 * np.sin(15000 * x)  # Low amplitude, high frequency
+    0.5*np.sin(90*x) - 0.5*np.cos(60*x)*np.sin(-5.*x) + 0.3*np.cos(30*x) + 0.05*np.sin(time_steps/40*x),
+    0.5*np.sin(50*x) - 0.5*np.cos(80*x)*np.sin(-10*x) + 0.3*np.cos(40*x) + 0.05*np.sin(time_steps/20*x),
+    0.5*np.sin(40*x) - 0.5*np.cos(25*x)*np.sin(-10*x) + 0.3*np.cos(60*x) + 0.10*np.sin(time_steps/18*x),
+    0.7*np.sin(70*x) - 0.4*np.cos(10*x)*np.sin(-15*x) + 0.4*np.cos(80*x) + 0.05*np.sin(time_steps/12*x),
+    0.1*np.sin(80*x) - 0.4*np.cos(50*x)*np.sin(-3.*x) + 0.3*np.cos(20*x) + 0.02*np.sin(time_steps/30*x)
 ]
 
+
 for i in range(len(y)):
-    y[i] /= 330
+    y[i] /= SNR # Quick rescaling, the division factor is ~ SNR
 
 event_lengths = [(time_steps//10, time_steps//8), (time_steps//7, time_steps//6), 
                  (time_steps//14, time_steps//12), (time_steps//5, time_steps//3),
@@ -276,7 +321,7 @@ event_lengths = [(time_steps//10, time_steps//8), (time_steps//7, time_steps//6)
 
 for i in range(num_samples):
     generator = GWSignalGenerator(signal_length=time_steps)
-    # y_i = np.zeros_like(x)
+    # y_i = np.zeros_like(x) # For no background signal tests
     events_i = generator.generate_random_events(1, event_lengths[i])
     generator.apply_events(y[i], events_i)
 
@@ -288,60 +333,66 @@ for i in range(num_samples):
 y = np.array(y)
 labels = np.array(labels)
 
-# Check the output
-print("y:", y)
-print("events:", events)
-print("labels:", labels)
-
 # Reshape y for RNN input: (samples, time_steps, features)
 y = y.reshape((y.shape[0], y.shape[1], 1))
 
-# Check the reshaped y
-print("Reshaped y:", y.shape)
+# Prepare to save data
+save_path = "GW_Parameter_Tuning_Results"
+if not os.path.exists(save_path):
+    os.makedirs(save_path)
 
-learning_rates = [5e-1, 1e-1, 5e-2, 1e-2, 5e-3]  # Example learning rates
-regularization_values = np.logspace(-7, 0, 8)
-gw_earlyboosts = np.linspace(1, 1.5, 5)
-epoch_list = np.logspace(1, 3, 3)
+# Function to save results incrementally
+def save_results_incrementally(results, base_filename):
+    filename = f"{base_filename}.pkl"
+    with open(os.path.join(save_path, filename), "wb") as f:
+        pickle.dump(results, f)
 
 progress = 0
 total_iterations = len(learning_rates)*len(regularization_values)*len(gw_earlyboosts)*len(epoch_list)*num_samples
 start_time = time.time()
+
 # Loop over learning rates and regularization values
 for epochs in epoch_list:
     for boost in gw_earlyboosts:
         for lr in learning_rates:
             for reg_value in regularization_values:
-                plt.figure(figsize=(20, 12))
-                plt.suptitle(fr"$\eta={lr}$, $\lambda={reg_value}$")
-                print(f"\nTraining with Learning Rate: {lr}, L2 Regularization: {reg_value}")
+                results = []
+
+                # Create a unique filename for the current parameter combination
+                base_filename = f"Synthetic_GW_Parameter_Tuning_Results_timesteps{time_steps}_SNR{SNR}_epoch{int(epochs)}_lamd{reg_value}_eta{lr}_boost{boost:.1f}"
+
+                # Check if results already exist
+                if os.path.exists(os.path.join(save_path, f"{base_filename}.pkl")):
+                    print(f"Skipping calculation for {base_filename} as the results already exist.")
+                    total_iterations -= num_samples
+                    continue  # Skip the calculation and move to the next combination
+
+                # plt.figure(figsize=(20, 12))
+                # plt.suptitle(fr"$\eta={lr}$, $\lambda={reg_value}$")
+                print(f"\nTraining with eta = {lr}, lambda = {reg_value}, epochs = {epochs}, early boost = {boost:.1f}")
 
                 for fold in range(num_samples):                    
                     # Split the data into train and test sets for this fold
-                    X_test = x  # Use the fold as the test set
+                    x_test = x  # Use the fold as the test set
                     y_test = y[fold]  # Corresponding labels for the test set
                     test_labels = labels[fold]
 
                     # Create the training set using all other samples
-                    X_train = np.linspace(0, (num_samples - 1) * time_for_1_sample, time_steps * (num_samples - 1))
+                    x_train = np.linspace(0, (num_samples - 1) * time_for_1_sample, time_steps * (num_samples - 1))  # Just for plotting
                     y_train = np.concatenate([y[i] for i in range(num_samples) if i != fold], axis=0)
                     train_labels = np.concatenate([labels[i] for i in range(num_samples) if i != fold], axis=0)
                     
                     # Initialize the KerasRNN model with the current learning rate and regularization
-                    hidden_layers = [64, 32]  # Example hidden layers
+                    hidden_layers = [5, 10, 2]  # Example hidden layers
                     model = KerasRNN(
                         hidden_layers, 
                         dim_output=1, 
                         dim_input=1, 
                         labels=train_labels, 
                         gw_class_early_boost=boost, 
-                        learning_rate=lr
+                        learning_rate=lr,
+                        l2_regularization=reg_value
                     )
-
-                    # Add L2 regularization to all Dense layers in the model
-                    for layer in model.model.layers:
-                        if isinstance(layer, ker.layers.Dense):
-                            layer.kernel_regularizer = ker.regularizers.L2(reg_value)
 
                     # Recompile the model with updated regularization
                     model.model.compile(
@@ -353,47 +404,63 @@ for epochs in epoch_list:
                     model.train(y_train, train_labels, epochs=int(epochs), batch_size=batch_size, step_length=step_length, verbose=0)
 
                     # Predict with the trained model
-                    predictions = model.predict(y_test, test_labels, step_length, verbose=0)
+                    predictions, loss, accuracy = model.predict(y_test, test_labels, step_length*(num_samples-1), verbose=0)
                     predictions = predictions.reshape(-1)
                     predicted_labels = (predictions > 0.5).astype(int)
                     x_pred = x[step_length - 1:]
-                    
-                    plt.subplot(2, 3, fold + 1)
-                    plt.title(f"Round {fold+1}")
-                    plt.plot(x, y[fold], label=f'Data {fold+1}', lw=0.5, color='b')
-                    plt.plot(x, test_labels, label=f"Solution {fold+1}", lw=1.6, color='g')
+
+                    results.append({
+                        "epochs": epochs,
+                        "boost": boost,
+                        "learning_rate": lr,
+                        "regularization": reg_value,
+                        "fold": fold,
+                        "x_train": x_train.tolist(),
+                        "y_train": y_train.tolist(),
+                        "train_labels": train_labels.tolist(),
+                        "x_test": x_test.tolist(),
+                        "y_test": y_test.tolist(),
+                        "test_labels": test_labels.tolist(),
+                        "predictions": predictions.tolist(),
+                        "loss": loss,
+                        "accuracy": accuracy
+                    })
+
+                    # plt.subplot(2, 3, fold + 1)
+                    # plt.title(f"Round {fold+1}")
+                    # plt.plot(x, y[fold], label=f'Data {fold+1}', lw=0.5, color='b')
+                    # plt.plot(x, test_labels, label=f"Solution {fold+1}", lw=1.6, color='g')
 
                     # Highlight predicted events
-                    predicted_gw_indices = np.where(predicted_labels == 1)[0]
-                    if len(predicted_gw_indices) == 0:
-                        print("No gravitational wave events predicted.")
-                    else:
-                        threshold = 2
-                        grouped_gw_indices = []
-                        current_group = [predicted_gw_indices[0]]
+                    # predicted_gw_indices = np.where(predicted_labels == 1)[0]
+                    # if len(predicted_gw_indices) == 0:
+                    #     print("No gravitational wave events predicted.")
+                    # else:
+                    #     threshold = 2
+                    #     grouped_gw_indices = []
+                    #     current_group = [predicted_gw_indices[0]]
 
-                        for i in range(1, len(predicted_gw_indices)):
-                            if predicted_gw_indices[i] - predicted_gw_indices[i - 1] <= threshold:
-                                current_group.append(predicted_gw_indices[i])
-                            else:
-                                grouped_gw_indices.append(current_group)
-                                current_group = [predicted_gw_indices[i]]
+                    #     for i in range(1, len(predicted_gw_indices)):
+                    #         if predicted_gw_indices[i] - predicted_gw_indices[i - 1] <= threshold:
+                    #             current_group.append(predicted_gw_indices[i])
+                    #         else:
+                    #             grouped_gw_indices.append(current_group)
+                    #             current_group = [predicted_gw_indices[i]]
 
-                        grouped_gw_indices.append(current_group)
-                        for i, group in zip(range(len(grouped_gw_indices)), grouped_gw_indices):
-                            plt.axvspan(x[group[0]], x[group[-1]], color="red", alpha=0.3, label="Predicted event" if i == 0 else "")
+                    #     grouped_gw_indices.append(current_group)
+                    #     for i, group in zip(range(len(grouped_gw_indices)), grouped_gw_indices):
+                    #         plt.axvspan(x[group[0]], x[group[-1]], color="red", alpha=0.3, label="Predicted event" if i == 0 else "")
                     progress += 1
                     percentage_progress = (progress / total_iterations) * 100
                     # Elapsed time
                     elapsed_time = time.time() - start_time
                     ETA = elapsed_time*(100/percentage_progress-1)
 
-                    print(f"Progress: {progress}/{total_iterations} ({percentage_progress:.2f}%), Time elapsed = {elapsed_time:.1f}s, ETA = {ETA:1f}s")
+                    print(f"Progress: {progress}/{total_iterations} ({percentage_progress:.2f}%), Time elapsed = {elapsed_time:.1f}s, ETA = {ETA:.1f}s, Test loss = {loss:.3f}, Test accuracy = {100*accuracy:.1f}%\n")
 
-                    plt.legend()
-                plt.savefig(f"../Figures/SyntheticGWs_SNR300_lr{lr}_lambd{reg_value}_epochs{int(epochs)}_earlyboost{boost}.pdf")  # Save the figure
-                plt.close()  # Close the figure
-
-
-
+                    # plt.legend()
+                # if savefigs:
+                    # plt.savefig(f"../Figures/SyntheticGWs_timesteps{time_steps}_SNR{SNR}_lr{lr}_lambd{reg_value}_epochs{int(epochs)}_earlyboost{boost:.1f}.pdf")  # Save the figure
+                # Save results incrementally
+                save_results_incrementally(results, base_filename)
 
