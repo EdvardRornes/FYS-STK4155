@@ -995,7 +995,7 @@ class KerasRNN(NeuralNetwork):
         """
         initial_boost = self.gw_class_early_boost
         scale = initial_boost - (initial_boost-1)*epoch/total_epochs
-        gw_class_weight = (len(self.labels)-np.sum(labels))/np.sum(labels)*scale
+        gw_class_weight = (len(self.labels)-np.sum(self.labels))/np.sum(self.labels)*scale
         print(gw_class_weight, epoch)
         return {0:1,1:gw_class_weight}
     
