@@ -232,6 +232,9 @@ pythontex-files-*/
 *.md5
 *.auxlock
 
+# keras
+*.keras
+
 # titletoc
 *.ptc
 
