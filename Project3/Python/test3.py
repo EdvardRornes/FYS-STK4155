@@ -136,7 +136,7 @@ class KerasRNN:
         best_weights = None  # Keep track of the best model's weights, not the entire model
 
         # Define thresholds
-        patience_threshold = int(np.ceil(0.3 * epochs))  # Early stopping threshold
+        patience_threshold = int(np.ceil(0.2 * epochs))  # Early stopping threshold
         epochs_without_improvement = 0
         low_loss_threshold = 0.3  # Continue training even without improvement if loss is below this value
 
@@ -147,7 +147,7 @@ class KerasRNN:
             # Fit the model for one epoch and save the history
             history = self.model.fit(
                 X_train_seq, y_train_seq,
-                epochs=1,
+                epochs=1, # 1 epoch due to dynamic class weight, still doing "epoch" epochs due to loop
                 batch_size=batch_size,
                 verbose=verbose,
                 class_weight=class_weights,
@@ -172,11 +172,11 @@ class KerasRNN:
             # Check early stopping conditions
             if epochs_without_improvement >= patience_threshold:
                 if best_val_loss >= low_loss_threshold:
-                    if verbose1 == 1:
+                    if verbose1 == 1 and epoch != epochs-1:
                         print(f"No improvement for {patience_threshold} consecutive epochs and val_loss >= {low_loss_threshold}. Stopping early at epoch {epoch + 1}.")
                     break
                 else:
-                    if verbose1 == 1:
+                    if verbose1 == 1 and epoch != epochs-1:
                         print(f"No improvement for {patience_threshold} consecutive epochs, but val_loss < {low_loss_threshold}. Continuing training.")
 
         # After training, restore the best model weights (so model doesn't carry over worse performance)
@@ -386,8 +386,6 @@ for epochs in epoch_list:
                     total_iterations -= num_samples
                     continue  # Skip the calculation and move to the next combination
 
-                # plt.figure(figsize=(20, 12))
-                # plt.suptitle(fr"$\eta={lr}$, $\lambda={reg_value}$")
                 print(f"\nTraining with eta = {lr}, lambda = {reg_value}, epochs = {epochs}, early boost = {boost:.1f}")
 
                 for fold in range(num_samples):                    
@@ -445,30 +443,6 @@ for epochs in epoch_list:
                         "accuracy": accuracy
                     })
 
-                    # plt.subplot(2, 3, fold + 1)
-                    # plt.title(f"Round {fold+1}")
-                    # plt.plot(x, y[fold], label=f'Data {fold+1}', lw=0.5, color='b')
-                    # plt.plot(x, test_labels, label=f"Solution {fold+1}", lw=1.6, color='g')
-
-                    # Highlight predicted events
-                    # predicted_gw_indices = np.where(predicted_labels == 1)[0]
-                    # if len(predicted_gw_indices) == 0:
-                    #     print("No gravitational wave events predicted.")
-                    # else:
-                    #     threshold = 2
-                    #     grouped_gw_indices = []
-                    #     current_group = [predicted_gw_indices[0]]
-
-                    #     for i in range(1, len(predicted_gw_indices)):
-                    #         if predicted_gw_indices[i] - predicted_gw_indices[i - 1] <= threshold:
-                    #             current_group.append(predicted_gw_indices[i])
-                    #         else:
-                    #             grouped_gw_indices.append(current_group)
-                    #             current_group = [predicted_gw_indices[i]]
-
-                    #     grouped_gw_indices.append(current_group)
-                    #     for i, group in zip(range(len(grouped_gw_indices)), grouped_gw_indices):
-                    #         plt.axvspan(x[group[0]], x[group[-1]], color="red", alpha=0.3, label="Predicted event" if i == 0 else "")
                     progress += 1
                     percentage_progress = (progress / total_iterations) * 100
                     # Elapsed time
@@ -477,9 +451,4 @@ for epochs in epoch_list:
 
                     print(f"Progress: {progress}/{total_iterations} ({percentage_progress:.2f}%), Time elapsed = {elapsed_time:.1f}s, ETA = {ETA:.1f}s, Test loss = {loss:.3f}, Test accuracy = {100*accuracy:.1f}%\n")
 
-                    # plt.legend()
-                # if savefigs:
-                    # plt.savefig(f"../Figures/SyntheticGWs_timesteps{time_steps}_SNR{SNR}_lr{lr}_lambd{reg_value}_epochs{int(epochs)}_earlyboost{boost:.1f}.pdf")  # Save the figure
-                # Save results incrementally
                 save_results_incrementally(results, base_filename)
-

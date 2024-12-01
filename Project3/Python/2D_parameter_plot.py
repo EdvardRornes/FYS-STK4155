@@ -28,7 +28,8 @@ def plot_2D_parameter_lambda_eta(
         xlim=None,
         ylim=None,
         ylabel=r"$\eta$",
-        on_click=None
+        on_click=None,
+        log_cbar=False
         ):
     """
     Plots a 2D heatmap with lambda and eta as inputs, and adds interactivity for clicks.
@@ -72,6 +73,10 @@ def plot_2D_parameter_lambda_eta(
     else:
         annot_data = np.round(value, 3).astype(str) if annot else None
 
+    if log_cbar:
+        value = np.log(value)
+        # value = np.sqrt(value)
+
     sns.heatmap(
         data=value,
         ax=ax,
@@ -91,6 +96,8 @@ def plot_2D_parameter_lambda_eta(
 
     # Add title and labels
     if title:
+        if log_cbar:
+            title += rf', Color bar is logged.'
         plt.title(title)
 
     plt.xlabel(r'$\lambda$', fontsize=xaxis_fontsize or 12)
@@ -203,7 +210,7 @@ def load_results(filepath):
     with open(filepath, "rb") as f:
         return pickle.load(f)
 
-save_option = input("Would you like to be prompted to save files? y/n\nNB!: If you choose yes, the terminal will crash if you do not give the later prompt an answer!! \n")
+save_option = input("Would you like to be prompted to save files? y/n\nNB!: If you choose yes, the terminal will crash if you do not give the later prompts an answer!! \n")
 
 # Directory containing the .pkl files
 pkl_dir = "GW_Parameter_Tuning_Results"
@@ -301,7 +308,8 @@ for epoch in unique_epochs:
             annot=True,
             savefig=False,
             filename=f"Loss_Epoch{epoch}_Boost{boost}",  # Save plots with unique filenames
-            on_click=lambda event, plot_info=(epoch, boost): on_click(event, lambdas, etas, losses, epochs, boosts, unique_lambdas, unique_etas, unique_epochs, unique_boosts, plot_info)  # Pass epoch and boost as tuple
+            on_click=lambda event, plot_info=(epoch, boost): on_click(event, lambdas, etas, losses, epochs, boosts, unique_lambdas, unique_etas, unique_epochs, unique_boosts, plot_info),  # Pass epoch and boost as tuple
+            log_cbar=True
         )
 print("Click on one of the grids to plot the results for the given parameter combination :)")
 plt.show()
