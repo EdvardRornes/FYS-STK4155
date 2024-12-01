@@ -118,8 +118,8 @@ class KerasRNN:
 
     def train(self, X_train: np.ndarray, y_train: np.ndarray, epochs: int, batch_size: int, step_length: int, verbose=1, verbose1=1):
         """
-        Train the RNN model using dynamically computed class weights, keeping the best model in memory.
-        The model is carried over through epochs, but is reinitialized between parameter runs.
+        Train the RNN model using dynamically computed class weights, stopping early if no improvement occurs for 30% of the epochs.
+        Continues training if the loss is sufficiently low, even if no improvement is observed.
         """
         # Split training data into a validation set
         X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
@@ -134,6 +134,11 @@ class KerasRNN:
         # Initialize variables to track the best model and validation loss
         best_val_loss = float('inf')
         best_weights = None  # Keep track of the best model's weights, not the entire model
+
+        # Define thresholds
+        patience_threshold = int(np.ceil(0.3 * epochs))  # Early stopping threshold
+        epochs_without_improvement = 0
+        low_loss_threshold = 0.3  # Continue training even without improvement if loss is below this value
 
         # Compute class weights dynamically based on training labels
         for epoch in range(epochs):
@@ -155,16 +160,30 @@ class KerasRNN:
             # Check if this is the best val_loss so far
             if current_val_loss < best_val_loss:
                 best_weights = self.model.get_weights()  # Save the best weights
-                if verbose1==1:
+                if verbose1 == 1:
                     print(f"Epoch {epoch + 1} - val_loss improved from {best_val_loss:.3f} to {current_val_loss:.3f}. Best model updated.")
                 best_val_loss = current_val_loss
+                epochs_without_improvement = 0  # Reset counter
             else:
-                if verbose1==1:
+                if verbose1 == 1:
                     print(f"Epoch {epoch + 1} - val_loss did not improve ({current_val_loss:.3f} >= {best_val_loss:.3f}).")
+                epochs_without_improvement += 1
 
-        # After all epochs, restore the best model weights (so model doesn't carry over worse performance)
+            # Check early stopping conditions
+            if epochs_without_improvement >= patience_threshold:
+                if best_val_loss >= low_loss_threshold:
+                    if verbose1 == 1:
+                        print(f"No improvement for {patience_threshold} consecutive epochs and val_loss >= {low_loss_threshold}. Stopping early at epoch {epoch + 1}.")
+                    break
+                else:
+                    if verbose1 == 1:
+                        print(f"No improvement for {patience_threshold} consecutive epochs, but val_loss < {low_loss_threshold}. Continuing training.")
+
+        # After training, restore the best model weights (so model doesn't carry over worse performance)
         if best_weights is not None:
             self.model.set_weights(best_weights)  # Set the model's weights to the best found during training
+
+
 
 
     def predict(self, X_test, y_test, step_length, verbose=1):
@@ -373,9 +392,9 @@ for epochs in epoch_list:
 
                 for fold in range(num_samples):                    
                     # Split the data into train and test sets for this fold
-                    x_test = x  # Use the fold as the test set
-                    y_test = y[fold]  # Corresponding labels for the test set
-                    test_labels = labels[fold]
+                    x_test = x  
+                    y_test = y[fold]  # Use the fold as the test set
+                    test_labels = labels[fold] # Corresponding labels for the test set
 
                     # Create the training set using all other samples
                     x_train = np.linspace(0, (num_samples - 1) * time_for_1_sample, time_steps * (num_samples - 1))  # Just for plotting
