@@ -164,7 +164,7 @@ def on_click(event, lambdas, etas, losses, epochs, boosts, unique_lambdas, uniqu
                 plt.title(f"Round {fold + 1}")
 
                 # Actual data
-                x_test = np.array(result['x_test'])
+                x_test = np.linspace(0, 50, time_steps)
                 y_test = np.array(result['y_test'])
                 test_labels = np.array(result['test_labels'])
 
