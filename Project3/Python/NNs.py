@@ -1,363 +1,14 @@
-from utils import * 
-import copy
 import numpy as np
-import keras as ker
-import random
-# from keras.models import Sequential 
-# from keras.layers import Dense, SimpleRNN # type: ignore
 
-class Activation:
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score, accuracy_score
 
-    def __init__(self, acitvation_name:str, is_derivative=False):
-        """
-        Creates a callable activation function corresponding to the string 'acitvation_name' given.
-        """
-        self.activation_functions =            [Activation.Lrelu, Activation.relu, 
-                                                Activation.sigmoid, Activation.tanh]
-        self.activation_functions_derivative = [Activation.Lrelu_derivative, Activation.relu_derivative, 
-                                                Activation.sigmoid_derivative, Activation.tanh_derivative]
-        self.activation_functions_name = ["LRELU", "RELU", "SIGMOID", "TANH"]
+import os
+import time 
+import pickle
+import copy
+from utils import Activation, Scalers, Optimizer
 
-        self.acitvation_name = acitvation_name
-        try:
-            index = self.activation_functions_name.index(acitvation_name.upper())
-            self.activation_func, self.activation_func_derivative  = self.activation_functions[index], self.activation_functions_derivative[index]
-        except:
-            raise TypeError(f"Did not recognize '{acitvation_name}' as an activation function.")
-
-        self._call = self.activation_func
-        if is_derivative:   # Then call-method will return derivative instead
-            self._call = self.activation_func_derivative
-
-    def __call__(self, z):
-        return self._call(z)
-
-    def __str__(self):
-        return self.acitvation_name
-    
-    def derivative(self) -> Activation:
-        return Activation(self.acitvation_name, True)
-    
-    @staticmethod
-    def sigmoid(z):
-        """Sigmoid activation function."""
-        return 1 / (1 + anp.exp(-z))
-
-    @staticmethod
-    def sigmoid_derivative(z):
-        """Derivative of the Sigmoid activation function."""
-        sigmoid_z = Activation.sigmoid(z)
-        return sigmoid_z * (1 - sigmoid_z)
-
-    @staticmethod
-    def relu(z):
-        """ReLU activation function."""
-        return np.where(z > 0, z, 0)
-
-    @staticmethod
-    def relu_derivative(z):
-        """Derivative of ReLU activation function."""
-        return np.where(z > 0, 1, 0)
-
-    @staticmethod
-    def Lrelu(z, alpha=0.01):
-        """Leaky ReLU activation function."""
-        return np.where(z > 0, z, alpha * z)
-
-    @staticmethod
-    def Lrelu_derivative(z, alpha=0.01):
-        """Derivative of Leaky ReLU activation function."""
-        return np.where(z > 0, 1, alpha)
-    
-    @staticmethod
-    def tanh(z):
-        return np.tanh(z)
-    
-    @staticmethod
-    def tanh_derivative(z):
-        return 1 / np.cosh(z)**2
-    
-class Optimizer:
-    """
-    Arguments
-        * learning_rate:        number or callable(epochs, i), essentially the coefficient before the gradient
-        * momentum:             number added in descent
-        * epsilon:              small number used to not divide by zero in Adagrad, RMSprop and Adam
-        * beta1:                used in Adam, in bias handling
-        * beta2:                used in Adam, in bias handling
-        * decay_rate:           used in ... 
-    """
-    
-    def __init__(self, learning_rate=0.01, momentum=0.9, epsilon=1e-8, beta1=0.9, beta2=0.999, decay_rate=0.9):
-        """
-        Class to be inherited by PlaneGradient, Adagrad, RMSprop or Adam, representing the method of choice for Stochastic Gradient Descent (SGD).
-        """
-        # self._learning_rate = learning_rate
-        self.learning_rate = learning_rate # calls property method
-
-        self.momentum = momentum
-        self.epsilon = epsilon
-        self.beta1 = beta1
-        self.beta2 = beta2
-        self.decay_rate = decay_rate
-        self.velocity = None  # For momentum term
-
-    @property
-    def learning_rate(self):
-        return self._learning_rate 
-    
-    @learning_rate.setter
-    def learning_rate(self, new_learning_rate):
-        # Makes sure learning_rate is a callable
-        if not isinstance(new_learning_rate, LearningRate):
-            tmp = new_learning_rate
-            
-            self._str_learning_rate = str(tmp)
-            new_learning_rate = LearningRate(0, 0, 0, 0, self._str_learning_rate, const=new_learning_rate)
-            self._learning_rate = new_learning_rate
-        else:
-            self._learning_rate = new_learning_rate
-            self._str_learning_rate = "callable"
-
-    def initialize_velocity(self, theta):
-        if self.velocity is None:
-            self.velocity = np.zeros_like(theta)
-
-    def __call__(self, theta:np.ndarray, gradient:np.ndarray, epoch_index:int, batch_index:int):
-        """
-        Arguments
-        * theta:            variable to be updated
-        * gradient:         gradient
-        * epoch_index:      current epoch
-        * batch_index:      current batch
-
-        Returns
-        updated theta
-        """
-        raise NotImplementedError("This method should be implemented by subclasses")
-    
-    def copy(self):
-        """
-        Creates and returns a copy of itself
-        """
-
-        raise Warning("Creating copy of Optimizer class, you probably want to create a copy of a subclass of Optimizer?")
-        optimizer = Optimizer(learning_rate=self.learning_rate, momentum=self.momentum, 
-                              epsilon=self.epsilon, beta1=self.beta1, beta2=self.beta2, decay_rate=self.decay_rate)
-        
-        return optimizer
-
-    def __str__(self):
-        return "Not defined"
-
-class PlaneGradient(Optimizer):
-
-    __doc__ = Optimizer.__doc__
-    def __init__(self, learning_rate=0.01, momentum=0.9, epsilon=None, beta1=None, beta2=None, decay_rate=None):
-        """
-        Class implementing basic Gradient Descent with optional momentum. Does support stochastic GD as well.
-        """
-        super().__init__(learning_rate, momentum)
-
-    def __call__(self, *args):
-
-        theta, gradient = args[0], args[1]; epoch_index = None; batch_index = None 
-
-        if len(args) == 4:
-            epoch_index, batch_index = args[2], args[3]
-        self.initialize_velocity(theta)
-
-        self.velocity = self.momentum * self.velocity - self._learning_rate(epoch_index, batch_index) * gradient
-
-        # Apply momentum
-        theta += self.velocity
-        return theta
-
-    def __str__(self):
-        return f"Plane Gradient descent: eta: {self.learning_rate}, momentum: {self.momentum}"
-    
-    def copy(self):
-        """
-        Creates and returns a copy of itself
-        """
-
-        optimizer = PlaneGradient(learning_rate=self.learning_rate, momentum=self.momentum, 
-                              epsilon=self.epsilon, beta1=self.beta1, beta2=self.beta2, decay_rate=self.decay_rate)
-        
-        return optimizer
-
-class Adagrad(Optimizer):
-
-    __doc__ = Optimizer.__doc__
-    def __init__(self, learning_rate=0.01, epsilon=1e-8, momentum=None, beta1=None, beta2=None, decay_rate=None):
-        """
-        Class implementing the Adagrad optimization algorithm. 
-        Adagrad adapts the learning rate for each parameter based on the accumulation of past squared gradients.
-        """
-
-        super().__init__(learning_rate, epsilon=epsilon)
-        self.G = None  # Accumulated squared gradients
-    
-    def initialize_accumulation(self, theta):
-        # Initializes accumulation matrix G if not already initialized
-        if self.G is None:
-            self.G = 0
-
-    def __call__(self, *args):
-        theta, gradient, epoch_index, batch_index = args[0], args[1], args[2], args[3]
-
-        self.initialize_accumulation(theta)
-
-        # Accumulating squared gradients
-        self.G += gradient*gradient
-
-        #Updating theta
-        theta -= (self._learning_rate(epoch_index, batch_index) / (np.sqrt(self.G) + self.epsilon)) * gradient
-        
-        return theta
-    
-    def __str__(self):
-        return f"Adagrad: eta: {self._str_learning_rate}, eps: {self.momentum}"
-    
-    def copy(self):
-        """
-        Creates and returns a copy of itself
-        """
-
-        optimizer = Adagrad(learning_rate=self.learning_rate, momentum=self.momentum, 
-                              epsilon=self.epsilon, beta1=self.beta1, beta2=self.beta2, decay_rate=self.decay_rate)
-        
-        return optimizer
-
-class RMSprop(Optimizer):
-    __doc__ = Optimizer.__doc__
-    def __init__(self, learning_rate=0.01, decay_rate=0.99, epsilon=1e-8, momentum=None, beta1=None, beta2=None):
-        """
-        Class implementing the RMSprop optimization algorithm.
-        RMSprop maintains a moving average of the squared gradients to normalize the gradient.
-        """
-
-        super().__init__(learning_rate, epsilon=epsilon, decay_rate=decay_rate)
-        self.G = None
-
-    def initialize_accumulation(self, theta):
-        # Initializes accumulation matrix G if not already initialized
-        if self.G is None:
-            self.G = np.zeros_like(theta)
-
-    def __call__(self, *args):
-        theta, gradient, epoch_index, batch_index = args[0], args[1], args[2], args[3]
-
-        self.initialize_accumulation(theta)
-
-        # Updating moving average of the squared gradients
-        self.G = self.decay_rate * self.G + (1 - self.decay_rate) * gradient*gradient
-
-        # Update theta
-        theta -= (self._learning_rate(epoch_index, batch_index) / (np.sqrt(self.G) + self.epsilon)) * gradient
-        return theta
-
-    def __str__(self):
-        return f"RMSprop: eta: {self._str_learning_rate}, eps: {self.momentum}, decay_rate = {self.decay_rate}"
-    
-    def copy(self):
-        """
-        Creates and returns a copy of itself
-        """
-
-        optimizer = RMSprop(learning_rate=self.learning_rate, momentum=self.momentum, 
-                              epsilon=self.epsilon, beta1=self.beta1, beta2=self.beta2, decay_rate=self.decay_rate)
-        
-        return optimizer
-
-class Adam(Optimizer):
-    __doc__ = Optimizer.__doc__
-    def __init__(self, learning_rate=0.001, beta1=0.9, beta2=0.999, epsilon=1e-8, decay_rate=None, momentum=None):
-        """
-        Class implementing the Adam optimization algorithm.
-        Adam combines the advantages of both RMSprop and momentum by maintaining both first and second moment estimates.
-        """
-
-        super().__init__(learning_rate, epsilon=epsilon, beta1=beta1, beta2=beta2)
-        self.m = None  # First moment vector
-        self.v = None  # Second moment vector
-        self.t = 0  # Time step
-
-    def initialize_moments(self, theta):
-        # Initializes first and second moment vectors if not already initialized
-        if self.m is None:
-            self.m = np.zeros_like(theta)
-        if self.v is None:
-            self.v = np.zeros_like(theta)
-
-    def __call__(self, *args):
-        theta, gradient, epoch_index, batch_index = args[0], args[1], args[2], args[3]
-
-        self.t += 1
-        self.initialize_moments(theta)
-
-        # Update biased first and second moments
-        self.m = self.beta1 * self.m + (1 - self.beta1) * gradient
-        self.v = self.beta2 * self.v + (1 - self.beta2) * gradient**2
-
-        # Compute bias-corrected moments
-        m_hat = self.m / (1 - self.beta1**self.t)
-        v_hat = self.v / (1 - self.beta2**self.t)
-
-        # Update theta
-        theta -= (self._learning_rate(epoch_index, batch_index) / (np.sqrt(v_hat) + self.epsilon)) * m_hat
-        return theta
-    
-    def __str__(self):
-        return f"Adam: eta: {self._str_learning_rate}, eps: {self.momentum}, beta1 = {self.beta1}, beta2 = {self.beta2}"
-    
-    def copy(self):
-        """
-        Creates and returns a copy of itself
-        """
-
-        optimizer = Adam(learning_rate=self.learning_rate, momentum=self.momentum, 
-                              epsilon=self.epsilon, beta1=self.beta1, beta2=self.beta2, decay_rate=self.decay_rate)
-        
-        return optimizer
-
-class Scalers:
-
-    def __init__(self, scaler_name:str):
-        scaler_names = ["STANDARD", "MINMAX"]
-        scalers = [Scalers.standard_scaler, Scalers.minmax_scaler]
-
-        try:
-            index = scaler_names.index(scaler_name.upper())
-            self._call = scalers[index]
-        except:
-            raise TypeError(f"Did not recognize '{scaler_name}' as a scaler type, available: ['standard', 'minmax']")
-        
-        self.scaler_name = scaler_name
-
-    def __call__(self, X_train:np.ndarray, X_test:np.ndarray) -> list[np.ndarray, np.ndarray]:
-        return self._call(X_train, X_test)
-    
-    def __str__(self):
-        return self.scaler_name
-    
-    @staticmethod
-    def standard_scaler(X_train, X_test):
-        scaler = StandardScaler()
-        scaler.fit(X_train)
-        X_train = scaler.transform(X_train)
-        X_test = scaler.transform(X_test)
-        
-        return X_train, X_test
-    
-    @staticmethod
-    def minmax_scaler(X_train, X_test):
-        scaler = MinMaxScaler()
-        scaler.fit(X_train)
-        X_train = scaler.transform(X_train)
-        X_test = scaler.transform(X_test)
-        
-        return X_train, X_test
 
 class NeuralNetwork:
     
@@ -612,37 +263,37 @@ class RNN(NeuralNetwork):
         """
         return self._loss_function(y_true, y_pred, epoch_index)
 
-    def evaluate(self, X:np.ndarray, y:np.ndarray, epoch_index=1, window_size=10) -> tuple[float, float]:
-        """
-        Evaluate the model on a given dataset.
+    # def evaluate(self, X:np.ndarray, y:np.ndarray, epoch_index=1, window_size=10) -> tuple[float, float]:
+    #     """
+    #     Evaluate the model on a given dataset.
         
-        Arguments:
-        * X:        Input time series data of shape (num_samples, input_size)
-        * y:        True labels of shape (num_samples, output_size)
+    #     Arguments:
+    #     * X:        Input time series data of shape (num_samples, input_size)
+    #     * y:        True labels of shape (num_samples, output_size)
         
-        Keyword Arguments:
-        * window_size: Size of the window for creating sequences (step length)
+    #     Keyword Arguments:
+    #     * window_size: Size of the window for creating sequences (step length)
         
-        Returns:
-        * Loss value and accuracy score
-        """
-        self.store_train_test_from_data(X, y)
+    #     Returns:
+    #     * Loss value and accuracy score
+    #     """
+    #     self.store_train_test_from_data(X, y)
 
-        # Prepare sequences for evaluation
-        X_test_seq, y_test_seq = self.prepare_sequences_RNN(self.X_test_scaled, self.y_test, window_size)
+    #     # Prepare sequences for evaluation
+    #     X_test_seq, y_test_seq = self.prepare_sequences_RNN(self.X_test_scaled, self.y_test, window_size)
 
-        # Forward pass to get predictions
-        y_pred = self._forward(X_test_seq)
+    #     # Forward pass to get predictions
+    #     y_pred = self._forward(X_test_seq)
 
-        # Calculate loss
-        loss = self.calculate_loss(y_test_seq, y_pred, epoch_index)
+    #     # Calculate loss
+    #     loss = self.calculate_loss(y_test_seq, y_pred, epoch_index)
 
-        # Calculate accuracy
-        y_pred_classes = (y_pred > 0.5).astype(int)
-        accuracy = accuracy_score(y_test_seq, y_pred_classes)
+    #     # Calculate accuracy
+    #     y_pred_classes = (y_pred > 0.5).astype(int)
+    #     accuracy = accuracy_score(y_test_seq, y_pred_classes)
 
-        print(f"Evaluation - Loss: {loss}, Accuracy: {accuracy}")
-        return loss, accuracy
+    #     print(f"Evaluation - Loss: {loss}, Accuracy: {accuracy}")
+    #     return loss, accuracy
     
     def predict(self, X:np.ndarray):
         return self._forward(X)
@@ -678,28 +329,29 @@ class RNN(NeuralNetwork):
 
     def _backward(self, X, y, y_pred, epoch_index, batch_index):
         batch_size, window_size, _ = X.shape
-        num_hidden_layers = len(self.layers) - 2  # Exclude input and output layers
+        num_hidden_layers = len(self.layers) - 2  # Excludings
 
-        # Initialize gradients
+        # initializing total gradients
         total_dW_input = [np.zeros_like(w) for w in self.W_input]
         total_dW_recurrent = [np.zeros_like(w) for w in self.W_recurrent]
         total_db_hidden = [np.zeros_like(b) for b in self.biases]
 
-        # Initialize delta_h for each layer (for time t+1)
+        # used in computing error from previous time step
         delta_h_next = [np.zeros((batch_size, self.layers[i + 1])) for i in range(num_hidden_layers)]
 
-        # Initialize gradients for output layer
+        # gradients for output layer
         dW_output = np.zeros_like(self.W_output)
         db_output = np.zeros_like(self.b_output)
 
-        # Determine the number of truncation steps
+        # determine the number of truncation steps
         truncation_steps = min(self.truncation_steps, window_size)
         t_start = max(0, window_size - truncation_steps)
 
-        # Backpropagation through time with truncation
+        # propagating backwards through time, restricted to a maximum amount dictated by t_start
         for t in reversed(range(t_start, window_size)):
-            # Compute error at the output layer for the last time step
-            if t == window_size - 1:
+
+            
+            if t == window_size - 1:    # output lauer
                 error = self._loss_function.gradient(y, y_pred, epoch_index) * self.activation_func_out_derivative(y_pred)
                 dW_output += self.hidden_states[t][-1].T @ error / batch_size
                 db_output += np.sum(error, axis=0, keepdims=True) / batch_size
@@ -708,30 +360,30 @@ class RNN(NeuralNetwork):
             else:
                 delta_output = np.zeros_like(self.hidden_states[t][-1])
 
-            # Initialize delta_h for the current time step
+            # seting up "error" list for each hidden layer
             delta_h_current = [np.zeros((batch_size, self.layers[i + 1])) for i in range(num_hidden_layers)]
 
-            # Backpropagate through hidden layers
+            # backpropagating through hidden layers
             for l in reversed(range(num_hidden_layers)):
                 h = self.hidden_states[t][l]
                 h_prev = self.hidden_states[t - 1][l] if t > 0 else np.zeros_like(h)
 
-                # Delta from the next time step
+                # delta from the next time step
                 delta_t_next = delta_h_next[l] @ self.W_recurrent[l].T
 
-                # Delta from the output layer (only for the last hidden layer)
+                # only for last layer
                 delta_from_output = delta_output if l == num_hidden_layers - 1 else np.zeros_like(h)
 
-                # Delta from the next layer at the same time step
+                # delta from the 'next' (previois un time) time step 
                 if l < num_hidden_layers - 1:
                     delta_from_next_layer = delta_h_current[l + 1] @ self.W_input[l + 1].T
                 else:
                     delta_from_next_layer = np.zeros_like(h)
 
-                # Total delta for the current layer
+                # total "error":
                 delta = (delta_t_next + delta_from_output + delta_from_next_layer) * self.activation_func_derivative(h)
 
-                # Compute gradients
+                ## Gradients:
                 if l == 0:
                     prev_activation = X[:, t, :]
                 else:
@@ -741,10 +393,10 @@ class RNN(NeuralNetwork):
                 total_dW_recurrent[l] += h_prev.T @ delta / batch_size
                 total_db_hidden[l] += np.sum(delta, axis=0, keepdims=True) / batch_size
 
-                # Store delta for the next time step
+                # storing for next time step:
                 delta_h_current[l] = delta
 
-            # Update delta_h_next for the next time step
+            # update delta_h_next for the next time step
             delta_h_next = delta_h_current
 
         # Update weights and biases using the optimizer functions
@@ -755,79 +407,6 @@ class RNN(NeuralNetwork):
 
         self.W_output = self.optimizer_W_output(self.W_output, dW_output, epoch_index, batch_index)
         self.b_output = self.optimizer_b_output(self.b_output, db_output, epoch_index, batch_index)
-
-
-    # def _backward(self, X, y, y_pred, epoch_index, batch_index):
-    #     batch_size, window_size, _ = X.shape
-    #     num_hidden_layers = len(self.layers) - 2  # Exclude input and output layers
-
-    #     # Initialize gradients
-    #     total_dW_input = [np.zeros_like(w) for w in self.W_input]
-    #     total_dW_recurrent = [np.zeros_like(w) for w in self.W_recurrent]
-    #     total_db_hidden = [np.zeros_like(b) for b in self.biases]
-
-    #     # Initialize delta_h for each layer
-    #     delta_h = [np.zeros((batch_size, self.layers[i + 1])) for i in range(num_hidden_layers)]
-
-    #     # Initialize gradients for output layer
-    #     dW_output = np.zeros_like(self.W_output)
-    #     db_output = np.zeros_like(self.b_output)
-
-
-    #     # Backpropagation through time
-    #     for t in reversed(range(window_size)):
-    #         # Compute error at the output layer for the last time step
-    #         if t == window_size - 1:
-    #             error = self._loss_function.gradient(y, y_pred, epoch_index) * self.activation_func_out_derivative(y_pred)
-    #             # error = y_pred - y  # Shape: (batch_size, output_size)
-    #             dW_output += self.hidden_states[t][-1].T @ error / batch_size
-    #             db_output += np.sum(error, axis=0, keepdims=True) / batch_size
-
-    #             delta_output = error @ self.W_output.T  # Shape: (batch_size, hidden_size_last_layer)
-    #         else:
-    #             delta_output = np.zeros_like(delta_h[-1])
-
-    #         # Backpropagate through hidden layers
-    #         for l in reversed(range(num_hidden_layers)):
-    #             h = self.hidden_states[t][l]
-    #             h_prev = self.hidden_states[t - 1][l] if t > 0 else np.zeros_like(h)
-
-    #             # Delta from next time step
-    #             delta_t_next = delta_h[l] @ self.W_recurrent[l].T if t < window_size - 1 else np.zeros_like(h)
-
-    #             # Delta from output layer (only for last hidden layer)
-    #             delta_from_output = delta_output if l == num_hidden_layers - 1 else 0
-
-    #             # Delta from next layer at the same time step
-    #             if l < num_hidden_layers - 1:
-    #                 delta_from_next_layer = delta_h[l + 1] @ self.W_input[l + 1].T
-    #             else:
-    #                 delta_from_next_layer = np.zeros_like(h)
-
-    #             # Total delta for current layer
-    #             delta = (delta_t_next + delta_from_output + delta_from_next_layer) * self.activation_func_derivative(h)
-
-    #             # Compute gradients
-    #             if l == 0:
-    #                 prev_activation = X[:, t, :]
-    #             else:
-    #                 prev_activation = self.hidden_states[t][l - 1]
-
-    #             total_dW_input[l] += prev_activation.T @ delta / batch_size
-    #             total_dW_recurrent[l] += h_prev.T @ delta / batch_size
-    #             total_db_hidden[l] += np.sum(delta, axis=0, keepdims=True) / batch_size
-
-    #             # Update delta_h for the next time step
-    #             delta_h[l] = delta
-
-    #     # Update weights and biases
-    #     for l in range(num_hidden_layers):
-    #         self.W_input[l] = self.optimizer_W_input[l](self.W_input[l], total_dW_input[l], epoch_index, batch_index)
-    #         self.W_recurrent[l] = self.optimizer_W_recurrent[l](self.W_recurrent[l], total_dW_recurrent[l], epoch_index, batch_index)
-    #         self.biases[l] = self.optimizer_biases[l](self.biases[l], total_db_hidden[l], epoch_index, batch_index)
-
-    #     self.W_output = self.optimizer_W_output(self.W_output, dW_output, epoch_index, batch_index)
-    #     self.b_output = self.optimizer_b_output(self.b_output, db_output, epoch_index, batch_index)
 
     def _initialize_weights_and_biases(self):
         """
