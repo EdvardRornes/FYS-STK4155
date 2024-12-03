@@ -83,7 +83,43 @@ def MSE(y,ytilde):
     return 1/n * np.sum(np.abs(y-ytilde)**2)
 
 ############ Activation functions ############
+
 class Activation:
+    def __init__(self):
+        pass 
+
+class Activation:
+
+    def __init__(self, acitvation_name:str, is_derivative=False):
+        """
+        Creates a callable activation function corresponding to the string 'acitvation_name' given.
+        """
+        self.activation_functions =            [Activation.Lrelu, Activation.relu, 
+                                                Activation.sigmoid, Activation.tanh]
+        self.activation_functions_derivative = [Activation.Lrelu_derivative, Activation.relu_derivative, 
+                                                Activation.sigmoid_derivative, Activation.tanh_derivative]
+        self.activation_functions_name = ["LRELU", "RELU", "SIGMOID", "TANH"]
+
+        self.acitvation_name = acitvation_name
+        try:
+            index = self.activation_functions_name.index(acitvation_name.upper())
+            self.activation_func, self.activation_func_derivative  = self.activation_functions[index], self.activation_functions_derivative[index]
+        except:
+            raise TypeError(f"Did not recognize '{acitvation_name}' as an activation function.")
+
+        self._call = self.activation_func
+        if is_derivative:   # Then call-method will return derivative instead
+            self._call = self.activation_func_derivative
+
+    def __call__(self, z):
+        return self._call(z)
+
+    def __str__(self):
+        return self.acitvation_name
+    
+    def derivative(self) -> Activation:
+        return Activation(self.acitvation_name, True)
+    
     @staticmethod
     def sigmoid(z):
         """Sigmoid activation function."""
@@ -117,13 +153,11 @@ class Activation:
     
     @staticmethod
     def tanh(z):
-        """tanh activation function."""
         return np.tanh(z)
     
     @staticmethod
     def tanh_derivative(z):
-        """Derivative of tanh activation function."""
-        return 1/np.cosh(z)**2
+        return 1 / np.cosh(z)**2
 
 
 ############ Cost/gradient functions ############

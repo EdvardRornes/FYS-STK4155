@@ -1,5 +1,7 @@
-from NNs import NeuralNetwork, RNN
+from NNs import DynamicallyWeightedLoss, WeightedBinaryCrossEntropyLoss, FocalLoss
+from test5 import RNN
 from utils import * 
+import numpy as np
 
 class GWSignalGenerator:
     def __init__(self, signal_length, noise_level=0.1):
@@ -62,8 +64,8 @@ class GWSignalGenerator:
         for _ in range(num_events):
             while True:
                 # Randomly determine start and length of event
-                event_length = random.randint(event_length_min, event_length_max)
-                event_start = random.randint(0, self.signal_length - event_length)
+                event_length = np.random.randint(event_length_min, event_length_max)
+                event_start = np.random.randint(0, self.signal_length - event_length)
                 event_end = event_start + event_length
 
                 # Ensure no overlap
@@ -72,12 +74,12 @@ class GWSignalGenerator:
                     break  # Valid event, exit loop
 
             # Randomize event properties
-            amplitude_factor = random.uniform(0, 0.5)
-            spike_factor = random.uniform(0.2, 1.5)
+            amplitude_factor = np.random.uniform(0, 0.5)
+            spike_factor = np.random.uniform(0.2, 1.5)
             
             # Randomize spin start and end frequencies
-            spin_start = random.uniform(5, 30)  # Starting spin frequency (in Hz)
-            spin_end = random.uniform(50, 500)  # Ending spin frequency (in Hz)
+            spin_start = np.random.uniform(5, 30)  # Starting spin frequency (in Hz)
+            spin_end = np.random.uniform(50, 500)  # Ending spin frequency (in Hz)
 
             events.append((event_start, event_end, amplitude_factor * scale, spike_factor * scale, spin_start, spin_end))
 
@@ -94,12 +96,12 @@ class GWSignalGenerator:
 
 
 # Parameters
-time_steps = 1000
+time_steps = 10000
 t = np.linspace(0, 50, time_steps)
 noise = 0.02
 
 # Base signal: sine wave + noise
-y = 1e-5*(0.5 * np.sin(100 * t) - 0.5 * np.cos(60 * t)*np.sin(-5*t) + 0.3*np.cos(30*t) + 0.05*np.sin(10000*t)) #+ noise * np.random.randn(time_steps)
+y = 2*(0.5 * np.sin(100 * t) - 0.5 * np.cos(60 * t)*np.sin(-5*t) + 0.3*np.cos(30*t) + 0.05*np.sin(10000*t)) #+ noise * np.random.randn(time_steps)
 y_noGW = y.copy()
 
 # Initialize generator and create events
@@ -125,21 +127,26 @@ weight_0 = class_weights[0]  # Weight for class 0
 weight_1 = class_weights[1]  # Weight for class 1
 print(weight_0, weight_1)
 
-testRNN = RNN(1, [100, 16, 16, 100], 1, Adam(learning_rate=0.1), "tanh", "sigmoid", 
-              lambda_reg=0.01, loss_function=WeightedBinaryCrossEntropyLoss(weight_0, weight_1),
-              scaler="minmax")
+testRNN = RNN(1, [2, 2], 1, Adam(learning_rate=0.01), "tanh", "sigmoid", 
+              lambda_reg=0.001, loss_function=WeightedBinaryCrossEntropyLoss(weight_0, weight_1),
+              scaler="standard")
 
 # testRNN = RNN(1, [16, 16, 16, 16], 1, Adam(learning_rate=1), "tanh", "sigmoid", 
 #               lambda_reg=0.01, loss_function=DynamicallyWeightedLoss(1.3),
 #               scaler="minmax")
 
-y = y + np.random.random(len(y)) * 0.5 * np.sin(t/10) + np.random.random(len(y)) * 0.5 * np.cos(t/20 + 1)
+y = y #+ np.random.random(len(y)) * 2 * np.sin(t/2)# + np.random.random(len(y)) * 0.5 * np.cos(t/20 + 1)
+
 X = copy.deepcopy(y.reshape(-1, 1))
 labels = copy.deepcopy(generator.labels) 
 
+batch_size = time_steps//50
 
 t_max_index = np.argmin(np.abs(t-10)); window_size = np.argmin(np.abs(t-20))
-testRNN.train(X, labels, 25, 25, window_size=window_size, truncation_steps=t_max_index)
+
+window_size = time_steps//100
+print(window_size)
+testRNN.train(X, labels.reshape(-1,1), 25, batch_size=batch_size, window_size=200, truncation_steps=1e14)
 
 labels_pred = testRNN.predict(y.reshape(-1, 1, 1))
 

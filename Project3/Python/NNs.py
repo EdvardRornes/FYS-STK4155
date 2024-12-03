@@ -39,7 +39,13 @@ class NeuralNetwork:
             self.activation_func_out = Activation(activation_func_output)
             self.activation_func_out_derivative = self.activation_func_out.derivative()
         
-        self._scaler = Scalers(scaler)
+        if scaler.upper() in ["NO SCALING", "NONE", "NO_SCALING"]:
+            
+            def tmp(X_train, X_test):
+                return X_train, X_test 
+            self._scaler = tmp 
+        else: 
+            self._scaler = Scalers(scaler)
     
     def save_data(self, filename:str, overwrite=False, stop=50) -> None:
         """Saves the analysis data to a file.
@@ -121,16 +127,62 @@ class NeuralNetwork:
         """
         sequences = []
         labels = []
-
+        # exit()
         for i in range(len(X) - step_length + 1):
             seq = X[i:i + step_length]
+            label_seq = y[i:i + step_length]  # Create a sequence of labels
             sequences.append(seq)
-            label = y[i + step_length - 1]
-            labels.append(label)
+            labels.append(label_seq)
 
         X_seq, y_seq = np.array(sequences).reshape(-1, step_length, input_size), np.array(labels)
+
         return X_seq, y_seq  
-    
+
+    # def prepare_sequences_RNN(self, X:np.ndarray, y:np.ndarray, step_length:int, input_size:int, overlap_percentage:float=0.9):
+    #     """
+    #     Converts data into sequences for RNN training with configurable overlap.
+        
+    #     Parameters:
+    #     * X: np.ndarray
+    #         Scaled input data (2D array, shape: [time_steps, features]).
+    #     * y: np.ndarray
+    #         Target data (1D array, shape: [time_steps]).
+    #     * step_length: int
+    #         Length of each sequence.
+    #     * input_size: int
+    #         Number of features in the input data.
+    #     * overlap_percentage: float
+    #         Percentage of overlap between consecutive sequences (0.0 to 1.0).
+        
+    #     Returns:
+    #     * X_seq: np.ndarray
+    #         3D array of sequences, shape: (num_sequences, step_length, input_size).
+    #     * y_seq: np.ndarray
+    #         1D array of corresponding labels, shape: (num_sequences,).
+    #     """
+    #     if not (0 <= overlap_percentage <= 1):
+    #         raise ValueError("overlap_percentage must be between 0.0 and 1.0")
+        
+    #     # Calculate step size based on the overlap percentage
+    #     step_size = int(step_length * (1 - overlap_percentage))
+    #     if step_size <= 0:
+    #         raise ValueError("The overlap percentage is too high, resulting in a non-positive step size.")
+        
+    #     sequences = []
+    #     labels = []
+
+    #     # Generate sequences with the specified overlap
+    #     for i in range(0, len(X) - step_length + 1, step_size):
+    #         seq = X[i:i + step_length]
+    #         sequences.append(seq)
+    #         label = y[i + step_length - 1]
+    #         labels.append(label)
+
+    #     X_seq = np.array(sequences).reshape(-1, step_length, input_size)
+    #     y_seq = np.array(labels)
+
+    #     return X_seq, y_seq
+
     @property
     def scaler(self):
         return self._scaler
@@ -222,8 +274,9 @@ class RNN(NeuralNetwork):
         self._trained = True
 
         # Prepare sequences for training
-        self.store_train_test_from_data(X, y, split_data=split_data) # applies scaling
+        self.store_train_test_from_data(X, y, split_data=True) # applies scaling
         X_seq, y_seq = self.prepare_sequences_RNN(self.X_train_scaled, self.y_train, window_size, self.input_size)
+        X_seq_test, y_seq_test = self.prepare_sequences_RNN(self.X_test_scaled, self.y_test, window_size, self.input_size)
 
         self.truncation_steps = truncation_steps # Sent to backward propagation method 
 
@@ -231,8 +284,16 @@ class RNN(NeuralNetwork):
             self._loss_function.epochs = epochs
             self._loss_function.labels = y
 
-        start_time = time.time()
+        start_time = time.time(); best_loss = 1e4
+
+        prev_weights = copy.deepcopy(self.weights)
+        prev_weights_recurrent = copy.deepcopy(self.W_recurrent)
+        
+        test_loss = 1
         for epoch in range(epochs):
+            
+            self.weights = prev_weights
+            self.W_recurrent = prev_weights_recurrent
             for i in range(0, X_seq.shape[0], batch_size):
                 X_batch = X_seq[i:i + batch_size]
                 y_batch = y_seq[i:i + batch_size]
@@ -243,9 +304,17 @@ class RNN(NeuralNetwork):
                 # Backward pass
                 self._backward(X_batch, y_batch.reshape(-1,1), y_pred, epoch, i)
 
-                # Optional: add code for logging loss or accuracy per epoch
-                test_loss = self.calculate_loss(y_batch.reshape(-1,1), y_pred, epoch)
-                print(f"Epoch {epoch + 1}/{epochs} completed, loss: {test_loss:.1e}, time elapsed: {time.time()-start_time:.1f}s", end="\r")
+                print(f"Epoch {epoch + 1}/{epochs} completed, loss: {test_loss:.3f}, time elapsed: {time.time()-start_time:.1f}s", end="\r")
+            
+            y_pred = self._forward(X_seq_test)
+    
+            test_loss = self.calculate_loss(y_seq_test, y_pred, epoch)
+
+            if test_loss < best_loss:
+                best_loss = test_loss
+
+                prev_weights = copy.deepcopy(self.weights)
+                prev_weights_recurrent = copy.deepcopy(self.W_recurrent)
 
         print("                                                                                           ", end="\r")
         print(f"Epoch {epochs}/{epochs} completed, time elapsed: {time.time()-start_time:.1f}s")
@@ -374,7 +443,7 @@ class RNN(NeuralNetwork):
                 # only for last layer
                 delta_from_output = delta_output if l == num_hidden_layers - 1 else np.zeros_like(h)
 
-                # delta from the 'next' (previois un time) time step 
+                # delta from the 'next' (previous in time) time step 
                 if l < num_hidden_layers - 1:
                     delta_from_next_layer = delta_h_current[l + 1] @ self.W_input[l + 1].T
                 else:

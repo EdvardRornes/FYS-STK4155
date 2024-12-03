@@ -108,48 +108,79 @@ aps,
 
 
 \section{Theory}
+\subsection{Gravitational Waves}
+Gravitational waves are created by the merging of large bodies, typically with masses of order \(\sim 50\) times that of the sun. 
+\subsubsection{}
+
 \subsection{Recurrent Neural Networks}
-The Recurrent Neural Networks (RNNs) are a class of neural networks specifically designed to handle sequential data or data with temporal dependencies. Unlike traditional FeedForward Neural Networks, RNNs are capable of "remembering" information from previous time steps. This is done through the so called `hidden state', which acts as a form of memory by retaining information about prior computations. The hidden state is essentially an array of data that is updated at each time step based on the input data and the previous hidden state. Alhough this enables RNN to access the temporal dependencies of the data at hand, it greatly increases the commputation time compared to that of the FFNN. 
+The Recurrent Neural Networks (RNNs) are a class of neural networks specifically designed to handle sequential data or data with temporal dependencies. Unlike traditional FeedForward Neural Networks, RNNs are capable of "remembering" information from previous time steps. This is done through the so called `hidden state', which acts as a form of memory by retaining information about prior computations. The hidden state is essentially an array of data that is updated at each time step based on the input data and the previous hidden state. Alhough this enables RNN to access the temporal dependencies of the data at hand, it greatly increases the commputation time compared to that of the FFNN. The standard RNN consists of only one hidden layer, but it is certainly possible to have more than one hidden layer. In fact, this is commonly referred to as the stacked RNN (SRNN), and we will arrive at this neural network further down. However, firstly, we present the structure and general algorithm for the RNN.
 
 \subsubsection{Structure}
-The RNN processes input sequentially, with information flowing step-by-step from the input to the output. The network consists of \(J\) neurons, each with associated weights and biases \(\{\boldsymbol{w}_{j}, \boldsymbol{b}_{j}\}_{j\in J}\). These parameters govern the transformation of inputs to outputs and are conceptually similar to those in the FFNN.
-
-The key difference between FFNN and RNN is that for each timestep \(t_i\), the RNN maintains a hidden state \(\boldsymbol{h}_i\) which acts as a memory of previous computations. The hidden state is initialized as the zero vector for each propagation through the network, updated at each step using both the current input and the hidden state from the previous (time) step. This update is parameterized by additional weights \(\{\boldsymbol{w}_{j}^{(h)}\}_{j\in J}\), which give the contribution from the hidden state to the current update.
+The RNN processes input sequentially, with information flowing step-by-step from the input to the output. This is done with the introduction of a hidden state \(h_{t}\), where the subscript denotes at time \(t\). The network can be summarized by the following two equations \cite{tallec2017unbiasingtruncatedbackpropagationtime}:
+\begin{subequations}
+\begin{align}
+	h_{t} &= \sigma^{(h)}\left(W_{hx}X_{t} + W_{hh}h_{t-1}  + b_{h}\right), \label{eq:hidden_state_RNN} \\
+	\tilde{y}_{t} &= \sigma^{(\text{out})}\left(W_{yh}h_{t}\right).	\label{eq:output_RNN}
+\end{align}
+\end{subequations}
+Here, \(\sigma_h\) and \(\sigma_{\text{out}}\) is the activation function for the hidden layer and the output layer respectively. \(W_{xh}\) is the weight from input to hidden layer, \(W_{hh}\) the hidden layer, \(W_{yh}\) the output layer and \(\tilde{y}\) the output of the RNN. Let now \(t\) be divided into a discrete set of times \((t_i)_{i\in N}\). Substituting \eqref{eq:hidden_state_RNN} into itself recursively leads to a formula for computing \(h_{t_n}\):
+\begin{align}	\label{eq:hidden_state_computation_RNN}
+	h_{t_n} = \sigma^{(h)}\biggl( W_{hx}X_{t_n} &+ W_{hh}\sigma_h \biggl( W_{hx}X_{t_{n-1}} \notag\\
+	&+ W_{hh}\sigma_h \left(\dots + b_h\right) + b_h\biggr) 
+	+b_h\biggr)
+\end{align}
+This shows that the hidden state at time \(t_n\) is dependent on the input \(X_{t}\) for \(t\in[0, t_n]\), i.e. all previous times. 
 
 \subsubsection{General Algorithm}
-Consider some general data ouput \(y\), of shape \((N, p_{\text{out}})\) and some data input \(X\), of shape \((N, p_{\text{in}})\), where \(N\) corresponds to the total amount of time points, and \(p_{\text{out}}, \ p_{\text{in}}\) the dimension of the output and input, respectively. The RNN then split the data into `windows' of size \(N_{W}\) in time. Then for the \(i\)-th window, the output of the \(j\)-th neuron is computed as
-\begin{align}
-	\boldsymbol{h}_{i}^{j} = \sigma\left(\boldsymbol{h}_{i}^{j-1} \boldsymbol{w}_{j} + \boldsymbol{h}_{i-1}^{j} \boldsymbol{w}^{(h)}_{j} + \boldsymbol{b}_{j}\right),
-\end{align}
-where \(\sigma\) is some activation function and \(\boldsymbol{h}_{i-1}\) the previous hidden state. For \(i=0\), the `previous' hidden state \(\boldsymbol{h}_{i-1j}\) is set to zero, and for \(j=0\), \(\boldsymbol{h}_{ij-1}\) is simply the input \(X_{i}\) (note that this is the \(i\)-th \emph{set} of inputs, not the input \(i\)-th from time point \(t_{i}\)).
+Consider some general data output \(y\), of shape \((N, p_{\text{out}})\) and some data input \(X\), of shape \((N, p_{\text{in}})\), where \(N\) corresponds to the total amount of time points, and \(p_{\text{out}}, \ p_{\text{in}}\) the dimension of the output and input, respectively. Generally, \(X\) could correspond to a quite large sampling frequency in time, making the computation of the hidden state \(h_t\) in \eqref{eq:hidden_state_computation_RNN} computationally demanding. One typical way of dealing with this is to split the data into `windows' of size \(N_{W}\) in time. These windows should generally overlap, such that no temporal dependencies across windows are left out. 
 
-To update the weights and biases we now look to investigate the error between \(y\) and the predicted output \(\tilde{y}\), using some given loss function \(L(y, \tilde{y})\),
+Splitting the data into windows, we define the hidden state for window \(n\) as:
+\begin{align}
+	h_{n} = \sigma^{(h)}\left( W_{hx}X_{n} + W_{hh}h_{n-1} + b_{h} \right),
+\end{align}
+where \(X_{n}\) is the \(n\)-th window.
+
+The error between \(y\) and the predicted output \(\tilde{y}\), is given by some chosen loss function \(L(y, \tilde{y})\),
 \begin{align}	
-	L(y,\tilde{y}) = \frac{1}{N}\sum\limits_{i=1}^{N} l(y_{i}, \tilde{y}_i),
+	L(y,\tilde{y}) = \frac{1}{N}\sum\limits_{n=1}^{N} l(y_{n}, \tilde{y}_n),
 \end{align}
 where \(l\) is some error-metric. 
-For some chosen learning rate \(\eta\), the standard update rule for the weights is given by:
+For some learning rate \(\eta\), the standard update rule for the weights and biases is given by:
+\begin{subequations}
 \begin{align}
-	\boldsymbol{w}_{j}\rightarrow \boldsymbol{w}_{j} - \eta \frac{\partial L}{\partial \boldsymbol{w}_{j}}.
+	W&\rightarrow W - \eta \frac{\partial L}{\partial W},  \\
+	b&\rightarrow b - \eta \frac{\partial L}{\partial b}.
 \end{align}
-This transformation may be extended using optimization methods, aimed at handling exploding gradient, allowing for faster convergence, avoiding local minimas, etc. such as the root mean squared propagation (RMSprop) or adaptive moment estimation (Adam). We covered some of this in \cite{project2}.
+\end{subequations}
+This transformation may be extended using optimization methods aimed at handling exploding gradient, faster convergence, avoiding local minimas, etc. such as the root mean squared propagation (RMSprop) or adaptive moment estimation (Adam). We covered some of these in \cite{project2}.
 
 Compared to FFNN, computing the gradient of \(L\) with respect to the weights leads to a somewhat more complicated expression (we now omit the \(j\)-index for readability):
 \begin{align}
-	\nabla_{\boldsymbol{w}} L &= \frac{1}{N}\sum\limits_{i=1}^{N} \nabla_{\boldsymbol{w}} l(y_{i}, \tilde{y}_i) \\
-	&= \frac{1}{N}\sum\limits_{i=1}^{N} \nabla_{\tilde{y}_i} l(y_i, \tilde{y}_i) \cdot \nabla_{h_i} \tilde{y}_i \cdot \nabla_{\boldsymbol{w}} h_i.
+	\frac{\partial L}{\partial W} &= \frac{1}{N}\sum\limits_{n=1}^{N} \frac{\partial l(y_{n}, \tilde{y}_n)}{\partial W}  \\
+	&= \frac{1}{N}\sum\limits_{n=1}^{N} \frac{\partial l(y_{n}, \tilde{y}_n)}{\partial \tilde{y}_{n}} \frac{\partial \tilde{y}_{n}}{\partial h_n}\frac{\partial h_n}{\partial W}.
 \end{align}
-The third factor, \( \nabla_{\boldsymbol{w}} h_i \), is not present for the FFNN, and it leads to a recursion formula:
+The last factor, \( \partial h_n/\partial W \), is not present for the FFNN, and using \eqref{eq:hidden_state_RNN}, one can obtain the recursion formula:
 \begin{align}	\label{eq:dhdw}
-	\nabla_{\boldsymbol{w}} h_i &= \nabla_{\boldsymbol{w}} \sigma + \nabla_{h_{i-1}} \sigma \cdot \nabla_{\boldsymbol{w}} h_{i-1} \notag\\ 
-	&= \nabla_{\boldsymbol{w}} \sigma + \nabla_{h_{i-1}} \sigma \cdot \left( \nabla_{\boldsymbol{w}} \sigma + \nabla_{h_{i-2}} \sigma \cdot \nabla_{\boldsymbol{w}} h_{i-2} \right) + \dots,
+	\frac{\partial h_n}{\partial W}  &= \frac{\partial \sigma^{(h)}}{\partial W} + \frac{\partial \sigma^{(h)}}{\partial h_{n-1}} \frac{\partial h_{n-1}}{\partial W}\notag\\ 
+	&= \frac{\partial \sigma_{n}^{(h)}}{\partial W} + \frac{\partial \sigma^{(h)}}{\partial h_{n-1}}  \left( \frac{\partial \sigma^{(h)}}{\partial W} + \frac{\partial \sigma^{(h)}_{n}}{\partial h_{n-2}} \frac{\partial h_{n-2}}{\partial W} \right) \notag \\
+	&= \frac{\partial \sigma_{n}^{(h)}}{\partial W} + \frac{\partial \sigma^{(h)}}{\partial h_{n-1}}  \left( \frac{\partial \sigma^{(h)}}{\partial W} + \frac{\partial \sigma_{n}^{(h)}}{\partial h_{n-2}} \left( \frac{\partial \sigma^{(h)}}{\partial W}\dots \right) \right) \notag\\ 
+	&= \frac{\partial \sigma_{n}^{(h)}}{\partial W} + \sum\limits_{m=1}^{n-1}\left( \prod_{j=m+1}^{n} \frac{\partial \sigma^{(h)}_{j}}{\partial h_{j-1}} \right) \frac{\partial \sigma^{(h)}_{m}}{\partial W}.
 \end{align}
-and so on. For a more comprehensive explenation of this algorithm we refer to \cite{jaeger2002tutorial}. 
+The last equality is explained in more detailed in for example \cite{jaeger2002tutorial}. Here, \(\partial \sigma_{n}^{(h)} /\partial W\) refers to the derivative of \(\sigma^{(h)}\) with respect to \(W\), evaluated at time window \(t_{n}\).
 
-The recursion relation in \eqref{eq:dhdw} leads to a much greater computation time, compared to FFNN, as every gradient computation need an additional propagation through the entire network. Additionally, this dependency of each gradient on all hidden states can lead to gradients blowing up due to only (relatively) minor errors. There are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in \eqref{eq:dhdw}, commonly referred to as `truncated backpropagation through time' (see e.g. \cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification of \eqref{eq:dhdw}, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on. 
+The recursion relation in \eqref{eq:dhdw} leads to a much greater computation time, compared to that of FFNN. Every gradient computation need an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in \eqref{eq:dhdw}, commonly referred to as `truncated backpropagation through time' (see e.g. \cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification of \eqref{eq:dhdw}, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on. 
 
-
-
+Implementing the stacked RNN is then done by essentially creating a hidden state for each `stack' of RNN. That is, a stacked RNN with \(L\) layers is described by the \(L\) hidden states, and the output of the stacked RNN is computed by feeding the hidden states to each other in succession, starting from the first hidden layer. The hidden states in some time window \(n\) are given by
+\begin{align}
+	h^{l}_{n} = \begin{cases}
+		\sigma^{(h)}\left( W_{hx}^{1}X_{n} + W_{hh}^{1}h_{n-1}^{1} + b_{h}^{1}\right), &l=1, \\
+		\sigma^{(h)}\left( W_{hx}^{l}h_{n}^{l-1} + W_{hh}^{l}h_{n-1}^{l} + b_{h}^{l}\right), &l\geq 2,
+	\end{cases}
+\end{align}	
+and the output of the stacked RNN in time window \(n\) as
+\begin{align}
+	\tilde{y}_{n} &= \sigma^{(\text{out})}\left( W_{yh}h^{L}_{n} + b_{y} \right).
+\end{align}
 \section{Implementation}
 
 \section{Discussion}
