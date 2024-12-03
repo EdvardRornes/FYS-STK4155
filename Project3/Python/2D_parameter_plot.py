@@ -97,7 +97,7 @@ def plot_2D_parameter_lambda_eta(
     # Add title and labels
     if title:
         if log_cbar:
-            title += rf', Color bar is logged.'
+            title += rf'. Color bar is logged.'
         plt.title(title)
 
     plt.xlabel(r'$\lambda$', fontsize=xaxis_fontsize or 12)
@@ -114,7 +114,7 @@ def plot_2D_parameter_lambda_eta(
 
     return fig, ax
 
-def on_click(event, lambdas, etas, losses, epochs, boosts, unique_lambdas, unique_etas, unique_epochs, unique_boosts, plot_info):
+def on_click(event, lambdas, etas, losses, epochs, boosts, unique_lambdas, unique_etas, plot_info):
     """
     Handle the click event on the plot.
     """
@@ -145,9 +145,6 @@ def on_click(event, lambdas, etas, losses, epochs, boosts, unique_lambdas, uniqu
         # Check if there is data for this specific combination
         if np.any(mask):
             print(f"Clicked Lambda: {clicked_lambda}, Eta: {clicked_eta}, Fig with Epoch: {epoch} & Boost: {boost}")
-
-            # Filter the losses based on this mask
-            filtered_losses = losses[mask]
 
             filepath = f'{pkl_dir}/Synthetic_GW_Parameter_Tuning_Results_timesteps{time_steps}_SNR{SNR}_epoch{epoch}_lamd{clicked_lambda}_eta{clicked_eta}_boost{boost:.1f}.pkl'
                 
@@ -226,6 +223,15 @@ boosts = []
 
 # Get all .pkl files in the directory
 pkl_files = [f for f in os.listdir(pkl_dir) if f.endswith(".pkl")]
+
+# for filename in pkl_files:
+#     file_path = os.path.join(pkl_dir, filename)
+#     if os.path.getsize(file_path) == 0:
+#         print(f"File {filename} is empty.")
+#         continue
+#     # Proceed with loading
+#     with open(file_path, "rb") as f:
+#         results = pickle.load(f)
 
 # Initialize the progress bar with the total number of files
 with tqdm(total=len(pkl_files), desc="Loading .pkl files", ncols=100) as pbar:
@@ -308,7 +314,7 @@ for epoch in unique_epochs:
             annot=True,
             savefig=False,
             filename=f"Loss_Epoch{epoch}_Boost{boost}",  # Save plots with unique filenames
-            on_click=lambda event, plot_info=(epoch, boost): on_click(event, lambdas, etas, losses, epochs, boosts, unique_lambdas, unique_etas, unique_epochs, unique_boosts, plot_info),  # Pass epoch and boost as tuple
+            on_click=lambda event, plot_info=(epoch, boost): on_click(event, lambdas, etas, losses, epochs, boosts, unique_lambdas, unique_etas, plot_info),  # Pass epoch and boost as tuple
             log_cbar=True
         )
 print("Click on one of the grids to plot the results for the given parameter combination :)")

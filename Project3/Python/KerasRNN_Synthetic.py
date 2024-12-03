@@ -1,5 +1,6 @@
 
 import os
+# Removes some print out details
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 import numpy as np
@@ -22,8 +23,8 @@ from tensorflow.keras import mixed_precision # type: ignore
 # policy = mixed_precision.Policy('mixed_float16')
 # mixed_precision.set_global_policy(policy)
 
-tf.config.threading.set_intra_op_parallelism_threads(12)  # Adjust number of threads
-tf.config.threading.set_inter_op_parallelism_threads(12)
+# tf.config.threading.set_intra_op_parallelism_threads(12)  # Adjust number of threads
+# tf.config.threading.set_inter_op_parallelism_threads(12)
 
 latex_fonts()
 savefigs = True
@@ -138,7 +139,7 @@ class KerasRNN:
         # Define thresholds
         patience_threshold = int(np.ceil(0.2 * epochs))  # Early stopping threshold
         epochs_without_improvement = 0
-        low_loss_threshold = 0.3  # Continue training even without improvement if loss is below this value
+        low_loss_threshold = 0.2  # Continue training even without improvement if loss is below this value
 
         # Compute class weights dynamically based on training labels
         for epoch in range(epochs):
@@ -318,10 +319,10 @@ gw_earlyboosts = np.linspace(1, 1.5, 6)
 epoch_list = [10, 25, 50, 100]
 SNR = 100
 
-y = []
 events = []
 labels = []
 
+# Background noise
 y = [
     0.5*np.sin(90*x) - 0.5*np.cos(60*x)*np.sin(-5.*x) + 0.3*np.cos(30*x) + 0.05*np.sin(time_steps/40*x),
     0.5*np.sin(50*x) - 0.5*np.cos(80*x)*np.sin(-10*x) + 0.3*np.cos(40*x) + 0.05*np.sin(time_steps/20*x),
@@ -334,10 +335,13 @@ y = [
 for i in range(len(y)):
     y[i] /= SNR # Quick rescaling, the division factor is ~ SNR
 
+# y = []
+
 event_lengths = [(time_steps//10, time_steps//8), (time_steps//7, time_steps//6), 
                  (time_steps//14, time_steps//12), (time_steps//5, time_steps//3),
                  (time_steps//5, time_steps//4)]
 
+# Add a single synthetic GW event to each sample
 for i in range(num_samples):
     generator = GWSignalGenerator(signal_length=time_steps)
     # y_i = np.zeros_like(x) # For no background signal tests
