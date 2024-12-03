@@ -207,7 +207,7 @@ def load_results(filepath):
     with open(filepath, "rb") as f:
         return pickle.load(f)
 
-save_option = input("Would you like to be prompted to save files? y/n\nNB!: If you choose yes, the terminal will crash if you do not give the later prompts an answer!! \n")
+save_option = input("Would you like to be prompted to save files? y/n\nNB!: If you choose yes, THE TERMINAL WILL CRASH if you do not give the later prompts an answer!! \n")
 
 # Directory containing the .pkl files
 pkl_dir = "GW_Parameter_Tuning_Results"

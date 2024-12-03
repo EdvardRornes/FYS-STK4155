@@ -317,6 +317,8 @@ learning_rates = [1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]
 regularization_values = np.logspace(-10, 0, 11)
 gw_earlyboosts = np.linspace(1, 1.5, 6)
 epoch_list = [10, 25, 50, 100]
+gw_earlyboosts = np.linspace(1.6, 2, 5)
+print(gw_earlyboosts)
 SNR = 100
 
 events = []
