@@ -131,6 +131,7 @@ class NeuralNetwork:
         for i in range(len(X) - step_length + 1):
             seq = X[i:i + step_length]
             label_seq = y[i:i + step_length]  # Create a sequence of labels
+
             sequences.append(seq)
             labels.append(label_seq)
 
@@ -413,11 +414,11 @@ class RNN(NeuralNetwork):
         db_output = np.zeros_like(self.b_output)
 
         # determine the number of truncation steps
-        truncation_steps = min(self.truncation_steps, window_size)
-        t_start = max(0, window_size - truncation_steps)
+        # truncation_steps = min(self.truncation_steps, window_size)
+        # t_start = max(0, window_size - truncation_steps)
 
         # propagating backwards through time, restricted to a maximum amount dictated by t_start
-        for t in reversed(range(t_start, window_size)):
+        for t in reversed(range(window_size)):
 
             
             if t == window_size - 1:    # output lauer

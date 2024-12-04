@@ -109,7 +109,7 @@ aps,
 
 \section{Theory}
 \subsection{Gravitational Waves}
-Gravitational waves are created by the merging of large bodies, typically with masses of order \(\sim 50\) times that of the sun. 
+% Gravitational waves are created by the merging of large bodies, typically with masses of order \(\sim 50\) times that of the sun. 
 \subsubsection{}
 
 \subsection{Recurrent Neural Networks}
@@ -120,7 +120,7 @@ The RNN processes input sequentially, with information flowing step-by-step from
 \begin{subequations}
 \begin{align}
 	h_{t} &= \sigma^{(h)}\left(W_{hx}X_{t} + W_{hh}h_{t-1}  + b_{h}\right), \label{eq:hidden_state_RNN} \\
-	\tilde{y}_{t} &= \sigma^{(\text{out})}\left(W_{yh}h_{t}\right).	\label{eq:output_RNN}
+	\tilde{y}_{t} &= \sigma^{(\text{out})}\left(W_{yh}h_{t} + b_{y}\right).	\label{eq:output_RNN}
 \end{align}
 \end{subequations}
 Here, \(\sigma_h\) and \(\sigma_{\text{out}}\) is the activation function for the hidden layer and the output layer respectively. \(W_{xh}\) is the weight from input to hidden layer, \(W_{hh}\) the hidden layer, \(W_{yh}\) the output layer and \(\tilde{y}\) the output of the RNN. Let now \(t\) be divided into a discrete set of times \((t_i)_{i\in N}\). Substituting \eqref{eq:hidden_state_RNN} into itself recursively leads to a formula for computing \(h_{t_n}\):
@@ -136,10 +136,12 @@ Consider some general data output \(y\), of shape \((N, p_{\text{out}})\) and so
 
 Splitting the data into windows, we define the hidden state for window \(n\) as:
 \begin{align}
-	h_{n} = \sigma^{(h)}\left( W_{hx}X_{n} + W_{hh}h_{n-1} + b_{h} \right),
+	h_{n} &= \sigma^{(h)}\left( W_{hx}X_{n} + W_{hh}h_{n-1} + b_{h} \right) \notag \\
+	&\equiv \sigma^{(h)}(z_{n})
 \end{align}
 where \(X_{n}\) is the \(n\)-th window.
 
+\subsubsection{Backpropagation Through Time}
 The error between \(y\) and the predicted output \(\tilde{y}\), is given by some chosen loss function \(L(y, \tilde{y})\),
 \begin{align}	
 	L(y,\tilde{y}) = \frac{1}{N}\sum\limits_{n=1}^{N} l(y_{n}, \tilde{y}_n),
@@ -148,29 +150,62 @@ where \(l\) is some error-metric.
 For some learning rate \(\eta\), the standard update rule for the weights and biases is given by:
 \begin{subequations}
 \begin{align}
-	W&\rightarrow W - \eta \frac{\partial L}{\partial W},  \\
-	b&\rightarrow b - \eta \frac{\partial L}{\partial b}.
+	W\leftarrow W - \eta \frac{\partial L}{\partial W},  \ b\leftarrow b - \eta \frac{\partial L}{\partial b}.
 \end{align}
 \end{subequations}
-This transformation may be extended using optimization methods aimed at handling exploding gradient, faster convergence, avoiding local minimas, etc. such as the root mean squared propagation (RMSprop) or adaptive moment estimation (Adam). We covered some of these in \cite{project2}.
+This transformation may be extended using optimization methods aimed at handling exploding gradient, faster convergence, avoiding local minimas, etc. We covered three of these optimization methods in \cite{project2}; the root mean squared propagation (RMSprop), the adaptive gradient (AdaGrad) and the adaptive moment estimation (Adam). 
 
-Compared to FFNN, computing the gradient of \(L\) with respect to the weights leads to a somewhat more complicated expression (we now omit the \(j\)-index for readability):
+Compared to FFNN, computing the gradient of \(L\) with respect to the weights leads to a somewhat more complicated expression. Consider now the partial derivative of the loss function with respect to the weight \(W\) (\(W_{hx}\) or \(W_{hh}\)):
 \begin{align}
-	\frac{\partial L}{\partial W} &= \frac{1}{N}\sum\limits_{n=1}^{N} \frac{\partial l(y_{n}, \tilde{y}_n)}{\partial W}  \\
-	&= \frac{1}{N}\sum\limits_{n=1}^{N} \frac{\partial l(y_{n}, \tilde{y}_n)}{\partial \tilde{y}_{n}} \frac{\partial \tilde{y}_{n}}{\partial h_n}\frac{\partial h_n}{\partial W}.
+	\frac{\partial L}{\partial W} &= \frac{1}{N}\sum\limits_{n=1}^{N}\frac{\partial l(y_n, \tilde{y}_n)}{\partial W} \notag\\
+	&=\frac{1}{N}\sum\limits_{n=1}^{N}\frac{\partial l(y_n, \tilde{y}_n)}{\partial \tilde{y}_n} \frac{\partial \tilde{y}_n}{\partial z_n} \frac{\partial z_n}{\partial W},
 \end{align}
-The last factor, \( \partial h_n/\partial W \), is not present for the FFNN, and using \eqref{eq:hidden_state_RNN}, one can obtain the recursion formula:
-\begin{align}	\label{eq:dhdw}
-	\frac{\partial h_n}{\partial W}  &= \frac{\partial \sigma^{(h)}}{\partial W} + \frac{\partial \sigma^{(h)}}{\partial h_{n-1}} \frac{\partial h_{n-1}}{\partial W}\notag\\ 
-	&= \frac{\partial \sigma_{n}^{(h)}}{\partial W} + \frac{\partial \sigma^{(h)}}{\partial h_{n-1}}  \left( \frac{\partial \sigma^{(h)}}{\partial W} + \frac{\partial \sigma^{(h)}_{n}}{\partial h_{n-2}} \frac{\partial h_{n-2}}{\partial W} \right) \notag \\
-	&= \frac{\partial \sigma_{n}^{(h)}}{\partial W} + \frac{\partial \sigma^{(h)}}{\partial h_{n-1}}  \left( \frac{\partial \sigma^{(h)}}{\partial W} + \frac{\partial \sigma_{n}^{(h)}}{\partial h_{n-2}} \left( \frac{\partial \sigma^{(h)}}{\partial W}\dots \right) \right) \notag\\ 
-	&= \frac{\partial \sigma_{n}^{(h)}}{\partial W} + \sum\limits_{m=1}^{n-1}\left( \prod_{j=m+1}^{n} \frac{\partial \sigma^{(h)}_{j}}{\partial h_{j-1}} \right) \frac{\partial \sigma^{(h)}_{m}}{\partial W}.
+where (\(\odot\) represents the Hadamard product)
+\begin{align}
+	\frac{\partial z_n}{\partial W} &= \frac{\partial}{\partial W}\left( W_{hx}X_n + W_{hh}h_{n-1} + b_{n} \right) \notag \\
+	&= X_{n}^{T} \odot \frac{\partial W_{hx}}{\partial W} + h_{n-1}^{T} \odot \frac{\partial W_{hh}}{\partial W} + W_{hh} \odot \frac{\partial h_{n-1}}{\partial W},
 \end{align}
-The last equality is explained in more detailed in for example \cite{jaeger2002tutorial}. Here, \(\partial \sigma_{n}^{(h)} /\partial W\) refers to the derivative of \(\sigma^{(h)}\) with respect to \(W\), evaluated at time window \(t_{n}\).
+and 
+\begin{align}
+	\frac{\partial h_{n-1}}{\partial W} = \sigma'_{h}(z_{n-1}) \odot \left( X^{T}_{n} \odot \frac{\partial W_{hx}}{\partial W} + h_{n-1}^{T}\odot \frac{\partial h_{n-2}}{\partial W}\right),
+\end{align}
+meaning that 
+\begin{align}
+	\frac{\partial z_{n}}{\partial W} &= X^{T}_{n} \odot \frac{\partial W_{hx}}{\partial W} + h^{T}_{n-1} \odot \frac{\partial W_{hh}}{\partial W} \notag\\
+	&+ W_{hh} \odot \biggl( \sigma'(z_{n-1}) \odot \biggl(X^{T}_{n} \odot \frac{\partial W_{hx}}{\partial W}\biggr) \notag\\
+	&+ h^{T}_{n-1}\odot \left(\sigma'(z_{n-2}) \odot \left(X^{T}_{n} \odot \frac{\partial W_{hx}}{\partial W} + \dots \right) \right)  \biggr).
+\end{align}
+There is the option of computing this recursively. However, the more common approach is to instead `unfold' the RNN through time. This is known as the method of backpropagation through time (BTT). Here, we define the quantities
+\begin{subequations}
+\begin{align} \label{eq:delta_definition_RNN}
+	\delta^{\text{out}}_{n} &\equiv \frac{\partial l(y_n, \tilde{y}_n)}{\partial \tilde{y}_n} \frac{\partial \tilde{y}_n}{\partial z_n} = \frac{\partial l(y_n, \tilde{y}_n)}{\partial \tilde{y}_n} \sigma'_{\text{out}}(z_n), \\
+	\delta_{N} &\equiv \delta^{\text{out}}_{n} \frac{\partial l(y_N, \tilde{y}_N)}{\partial \tilde{y}_N}, \\
+	\delta_{n} &\equiv \left( \delta^{\text{out}}_{n} W^{T}_{hx} + \delta_{n+1}W_{hh}^T\right)\odot \sigma'_{h}(z_n).
+\end{align}
+\end{subequations}
+This makes it possible to iterate backwards, starting from the last time window \(N\), and the gradients of the weights and biases are then given by
+\begin{subequations}
+\begin{align}
+	\frac{\partial L}{\partial W_{hx}} &= \frac{1}{N}\sum\limits_{n=1}^{N}\delta^{\text{out}}_{n} X^{T}_{n}, \\
+	\frac{\partial L}{\partial W_{hy}} &= \frac{1}{N}\sum\limits_{n=1}^{N}\delta^{\text{out}}_{n} h^{T}_{n}, \\
+	\frac{\partial L}{\partial W_{hh}} &= \frac{1}{N}\sum\limits_{n=1}^{N}\delta_{n} h^{T}_{n-1},\\
+	\frac{\partial L}{\partial b_{y}}  &= \frac{1}{N}\sum\limits_{n=1}^{N}\delta^{\text{out}}_{n},\\
+	\frac{\partial L}{\partial b_{h}}  &= \frac{1}{N}\sum\limits_{n=1}^{N}\delta_{n}.
+\end{align}
+\end{subequations}
+% \begin{align}
+% 	\delta_{N} &= \delta^{\text{out}}_{n} \frac{\partial l(y_N, \tilde{y}_N)}{\partial \tilde{y}_N},\\
+% 	\delta_{N-1} &= \left( \delta^{\text{out}}_{n} + \delta_{N}W_{hh}^T\right)\odot \sigma'_{h}(z_N),\\
+% 	&\dots \\
+% 	\delta_{1} &= \left( \delta^{\text{out}}_{n} + \delta_{2}W_{hh}^T\right)\odot \sigma'_{h}(z_{2})
+% \end{align}
 
-The recursion relation in \eqref{eq:dhdw} leads to a much greater computation time, compared to that of FFNN. Every gradient computation need an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in \eqref{eq:dhdw}, commonly referred to as `truncated backpropagation through time' (see e.g. \cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification of \eqref{eq:dhdw}, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on. 
+The dependency for each error term \(\delta_{n}\) on `future' error terms leads to a much greater computation time, compared to that of FFNN. Every gradient computation need an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm summerized in \eqref{eq:delta_definition_RNN}, commonly referred to as `truncated backpropagation through time' (see e.g. \cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification of \eqref{eq:dhdw}, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on. 
 
-Implementing the stacked RNN is then done by essentially creating a hidden state for each `stack' of RNN. That is, a stacked RNN with \(L\) layers is described by the \(L\) hidden states, and the output of the stacked RNN is computed by feeding the hidden states to each other in succession, starting from the first hidden layer. The hidden states in some time window \(n\) are given by
+
+
+
+Implementing the stacked RNN is then done by essentially creating a hidden state for each `stack' of RNN. The output of the stacked RNN is computed by feeding the hidden states to each other in succession, starting from the first hidden layer. The hidden states in some time window \(n\) are given by
 \begin{align}
 	h^{l}_{n} = \begin{cases}
 		\sigma^{(h)}\left( W_{hx}^{1}X_{n} + W_{hh}^{1}h_{n-1}^{1} + b_{h}^{1}\right), &l=1, \\
@@ -181,7 +216,16 @@ and the output of the stacked RNN in time window \(n\) as
 \begin{align}
 	\tilde{y}_{n} &= \sigma^{(\text{out})}\left( W_{yh}h^{L}_{n} + b_{y} \right).
 \end{align}
+Here, the dimensions are \(W^{l}_{hx}\in\mathbb{R}^{d_{l}\times d_{l-1}}\), \(W^{l}_{hh}\in\mathbb{R}^{d_{l}\times d_{l}}\), with \(d_l\) being the dimension of the \(l\)-th hidden state, \(l_0\) the dimension of the input and \(l^{L}\) the dimension of the output. The BTT algorithm for a stacked RNN takes on the same form, except that we now have \(L\) hidden states. 
+
+\subsubsection{Gradient Clipping}
+A common method for dealing with exploding gradients, is the method of gradient clipping (see e.g. \cite{Goodfellow-et-al-2016}). This method prevents checks whether the magnitude of the gradient is moving past a certain threshold. If this is true it truncates the current gradient. This can be summarized as:
+\begin{align}
+	\nabla L \rightarrow \frac{\epsilon}{||\nabla L||}\nabla L \text{ if } ||\nabla L|| > \epsilon.
+\end{align}
+
 \section{Implementation}
+
 
 \section{Discussion}
 

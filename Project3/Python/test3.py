@@ -136,7 +136,7 @@ class KerasRNN:
         best_weights = None  # Keep track of the best model's weights, not the entire model
 
         # Define thresholds
-        patience_threshold = int(np.ceil(0.2 * epochs))  # Early stopping threshold
+        patience_threshold = int(np.ceil(0.5 * epochs))  # Early stopping threshold
         epochs_without_improvement = 0
         low_loss_threshold = 0.3  # Continue training even without improvement if loss is below this value
 

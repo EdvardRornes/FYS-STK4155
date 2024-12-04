@@ -114,10 +114,10 @@ GWSignalGenerator.add_gw_event(generator, y, time_steps//2, 5*time_steps//6, spi
 # generator.labels[50] = 1
 # GWSignalGenerator.add_gw_event(generator, y, np.argmin(np.abs(t-10)),  np.argmin(np.abs(t-20)), spin_start=3, spin_end=15, spike_factor=2, scale=1)
 
-
+strain = y
 from sklearn.utils.class_weight import compute_class_weight
 import numpy as np
-
+np.random.seed(42)
 # Assuming y is your label array
 unique_classes = np.unique(generator.labels)
 class_weights = compute_class_weight('balanced', classes=unique_classes, y=generator.labels)
@@ -127,33 +127,26 @@ weight_0 = class_weights[0]  # Weight for class 0
 weight_1 = class_weights[1]  # Weight for class 1
 print(weight_0, weight_1)
 
-testRNN = RNN(1, [2, 2], 1, Adam(learning_rate=0.01), "tanh", "sigmoid", 
-              lambda_reg=0.001, loss_function=WeightedBinaryCrossEntropyLoss(weight_0, weight_1),
-              scaler="standard")
+testRNN = RNN(1, [5, 10, 2], 1, Adam(learning_rate=0.005, momentum=1), "tanh", "sigmoid", 
+              lambda_reg=0.001, loss_function=WeightedBinaryCrossEntropyLoss(weight_0=weight_0, weight_1=weight_1),
+              scaler="no scaling")
 
-# testRNN = RNN(1, [16, 16, 16, 16], 1, Adam(learning_rate=1), "tanh", "sigmoid", 
-#               lambda_reg=0.01, loss_function=DynamicallyWeightedLoss(1.3),
-#               scaler="minmax")
-
-y = y #+ np.random.random(len(y)) * 2 * np.sin(t/2)# + np.random.random(len(y)) * 0.5 * np.cos(t/20 + 1)
-
-X = copy.deepcopy(y.reshape(-1, 1))
+X = copy.deepcopy(strain.reshape(-1, 1))
 labels = copy.deepcopy(generator.labels) 
 
 batch_size = time_steps//50
 
 t_max_index = np.argmin(np.abs(t-10)); window_size = np.argmin(np.abs(t-20))
 
-window_size = time_steps//100
-print(window_size)
-testRNN.train(X, labels.reshape(-1,1), 25, batch_size=batch_size, window_size=200, truncation_steps=1e14)
+window_size = 200
+testRNN.train(X, labels.reshape(-1, 1), 10, batch_size=batch_size, window_size=window_size)
 
-labels_pred = testRNN.predict(y.reshape(-1, 1, 1))
+labels_pred = testRNN.predict(X.reshape(-1, 1, 1))
 
 plt.figure(figsize=(15, 6))
 plt.plot(t, y_noGW, label="No GW Signal", lw=0.4, color="gray", alpha=0.7)
-plt.plot(t, y, label="Signal (with GW events)", lw=0.6, color="blue")
+plt.plot(t, strain, label="Signal (with GW events)", lw=0.6, color="blue")
 plt.plot(t, generator.labels, label="Actual")
-plt.plot(t, labels_pred, label="Predicted")
+plt.plot(t, labels_pred[:, 0, 0], label="Predicted")
 plt.legend()
 plt.show()
