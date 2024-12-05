@@ -113,7 +113,33 @@ class NeuralNetwork:
         self.X_train = X_train; self.X_test = X_test
         self.X_train_scaled, self.X_test_scaled = self._scaler(X_train, X_test)
 
-    def prepare_sequences_RNN(self, X:np.ndarray, y:np.ndarray, step_length:int, input_size:int):
+    # def prepare_sequences_RNN(self, X:np.ndarray, y:np.ndarray, step_length:int, input_size:int):
+    #     """
+    #     Converts data into sequences for RNN training.
+        
+    #     Parameters:
+    #     * X:                scaled data 
+    #     * y:                output data.
+    #     * step_length:      length of each sequence.
+        
+    #     Returns:
+    #     * X_seq, y_seq:     sequences (3D array) and corresponding labels (1D array).
+    #     """
+    #     sequences = []
+    #     labels = []
+    #     # exit()
+    #     for i in range(len(X) - step_length + 1):
+    #         seq = X[i:i + step_length]
+    #         label_seq = y[i:i + step_length]  # Create a sequence of labels
+
+    #         sequences.append(seq)
+    #         labels.append(label_seq)
+
+    #     X_seq, y_seq = np.array(sequences).reshape(-1, step_length, input_size), np.array(labels)
+
+    #     return X_seq, y_seq  
+
+    def prepare_sequences_RNN(self, X:np.ndarray, y:np.ndarray, step_length:int, input_size:int, overlap:float=50):
         """
         Converts data into sequences for RNN training.
         
@@ -121,14 +147,20 @@ class NeuralNetwork:
         * X:                scaled data 
         * y:                output data.
         * step_length:      length of each sequence.
+        * input_size:       number of features in input data.
+        * overlap:          overlap percentage between sequences (0 to 100).
         
         Returns:
         * X_seq, y_seq:     sequences (3D array) and corresponding labels (1D array).
         """
+        if not (0 <= overlap < 100):
+            raise ValueError("Overlap percentage must be between 0 and 100 (exclusive).")
+
+        step_size = max(1, int(step_length * (1 - overlap / 100)))  # Calculate step size based on overlap percentage
         sequences = []
         labels = []
-        # exit()
-        for i in range(len(X) - step_length + 1):
+
+        for i in range(0, len(X) - step_length + 1, step_size):
             seq = X[i:i + step_length]
             label_seq = y[i:i + step_length]  # Create a sequence of labels
 
@@ -137,7 +169,8 @@ class NeuralNetwork:
 
         X_seq, y_seq = np.array(sequences).reshape(-1, step_length, input_size), np.array(labels)
 
-        return X_seq, y_seq  
+        return X_seq, y_seq
+
 
     # def prepare_sequences_RNN(self, X:np.ndarray, y:np.ndarray, step_length:int, input_size:int, overlap_percentage:float=0.9):
     #     """
