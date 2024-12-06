@@ -155,52 +155,55 @@ For some learning rate \(\eta\), the standard update rule for the weights and bi
 \end{subequations}
 This transformation may be extended using optimization methods aimed at handling exploding gradient, faster convergence, avoiding local minimas, etc. We covered three of these optimization methods in \cite{project2}; the root mean squared propagation (RMSprop), the adaptive gradient (AdaGrad) and the adaptive moment estimation (Adam). 
 
-Compared to FFNN, computing the gradient of \(L\) with respect to the weights leads to a somewhat more complicated expression. Consider now the partial derivative of the loss function with respect to the weight \(W\) (\(W_{hx}\) or \(W_{hh}\)):
+Compared to FFNN, computing the gradient of \(L\) with respect to the weights leads to a somewhat more complicated expression. Consider now the partial derivative of the loss function with respect to the weight \(W\),  being either \(W_{hx}\) or \(W_{hh}\) (cf. \cite{superGood}):
 \begin{align}
-	\frac{\partial L}{\partial W} &= \frac{1}{N}\sum\limits_{n=1}^{N}\frac{\partial l(y_n, \tilde{y}_n)}{\partial W} \notag\\
-	&=\frac{1}{N}\sum\limits_{n=1}^{N}\frac{\partial l(y_n, \tilde{y}_n)}{\partial \tilde{y}_n} \frac{\partial \tilde{y}_n}{\partial z_n} \frac{\partial z_n}{\partial W},
+	\frac{\partial L}{\partial W} &= \sum_{n=1}^{N}\frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial \tilde{y}_{n}}{\partial W}\\
+	&= \sum_{n=1}^{N}\frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial \tilde{y}_{n}}{\partial h_{n}}\frac{\partial h_{n}}{\partial W},
 \end{align}
-where (\(\odot\) represents the Hadamard product)
+where we can use backpropagation through time (BPTT) to write \cite{superGood}:
 \begin{align}
-	\frac{\partial z_n}{\partial W} &= \frac{\partial}{\partial W}\left( W_{hx}X_n + W_{hh}h_{n-1} + b_{n} \right) \notag \\
-	&= X_{n}^{T} \odot \frac{\partial W_{hx}}{\partial W} + h_{n-1}^{T} \odot \frac{\partial W_{hh}}{\partial W} + W_{hh} \odot \frac{\partial h_{n-1}}{\partial W},
+	\frac{\partial L}{\partial W} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial \tilde{y}_{n}}{\partial h_{n}} \frac{\partial h_{n}}{\partial h_{k}} \frac{\partial h_{k}}{\partial W}.
 \end{align}
-and 
+Notice here that,
 \begin{align}
-	\frac{\partial h_{n-1}}{\partial W} = \sigma'_{h}(z_{n-1}) \odot \left( X^{T}_{n} \odot \frac{\partial W_{hx}}{\partial W} + h_{n-1}^{T}\odot \frac{\partial h_{n-2}}{\partial W}\right),
+	\frac{\partial h_n}{\partial h_k} &= \frac{\partial h_n}{\partial h_{n-1}} \frac{\partial h_{n-1}}{\partial h_{n-1}} ... \frac{\partial h_{k+1}}{\partial h_{k}} \notag \\
+	&= \left( \sigma'_{h}(z_n)W_{hh} \right)\left( \sigma'_{h}(z_{n-1})W_{hh} \right) ... \left( \sigma'_{h}(z_{k+1})W_{hh} \right) \notag\\
+	&= \prod_{j=0}^{n-k-1} \left(\sigma'_{h}(z_{z-j})W_{hh}\right).
 \end{align}
-meaning that 
-\begin{align}
-	\frac{\partial z_{n}}{\partial W} &= X^{T}_{n} \odot \frac{\partial W_{hx}}{\partial W} + h^{T}_{n-1} \odot \frac{\partial W_{hh}}{\partial W} \notag\\
-	&+ W_{hh} \odot \biggl( \sigma'(z_{n-1}) \odot \biggl(X^{T}_{n} \odot \frac{\partial W_{hx}}{\partial W}\biggr) \notag\\
-	&+ h^{T}_{n-1}\odot \left(\sigma'(z_{n-2}) \odot \left(X^{T}_{n} \odot \frac{\partial W_{hx}}{\partial W} + \dots \right) \right)  \biggr).
-\end{align}
-There is the option of computing this recursively. However, the more common approach is to instead `unfold' the RNN through time. This is known as the method of backpropagation through time (BTT). Here, we define the quantities
-\begin{subequations}
-\begin{align} \label{eq:delta_definition_RNN}
-	\delta^{\text{out}}_{n} &\equiv \frac{\partial l(y_n, \tilde{y}_n)}{\partial \tilde{y}_n} \frac{\partial \tilde{y}_n}{\partial z_n} = \frac{\partial l(y_n, \tilde{y}_n)}{\partial \tilde{y}_n} \sigma'_{\text{out}}(z_n), \\
-	\delta_{N} &\equiv \delta^{\text{out}}_{n} \frac{\partial l(y_N, \tilde{y}_N)}{\partial \tilde{y}_N}, \\
-	\delta_{n} &\equiv \left( \delta^{\text{out}}_{n} W^{T}_{hx} + \delta_{n+1}W_{hh}^T\right)\odot \sigma'_{h}(z_n).
-\end{align}
-\end{subequations}
-This makes it possible to iterate backwards, starting from the last time window \(N\), and the gradients of the weights and biases are then given by
-\begin{subequations}
-\begin{align}
-	\frac{\partial L}{\partial W_{hx}} &= \frac{1}{N}\sum\limits_{n=1}^{N}\delta^{\text{out}}_{n} X^{T}_{n}, \\
-	\frac{\partial L}{\partial W_{hy}} &= \frac{1}{N}\sum\limits_{n=1}^{N}\delta^{\text{out}}_{n} h^{T}_{n}, \\
-	\frac{\partial L}{\partial W_{hh}} &= \frac{1}{N}\sum\limits_{n=1}^{N}\delta_{n} h^{T}_{n-1},\\
-	\frac{\partial L}{\partial b_{y}}  &= \frac{1}{N}\sum\limits_{n=1}^{N}\delta^{\text{out}}_{n},\\
-	\frac{\partial L}{\partial b_{h}}  &= \frac{1}{N}\sum\limits_{n=1}^{N}\delta_{n}.
-\end{align}
-\end{subequations}
-% \begin{align}
-% 	\delta_{N} &= \delta^{\text{out}}_{n} \frac{\partial l(y_N, \tilde{y}_N)}{\partial \tilde{y}_N},\\
-% 	\delta_{N-1} &= \left( \delta^{\text{out}}_{n} + \delta_{N}W_{hh}^T\right)\odot \sigma'_{h}(z_N),\\
-% 	&\dots \\
-% 	\delta_{1} &= \left( \delta^{\text{out}}_{n} + \delta_{2}W_{hh}^T\right)\odot \sigma'_{h}(z_{2})
-% \end{align}
 
-The dependency for each error term \(\delta_{n}\) on `future' error terms leads to a much greater computation time, compared to that of FFNN. Every gradient computation need an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm summerized in \eqref{eq:delta_definition_RNN}, commonly referred to as `truncated backpropagation through time' (see e.g. \cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification of \eqref{eq:dhdw}, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on. 
+Define now the errors,
+\begin{align}
+	\delta^{k}_{hh}\equiv \frac{\partial h_{k}}{\partial W_{hh}}, \ \delta^{k}_{hx}\equiv \frac{\partial h_{k}}{\partial W_{hx}}.
+\end{align}
+Computing these errors leads to the recursive formula,
+\begin{align}
+	\delta^{1}_{hh} &= 0, \notag\\
+	\delta^{2}_{hh} &= \sigma'_{h}(z_2) h_1,  \notag\\
+	\delta^{3}_{hh} &= \sigma'_{h}(z_3) \left( h_2 + W_{hh}\sigma'_{h}(z_2)h_1 \right), \\
+	&\dots, \notag \\
+	\delta^{k}_{hh} &= \sigma'_{h}(z_{k}) \left( h_{k-1} + W_{hh}\delta^{k-1}_{hh}\right),
+\end{align}
+with a similar behavior for \(\delta^{N-n}_{hx}\). On the other hand, the last product in the gradient for the (hidden) biases, \(\partial h_{N-n}/\partial b_{h}\), do not lead to a recursive formula (c.f. \cite{superGood}). Hence, for the hidden weights and biases, we have the gradients 
+\begin{subequations}
+\begin{align}
+	\frac{\partial L}{\partial W_{hh}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}}  \left[ \prod_{j=n-k-1}^{0} \sigma'_{h}(z_{n-j})W_{hh}\right] \delta^{k}_{hh}, \\
+	\frac{\partial L}{\partial W_{hx}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}}  \left[ \prod_{j=n-k-1}^{0} \sigma'_{h}(z_{n-j})W_{hh}\right] \delta^{k}_{hx}, \\
+	\frac{\partial L}{\partial b_{h}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}}  \left[ \prod_{j=n-k-1}^{0} \sigma'_{h}(z_{n-j})W_{hh}\right] \sigma'_{h}(z_k).
+\end{align}
+\end{subequations}
+For the output layer, \(\partial h_n/\partial W_{yh}\) is only non zero of \(n=N\), hence
+\begin{subequations}
+	\begin{align}
+		\frac{\partial L}{\partial W_{yh}} &= \frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial z_N}{\partial h_{n}} \sigma'_{\text{out}} h_{N}, \\
+		\frac{\partial L}{\partial b_{y}} &= \frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial z_N}{\partial h_{n}} \sigma'_{\text{out}}.
+	\end{align}
+\end{subequations}
+\begin{align}
+	\frac{\partial L}{\partial W_{yh}} &= \frac{\partial L}{\partial h_{N}}  \left[ \prod_{j=N-k-1}^{0} \sigma'_{h}(z_{n-j})W_{hh}\right] \sigma'_{\text{out}}(z_N)h_N, \\
+	\frac{\partial L}{\partial b_{h}} &= \frac{\partial L}{\partial h_{N}}  \left[ \prod_{j=N-k-1}^{0} \sigma'_{h}(z_{n-j})W_{hh}\right] \sigma'_{\text{out}}(z_N).
+\end{align}
+
+The dependency for each error term \(\delta^{N-n}\) on `past' error terms leads to a much greater computation time, compared to that of FFNN. Every gradient computation need an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm, commonly referred to as `truncated backpropagation through time' (see e.g. \cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on. 
 
 
 
