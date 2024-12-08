@@ -14,6 +14,9 @@
 *.cb2
 .*.lb
 
+## Large data folder
+Project3/Python/GW_Parameter_Tuning_Results/
+
 ## Intermediate documents:
 *.dvi
 *.xdv

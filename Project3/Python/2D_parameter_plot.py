@@ -123,55 +123,56 @@ def on_click(event, lambdas, etas, losses, epochs, boosts, unique_lambdas, uniqu
         # Get the clicked coordinates (in axis space)
         x, y = event.xdata, event.ydata
 
+        # Floor the coordinates to align with displayed plot indices
         x = int(np.floor(x))
         y = int(np.floor(y))
 
         print(f"Clicked coordinates: x={x}, y={y}, Plot Info (Epoch, Boost): {plot_info}")
 
-        # Find the closest parameter combination based on the click position
+        # Map the clicked coordinates to the closest lambda and eta indices
         lambda_idx = x
         eta_idx = y
 
-        # Get the corresponding parameter values
+        # Retrieve the parameter values for the clicked indices
         clicked_lambda = unique_lambdas[lambda_idx]
         clicked_eta = unique_etas[eta_idx]
 
-        # Extract the epoch and boost directly from the passed tuple
+        # Extract epoch and boost from the plot_info tuple
         epoch, boost = plot_info
 
-        # Filter data for the clicked combination of lambda, eta, epoch, and boost
+        # Filter data based on the clicked parameters
         mask = (lambdas == clicked_lambda) & (etas == clicked_eta) & (epochs == epoch) & (boosts == boost)
+        
+        x_test = np.linspace(0, 50, time_steps)
 
-        # Check if there is data for this specific combination
         if np.any(mask):
-            print(f"Clicked Lambda: {clicked_lambda}, Eta: {clicked_eta}, Fig with Epoch: {epoch} & Boost: {boost}")
+            print(f"Clicked Lambda: {clicked_lambda}, Eta: {clicked_eta}, Epochs: {epoch}, Boost: {boost:.1f}")
 
-            filepath = f'{pkl_dir}/Synthetic_GW_Parameter_Tuning_Results_timesteps{time_steps}_SNR{SNR}_epoch{epoch}_lamd{clicked_lambda}_eta{clicked_eta}_boost{boost:.1f}.pkl'
-                
+            # Load results from the corresponding file
+            filepath = f'{pkl_dir}/Synthetic_GW_Merged_Results_timesteps{time_steps}_SNR{SNR}_epoch{epoch}_boost{boost:.1f}.pkl'
             results = load_results(filepath)
+            key = f"lambda_{clicked_lambda}_eta_{clicked_eta}"
 
-            # Example: Plot predictions for the first set of results
+            folds_data = results["data"][key]
+
+            # Create a new figure for displaying results
             plt.figure(figsize=(20, 12))
-
             plt.suptitle(fr"$\eta={clicked_eta}$, $\lambda={clicked_lambda}$, Epochs$\,={epoch}$, $\phi={boost:.1f}$")
 
-            # Loop through the folds and plot the results
-            for fold, result in enumerate(results):
-                plt.subplot(2, 3, fold + 1)
-                plt.title(f"Round {fold + 1}")
+            # Loop through results and plot each fold
+            for fold_idx, fold in enumerate(folds_data):
+                plt.subplot(2, 3, fold_idx + 1)
+                plt.title(f"Round {fold_idx + 1}")
 
-                # Actual data
-                x_test = np.linspace(0, 50, time_steps)
-                y_test = np.array(result['y_test'])
-                test_labels = np.array(result['test_labels'])
-
-                # Predictions
-                predictions = np.array(result['predictions'])
+                # Data preparation
+                predictions = np.array(fold['predictions'])
+                y_test = np.array(fold['y_test'])
+                test_labels = np.array(fold['test_labels'])
                 predicted_labels = (predictions > 0.5).astype(int)
 
-                # Plot the data and predicted events
-                plt.plot(x_test, y_test, label=f'Data {fold+1}', lw=0.5, color='b')
-                plt.plot(x_test, test_labels, label=f"Solution {fold+1}", lw=1.6, color='g')
+                # Plot original and solution data
+                plt.plot(x_test, y_test, label=f'Data {fold_idx+1}', lw=0.5, color='b')
+                plt.plot(x_test, test_labels, label=f"Solution {fold_idx+1}", lw=1.6, color='g')
 
                 # Highlight predicted events
                 predicted_gw_indices = np.where(predicted_labels == 1)[0]
@@ -193,13 +194,18 @@ def on_click(event, lambdas, etas, losses, epochs, boosts, unique_lambdas, uniqu
 
                 plt.legend()
 
-            # Display the plot
+            # Adjust layout and show the plot
             plt.tight_layout()
             plt.show()
+
+            # Optionally save the plot
             if save_option.lower() == 'y':
                 save_fig = input("Would you like to save the previously generated figure? y/n\n")
-                if save_fig.lower() == 'y' and save_fig is not None:
-                    plt.savefig(f'../Figures/Synthetic_GW_Results_timesteps{time_steps}_SNR{SNR}_epoch{epoch}_lamd{clicked_lambda}_eta{clicked_eta}_boost{boost:.1f}.pdf')
+                if save_fig.lower() == 'y':
+                    save_path = f'../Figures/Synthetic_GW_Results_timesteps{time_steps}_SNR{SNR}_epoch{epoch}_lamd{clicked_lambda}_eta{clicked_eta}_boost{boost:.1f}.pdf'
+                    plt.savefig(save_path)
+                    print(f"Figure saved to {save_path}")
+
 
 
 # Function to load the results
@@ -207,10 +213,10 @@ def load_results(filepath):
     with open(filepath, "rb") as f:
         return pickle.load(f)
 
-save_option = input("Would you like to be prompted to save files? y/n\nNB!: If you choose yes, THE TERMINAL WILL CRASH if you do not give the later prompts an answer!! \n")
+save_option = input("Would you like to be prompted to save files? y/n\nNB! If you choose yes, THE TERMINAL WILL CRASH if you do not give the later prompts an answer!! \n")
 
-# Directory containing the .pkl files
-pkl_dir = "GW_Parameter_Tuning_Results"
+# Define the input and output paths
+pkl_dir = "GW_Merged_Results"  # Merged results path
 time_steps = 5000
 SNR = 100
 
@@ -224,36 +230,33 @@ boosts = []
 # Get all .pkl files in the directory
 pkl_files = [f for f in os.listdir(pkl_dir) if f.endswith(".pkl")]
 
-# for filename in pkl_files:
-#     file_path = os.path.join(pkl_dir, filename)
-#     if os.path.getsize(file_path) == 0:
-#         print(f"File {filename} is empty.")
-#         continue
-#     # Proceed with loading
-#     with open(file_path, "rb") as f:
-#         results = pickle.load(f)
-
 # Initialize the progress bar with the total number of files
 with tqdm(total=len(pkl_files), desc="Loading .pkl files", ncols=100) as pbar:
     for filename in pkl_files:
-        with open(os.path.join(pkl_dir, filename), "rb") as f:
-            results = pickle.load(f)
-            # Group results by parameter combinations
-            grouped_results = {}
-            for result in results:
-                key = (result["epochs"], result["boost"], result["regularization"], result["learning_rate"])
-                if key not in grouped_results:
-                    grouped_results[key] = []
-                grouped_results[key].append(result["loss"])  # Append fold loss for this parameter combination
+        file_path = os.path.join(pkl_dir, filename)
+        
+        # Load the merged results file
+        with open(file_path, "rb") as f:
+            merged_data = pickle.load(f)
+        
+        # Extract parameters from the filename (Epoch and Boost)
+        parts = filename.split('_')
+        epochs_value = int(parts[6].replace('epoch', ''))
+        boost_value = float(parts[7].replace('boost', '').replace('.pkl', ''))
+
+        # Iterate over the lambda-eta combinations in the merged data
+        for lambda_eta_key, fold_data in merged_data["data"].items():
+            # Split the lambda_eta_key to extract lambda and eta values
+            lambda_value = float(lambda_eta_key.split('_')[1])
+            eta_value = float(lambda_eta_key.split('_')[3])
             
-            # Average losses across folds
-            for (epoch, boost, reg, lr), fold_losses in grouped_results.items():
-                if reg == 1.0:  # Skip bad lambdas for better cmap
-                    continue
-                lambdas.append(reg)
-                etas.append(lr)
-                epochs.append(epoch)
-                boosts.append(boost)
+            # Collect the loss values
+            fold_losses = [item["loss"] for item in fold_data]  # Extract losses for this lambda-eta combination
+            if len(fold_losses) > 0:
+                lambdas.append(lambda_value)
+                etas.append(eta_value)
+                epochs.append(epochs_value)
+                boosts.append(boost_value)
                 losses.append(np.mean(fold_losses))  # Average the losses for all folds
 
         # Update the progress bar after processing each file
@@ -271,7 +274,6 @@ unique_lambdas = np.unique(lambdas)
 unique_etas = np.unique(etas)
 unique_epochs = np.unique(epochs)
 unique_boosts = np.unique(boosts)
-
 
 # Loop over epochs and boosts to create plots
 for epoch in unique_epochs:
@@ -313,11 +315,9 @@ for epoch in unique_epochs:
             Reverse_cmap=False,
             annot=True,
             savefig=False,
-            filename=f"Loss_Epoch{epoch}_Boost{boost}",  # Save plots with unique filenames
+            filename=f"Loss_Epoch{epoch}_Boost{boost}",
             on_click=lambda event, plot_info=(epoch, boost): on_click(event, lambdas, etas, losses, epochs, boosts, unique_lambdas, unique_etas, plot_info),  # Pass epoch and boost as tuple
             log_cbar=True
         )
 print("Click on one of the grids to plot the results for the given parameter combination :)")
 plt.show()
-
-
