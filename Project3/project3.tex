@@ -105,15 +105,56 @@ aps,
 \tableofcontents
 
 \section{Introduction}
+Gravitational waves (GWs) are the product of some of the most extreme events that occur in the universe. While, in theory, just about any accelerating object produces GWs, they are so weak that they can only be detected from the most energetic and cataclysmic events. The only sources of detectable GWs with current technology are the mergers of black holes and neutron stars \cite{LIGOScientific:2007fwp}, where the immense masses and high velocities involved generate powerful ripples in spacetime. These ripples propagate outward, traveling at the speed of light, and cause minute distortions in spacetime itself, which can be measured by highly sensitive instruments.
 
+One of the most advanced experiments to detect these waves is the Laser Interferometer Gravitational-Wave Observatory (LIGO). LIGO uses laser interferometry to measure the incredibly small displacements caused by passing gravitational waves. However, the signals from gravitational waves are often faint and easily overwhelmed by noise, making detection a complex task.
+
+Machine learning, particularly neural networks (NNs), has become a powerful tool in this context. By training a neural network on large datasets of both gravitational wave signals and background noise, these models can learn to distinguish between genuine gravitational wave signals and random noise. This, in theory, may allow for more accurate detection and classification of GW events, even in the presence of significant interference, and may be the future of GW detection \cite{Marx:2024wjt, skliris2024}. Neural networks can be trained to recognize patterns in the data that correspond to the characteristic signatures of gravitational waves, improving both the efficiency and reliability of detection algorithms. With the growing amount of data from observatories like LIGO, NNs are playing an increasingly important role in identifying new events and advancing our understanding of the universe.
+
+In this work we attempt to detect GWs on untreated data from \cite{gwosc} by building our own Recurrent Neural Network (RNN), along with using \texttt{tensorflow.keras}' RNN to test against our own. The performance on this untreated data is quite poor due to the untreated data having a signal to noise ratio (SNR) which is very large. The process of removing noise from GW is quite advanced, and requires state of the art techniques. Due to time constraints and lack of expertise in this field, we instead created a simple program which generates synthetic GW data. This allows us to control the SNR and focus on training neural networks on processed data, which simplifies the task vastly and allows us to evaluate our RNN's performance. The code in (cite Github) however does contain a program which automatically labels GW files granted that the user knows the duration of the GW signal, which may be of use for future work.
 
 \section{Theory}
 \subsection{Gravitational Waves}
-% Gravitational waves are created by the merging of large bodies, typically with masses of order \(\sim 50\) times that of the sun. 
-\subsubsection{}
+We will simply give a quick introduction to GWs. For a more detailed analysis, please see any textbook on general relativity, e.g. \cite{Carroll} or \cite{Wald}.
+
+\subsubsection{Linearized Gravity}
+As mentioned, GWs are ripples in spacetime caused by the acceleration of massive objects, such as merging black holes or neutron stars. For sufficiently small ripples, or for an observer sufficiently far away from e.g. a black hole merger, the GWs are accurately described by first order perturbations of a flat spacetime described by the Minkowski metric, $\eta_{\mu\nu}$, with a small perturbation
+\begin{align}
+	g_{\mu\nu}=\eta_{\mu\nu}+h_{\mu\nu},\quad|h_{\mu\nu}|\ll1
+\end{align}
+Then applying this to the Einstein field equations (EFE),
+\begin{align}
+	G_{\mu\nu}=8\pi GT_{\mu\nu}
+	\label{eq:EFE}
+\end{align}
+where $G_{\mu\nu}$ is the Einstein tensor which depends solely on the metric $g_{\mu\nu}$, and $T_{\mu\nu}$ is the stress-energy tensor. Applying the perturbed metric to \eqref{eq:EFE} one can show that to first order this gives the linearized EFE \cite{Carroll}:
+\begin{align}
+	-16\pi T_{\mu\nu}&=\Box h_{\mu\nu}-\p_\mu\p^\rho h_{\nu\rho}-\p_\nu\p^\rho h_{\mu\rho}\nonumber\\
+	&+\eta_{\mu\nu}\p^\rho\p^\sigma h_{\rho\sigma}+\p_\mu \p_\nu h-\eta_{\mu\nu}\Box h
+	\label{eq:LEFE}
+\end{align}
+where $h\equiv \tensor{h}{^\mu_\mu}=\eta^{\mu\nu}h_{\mu\nu}$ is the first order trace of $h$. Note that we do not perturb $T_{\mu\nu}$ since it is in fact a perturbation itself. Now this equation here is quite complicated, however due to a symmetry in the original Lagrangian one has a so-called \textit{gauge freedom}, i.e. a set of transformations which leave the Lagrangian invariant. This can be used to vastly simplify the equations heavily. A common choice is the Lorenz gauge: $\p^\mu h_{\mu\nu}=0$. Using this we can reduce \eqref{eq:LEFE} to the much simpler differential equation
+\begin{align}
+	\Box h_{\mu\nu}=-16\pi T_{\mu\nu}
+\end{align}
+Specializing to the case corresponding to a vacuum ($T_{\mu\nu}=0$) then we simply have a plane wave equation
+\begin{align}
+	\Box h_{\mu\nu}=0,\implies h_{\mu\nu}=C_{\mu\nu}e^{ikx},\quad k_\mu k^\mu=0
+\end{align}
+where
+\begin{align}
+	C_{\mu\nu}=\begin{bmatrix}
+		0&0&0&0\\
+		0&h_+&h_\times&0\\
+		0&h_\times&-h_+&0\\
+		0&0&0&0
+	\end{bmatrix}
+\end{align}
+for a GW travelling along the $z$-axis. The details for how this is derived is spelled out in \cite{Carroll}. $h_+$ and $h_\times$ correspond to the ``plus'' and ``cross'' polarizations which determine how the gravitational waves stretch and compress the spacetime it passes through. The stretching from these are what is measured by observatories such as LIGO and Virgo and the displacements from these are referred to as `strain'.
+
 
 \subsection{Recurrent Neural Networks}
-The Recurrent Neural Networks (RNNs) are a class of neural networks specifically designed to handle sequential data or data with temporal dependencies. Unlike traditional FeedForward Neural Networks, RNNs are capable of "remembering" information from previous time steps. This is done through the so called `hidden state', which acts as a form of memory by retaining information about prior computations. The hidden state is essentially an array of data that is updated at each time step based on the input data and the previous hidden state. Alhough this enables RNN to access the temporal dependencies of the data at hand, it greatly increases the commputation time compared to that of the FFNN. The standard RNN consists of only one hidden layer, but it is certainly possible to have more than one hidden layer. In fact, this is commonly referred to as the stacked RNN (SRNN), and we will arrive at this neural network further down. However, firstly, we present the structure and general algorithm for the RNN.
+The Recurrent Neural Networks (RNNs) are a class of neural networks specifically designed to handle sequential data or data with temporal dependencies. Unlike traditional Feed Forward Neural Networks, RNNs are capable of ``remembering'' information from previous time steps. This is done through the so called `hidden state', which acts as a form of memory by retaining information about prior computations. The hidden state is essentially an array of data that is updated at each time step based on the input data and the previous hidden state. Although this enables RNN to access the temporal dependencies of the data at hand, it greatly increases the computation time compared to that of the FFNN. The standard RNN consists of only one hidden layer, but it is certainly possible to have more than one hidden layer. In fact, this is commonly referred to as the stacked RNN (SRNN), and we will arrive at this neural network further down. However, firstly, we present the structure and general algorithm for the RNN.
 
 \subsubsection{Structure}
 The RNN processes input sequentially, with information flowing step-by-step from the input to the output. This is done with the introduction of a hidden state \(h_{t}\), where the subscript denotes at time \(t\). The network can be summarized by the following two equations \cite{tallec2017unbiasingtruncatedbackpropagationtime}:
@@ -132,7 +173,7 @@ Here, \(\sigma_h\) and \(\sigma_{\text{out}}\) is the activation function for th
 This shows that the hidden state at time \(t_n\) is dependent on the input \(X_{t}\) for \(t\in[0, t_n]\), i.e. all previous times. 
 
 \subsubsection{General Algorithm}
-Consider some general data output \(y\), of shape \((N, p_{\text{out}})\) and some data input \(X\), of shape \((N, p_{\text{in}})\), where \(N\) corresponds to the total amount of time points, and \(p_{\text{out}}, \ p_{\text{in}}\) the dimension of the output and input, respectively. Generally, \(X\) could correspond to a quite large sampling frequency in time, making the computation of the hidden state \(h_t\) in \eqref{eq:hidden_state_computation_RNN} computationally demanding. One typical way of dealing with this is to split the data into `windows' of size \(N_{W}\) in time. These windows should generally overlap, such that no temporal dependencies across windows are left out. 
+Consider some general data output \(y\), of shape \((N, p_{\text{out}})\) and some data input \(X\), of shape \((N, p_{\text{in}})\), where \(N\) corresponds to the total amount of time points, and \(p_{\text{out}}, \ p_{\text{in}}\) the dimension of the output and input, respectively. Generally, \(X\) could correspond to a large sampling frequency in time, making the computation of the hidden state \(h_t\) in \eqref{eq:hidden_state_computation_RNN} computationally demanding. One typical way of dealing with this is to split the data into `windows' of size \(N_{W}\) in time. These windows should generally overlap, such that no temporal dependencies across windows are left out. 
 
 Splitting the data into windows, we define the hidden state for window \(n\) as:
 \begin{align}
@@ -203,10 +244,7 @@ For the output layer, \(\partial h_n/\partial W_{yh}\) is only non zero of \(n=N
 	\frac{\partial L}{\partial b_{h}} &= \frac{\partial L}{\partial h_{N}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j})W_{hh}\right] \sigma'_{\text{out}}(z_N).
 \end{align}
 
-The dependency for each error term \(\delta^{N-n}\) on `past' error terms leads to a much greater computation time, compared to that of FFNN. Every gradient computation need an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm, commonly referred to as `truncated backpropagation through time' (see e.g. \cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on. 
-
-
-
+The dependency for each error term \(\delta^{N-n}\) on `past' error terms leads to a much greater computation time, compared to that of FFNN. Every gradient computation needs an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm, commonly referred to as `truncated backpropagation through time' (see e.g. \cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on.
 
 Implementing the stacked RNN is then done by essentially creating a hidden state for each `stack' of RNN. The output of the stacked RNN is computed by feeding the hidden states to each other in succession, starting from the first hidden layer. The hidden states in some time window \(n\) are given by
 \begin{align}
@@ -224,16 +262,37 @@ Here, the dimensions are \(W^{l}_{hx}\in\mathbb{R}^{d_{l}\times d_{l-1}}\), \(W^
 \subsubsection{Gradient Clipping}
 A common method for dealing with exploding gradients, is the method of gradient clipping (see e.g. \cite{Goodfellow-et-al-2016}). This method prevents checks whether the magnitude of the gradient is moving past a certain threshold. If this is true it truncates the current gradient. This can be summarized as:
 \begin{align}
-	\nabla L \rightarrow \frac{\epsilon}{||\nabla L||}\nabla L \text{ if } ||\nabla L|| > \epsilon.
+	\nabla L \rightarrow \frac{\epsilon}{||\nabla L||}\nabla L\quad\text{if}\quad||\nabla L|| > \epsilon.
 \end{align}
 
-\section{Implementation}
+\subsection{Additional Techniques}
+\subsubsection{Early Stopping}
+We opted into using early stopping for the majority of our parameter scans. Given that our program did not improve in a certain number of epochs (between $15\%$ and $40\%$ depending on number of epochs), and the loss was sufficiently high, we ended the learning process early. If the loss was sufficiently good, we however still kept on going, in the hopes that we would be able to improve the model further. This is mostly done to not waste time on parameter combinations which perform poorly. 
 
+\subsubsection{Dynamic Class Weights}
+To handle the large class imbalance between the noise and gravitational events, we introduced a dynamic class weight adjustment based on the hyperparameter $\phi$. If we define $l_i=1$ when there is a signal, and $l_i=0$ when there is only noise and normalize the class weight for the noise to $1$. Then a simple way to compute a linear dynamical weights for the signal class is:
+\begin{align}
+	S_{\rm CW}&=\left[\phi-(\phi-1)\frac{{\rm epoch}}{N}\right]\times\left[\frac{{\rm len}(l)}{\sum_i l_i}-1\right]
+\end{align}
+where $S_{\rm CW}$ refers to the signal class weight (GWs in our case), epoch is the current epoch, $N$ is the total number of epochs and $l$ is the labels. This essentially gives an early boost to the signal class, causing the program to be punished for only guessing noise, and gradually converges to a balanced class weight system, where the NN would perform equally poorly from guessing all in either of the classes. A simple example is show in Fig. \ref{fig:DynamicCW}. This is important in our case since GW events are so rare. Due to this the program may simply decide that it is best not to guess it at all as it is much more likely to be punished for guessing GWs.
+\begin{figure}[ht!]
+	\includegraphics[width=0.49\textwidth]{Figures/DynamicCW.pdf}
+	\caption{Dynamic class weight shown for a simple example with $\phi=2$ where we have a 4:1 noise-signal ratio over 100 epochs.}
+	\label{fig:DynamicCW}
+\end{figure}
+
+\section{Implementation}
+We implemented a program which downloads the data from gwosc, and when given the duration of the GW signal of interest, automatically labels the data accordingly. Further we made a class \texttt{GWSignalGenerator}, which adds a synthetic GW signal to any arbitrary sequence, and adds corresponding labels to the dataset. This was originally meant to be our test runs before working with the real deal. However due to the complicated nature of detecting GWs, this ended up being what our NNs where working with instead.
+
+The structure of the programs are...
+
+We then performed large parameter sca
 
 \section{Discussion}
 
+
 \section{Conclusion}
-Test bib \cite{Planck:2018vyg}
+As mentioned prior, actual gravitational wave detection is very difficult, and requires advanced techniques such as matched filtering and adaptive noise subtraction. In the limited time and resources we were not able to properly clean the data. Thus we opted into...
 
 % Bibliography
 \bibliographystyle{JHEP}
