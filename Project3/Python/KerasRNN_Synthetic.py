@@ -100,9 +100,10 @@ class KerasRNN:
         n_samples = len(X) - step_length + 1
         X_seq = np.array([X[i:i + step_length] for i in range(n_samples)]).reshape(-1, step_length, 1)
         y_seq = y[step_length-1:]
+        print(X_seq.shape)
+        print(y_seq.shape)
         return X_seq, y_seq
 
-    
     def compute_class_weights(self, epoch: int, total_epochs: int):
         """
         Compute class weights dynamically based on the label distribution.
@@ -115,7 +116,6 @@ class KerasRNN:
         else:
             print("Labels required for training, exiting")
             exit()
-
 
     def train(self, X_train: np.ndarray, y_train: np.ndarray, epochs: int, batch_size: int, step_length: int, verbose=1, verbose1=1):
         """
@@ -130,14 +130,14 @@ class KerasRNN:
         X_val_seq, y_val_seq = self.prepare_sequences_RNN(X_val, y_val, step_length)
 
         # Reinitialize model (this ensures no previous weights are carried over between parameter runs)
-        self.model = self.create_model()  # Recreate a fresh model
+        self.model = self.create_model()
 
         # Initialize variables to track the best model and validation loss
         best_val_loss = float('inf')
         best_weights = None  # Keep track of the best model's weights, not the entire model
 
         # Define thresholds
-        patience_threshold = int(np.ceil(0.2 * epochs))  # Early stopping threshold
+        patience_threshold = int(np.ceil(0.15 * epochs))  # Early stopping threshold
         epochs_without_improvement = 0
         low_loss_threshold = 0.2  # Continue training even without improvement if loss is below this value
 
@@ -184,9 +184,6 @@ class KerasRNN:
         if best_weights is not None:
             self.model.set_weights(best_weights)  # Set the model's weights to the best found during training
 
-
-
-
     def predict(self, X_test, y_test, step_length, verbose=1):
         """
         Generate predictions for test data.
@@ -195,8 +192,6 @@ class KerasRNN:
         prediction = self.model.predict(X_test_seq, verbose=verbose)
         loss, accuracy = self.model.evaluate(X_test_seq, y_test_seq, verbose=verbose)
         return prediction, loss, accuracy
-
-
 
 
 class GWSignalGenerator:
@@ -263,7 +258,6 @@ class GWSignalGenerator:
         # Store region details for visualization or debugging
         self.regions.append((start, end, inspiral_end, merge_start, merge_end, dropoff_start, dropoff_end))
 
-
     def generate_random_events(self, num_events: int, event_length_range: tuple, scale=1, 
                                amplitude_factor_range = (0, 0.5), spike_factor_range = (0.2, 1.5),
                                spin_start_range = (1, 5), spin_end_range = (5, 20)):
@@ -311,15 +305,18 @@ time_steps = 5000
 time_for_1_sample = 50
 x = np.linspace(0, time_for_1_sample, time_steps)
 num_samples = 5
-step_length = time_steps//100//(num_samples-1)
+step_length = time_steps//100
 batch_size = time_steps//50*(num_samples-1)
 learning_rates = [1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]
 regularization_values = np.logspace(-10, 0, 11)
 gw_earlyboosts = np.linspace(1, 1.5, 6)
 epoch_list = [10, 25, 50, 100]
-gw_earlyboosts = np.linspace(1.6, 2, 5)
-print(gw_earlyboosts)
 SNR = 100
+
+# epoch_list=[50]
+# learning_rates=[5e-3, 1e-2]
+# gw_earlyboosts=np.linspace(1.5,1,6)
+# regularization_values=np.logspace(-9,-6,4)
 
 events = []
 labels = []
@@ -371,6 +368,7 @@ def save_results_incrementally(results, base_filename):
     filename = f"{base_filename}.pkl"
     with open(os.path.join(save_path, filename), "wb") as f:
         pickle.dump(results, f)
+    print(f'File {filename} saved to {save_path}.')
 
 progress = 0
 total_iterations = len(learning_rates)*len(regularization_values)*len(gw_earlyboosts)*len(epoch_list)*num_samples
@@ -427,7 +425,7 @@ for epochs in epoch_list:
                     model.train(y_train, train_labels, epochs=int(epochs), batch_size=batch_size, step_length=step_length, verbose=0)
 
                     # Predict with the trained model
-                    predictions, loss, accuracy = model.predict(y_test, test_labels, step_length*(num_samples-1), verbose=0)
+                    predictions, loss, accuracy = model.predict(y_test, test_labels, step_length, verbose=0)
                     predictions = predictions.reshape(-1)
                     predicted_labels = (predictions > 0.5).astype(int)
                     x_pred = x[step_length - 1:]
@@ -438,7 +436,6 @@ for epochs in epoch_list:
                         "learning_rate": lr,
                         "regularization": reg_value,
                         "fold": fold,
-                        "y_train": y_train.tolist(),
                         "train_labels": train_labels.tolist(),
                         "y_test": y_test.tolist(),
                         "test_labels": test_labels.tolist(),
