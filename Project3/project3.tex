@@ -168,7 +168,7 @@ Notice here that,
 \begin{align}
 	\frac{\partial h_n}{\partial h_k} &= \frac{\partial h_n}{\partial h_{n-1}} \frac{\partial h_{n-1}}{\partial h_{n-1}} ... \frac{\partial h_{k+1}}{\partial h_{k}} \notag \\
 	&= \left( \sigma'_{h}(z_n)W_{hh} \right)\left( \sigma'_{h}(z_{n-1})W_{hh} \right) ... \left( \sigma'_{h}(z_{k+1})W_{hh} \right) \notag\\
-	&= \prod_{j=0}^{n-k-1} \left(\sigma'_{h}(z_{z-j})W_{hh}\right).
+	&= \prod_{j=k+1}^{n} \sigma'_{h}(z_{j})W_{hh}.
 \end{align}
 
 Define now the errors,
@@ -186,9 +186,9 @@ Computing these errors leads to the recursive formula,
 with a similar behavior for \(\delta^{N-n}_{hx}\). On the other hand, the last product in the gradient for the (hidden) biases, \(\partial h_{N-n}/\partial b_{h}\), do not lead to a recursive formula (c.f. \cite{superGood}). Hence, for the hidden weights and biases, we have the gradients 
 \begin{subequations}
 \begin{align}
-	\frac{\partial L}{\partial W_{hh}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}}  \left[ \prod_{j=n-k-1}^{0} \sigma'_{h}(z_{n-j})W_{hh}\right] \delta^{k}_{hh}, \\
-	\frac{\partial L}{\partial W_{hx}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}}  \left[ \prod_{j=n-k-1}^{0} \sigma'_{h}(z_{n-j})W_{hh}\right] \delta^{k}_{hx}, \\
-	\frac{\partial L}{\partial b_{h}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}}  \left[ \prod_{j=n-k-1}^{0} \sigma'_{h}(z_{n-j})W_{hh}\right] \sigma'_{h}(z_k).
+	\frac{\partial L}{\partial W_{hh}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j})W_{hh}\right] \delta^{k}_{hh}, \\
+	\frac{\partial L}{\partial W_{hx}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j})W_{hh}\right] \delta^{k}_{hx}, \\
+	\frac{\partial L}{\partial b_{h}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j})W_{hh}\right] \sigma'_{h}(z_k).
 \end{align}
 \end{subequations}
 For the output layer, \(\partial h_n/\partial W_{yh}\) is only non zero of \(n=N\), hence
@@ -199,8 +199,8 @@ For the output layer, \(\partial h_n/\partial W_{yh}\) is only non zero of \(n=N
 	\end{align}
 \end{subequations}
 \begin{align}
-	\frac{\partial L}{\partial W_{yh}} &= \frac{\partial L}{\partial h_{N}}  \left[ \prod_{j=N-k-1}^{0} \sigma'_{h}(z_{n-j})W_{hh}\right] \sigma'_{\text{out}}(z_N)h_N, \\
-	\frac{\partial L}{\partial b_{h}} &= \frac{\partial L}{\partial h_{N}}  \left[ \prod_{j=N-k-1}^{0} \sigma'_{h}(z_{n-j})W_{hh}\right] \sigma'_{\text{out}}(z_N).
+	\frac{\partial L}{\partial W_{yh}} &= \frac{\partial L}{\partial h_{N}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j})W_{hh}\right] \sigma'_{\text{out}}(z_N)h_N, \\
+	\frac{\partial L}{\partial b_{h}} &= \frac{\partial L}{\partial h_{N}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j})W_{hh}\right] \sigma'_{\text{out}}(z_N).
 \end{align}
 
 The dependency for each error term \(\delta^{N-n}\) on `past' error terms leads to a much greater computation time, compared to that of FFNN. Every gradient computation need an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm, commonly referred to as `truncated backpropagation through time' (see e.g. \cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on. 
