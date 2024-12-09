@@ -209,16 +209,8 @@ class RNN(NeuralNetwork):
 
         # Iterate over each time step to compute gradients
         for t in range(window_size):
-            # Compute gradients for the output layer at time step t
-            # Shape considerations:
-            # y_pred[:, t, :] -> (batch_size, output_size)
-            # self.hidden_states[-1][t] -> (output_size, batch_size)
-            # Transpose hidden_states to match dimensions
             h_prev = self.hidden_states[-2][t].T  # Shape: (batch_size, hidden_size)
 
-            # Compute dL/dz_y at time step t
-            # dL_dy_pred[:, t, :] has shape (batch_size, output_size)
-            # d_activation_out has shape (batch_size, output_size)
             d_activation_out = self.activation_func_out_derivative(self.z[-1][t].T)  # Shape: (batch_size, output_size)
             dL_dz_y = dL_dy_pred[:, t, :] * d_activation_out  # Shape: (batch_size, output_size)
 
@@ -228,39 +220,124 @@ class RNN(NeuralNetwork):
 
         # Compute gradients for hidden layers using BPTT
         # Initialize delta terms for each hidden layer
-        delta_hh = [np.zeros((self.layers[l+1], self.layers[l+1])) for l in range(self.L)]  # List per layer
-        delta_hx = [np.zeros((self.layers[l+1], self.layers[l])) for l in range(self.L)]
-
         delta_hh = []
         delta_hx = []
+        dL_dh_n = []
 
         # Compute delta terms recursively for each hidden layer
-        for l in range(self.L-1):
+        for l in range(self.L - 1):
             delta_hh.append([])
             delta_hx.append([])
+            dL_dh_n.append([])
 
             # Recursive computation
             for k in range(window_size):
-                if k == 0:
-                    delta_hh[-1].append(np.zeros((self.layers[l+1], batch_size)))
-                else:
-                    if l == 0:
-                        delta_hh[-1].append(self.activation_func_derivative(self.z[l][k]) * (self.W_hh[0] @ delta_hh[0][-1]))
-                    else:
-                        delta_hh[-1].append(self.activation_func_derivative(self.z[l][k]) * (self.hidden_states[l][k-1] + self.W_hh[l] @ delta_hh[l][-1]))
+                _dL_dh_n = self._loss_function.gradient(y_batch[:, k, :], y_pred[:, k, :])  # Shape: (B, d_out)
+                sigma_prime_out = self.activation_func_out_derivative(self.z[l][k])  # Shape: (d_h_l, B)
+
+                # Initialize product_term with correct dimensions
+                product_term = np.eye(self.hidden_states[l + 1][k].shape[0])  # Shape: (d_h_{l+1}, d_h_{l+1})
+
+                # Compute the product of derivatives for layers l+1 to L
+                for j in range(l + 1, self.L - 1):  # Loop over upper layers
+                    sigma_prime_h = self.activation_func_derivative(self.z[j][k])  # Shape: (d_h_j, B)
+                    W_hx_j = self.W_hx[j]  # Shape: (d_h_j, d_h_{j-1})
+
+                    print(f"Layer {j}: sigma_prime_h: {np.shape(sigma_prime_h[:, k])}, W_hx_j: {np.shape(W_hx_j)}")
+                    print(f"Before: product_term: {np.shape(product_term)}")
+
+                    # Update product_term
+                    diag_sigma = np.diag(sigma_prime_h[:, k])  # Shape: (d_h_j, d_h_j)
+                    weight_product = diag_sigma @ W_hx_j  # Shape: (d_h_j, d_h_{j-1})
+
+                    # Ensure compatibility for product_term multiplication
+                    if product_term.shape[1] != weight_product.shape[0]:
+                        adjusted_product_term = np.zeros((product_term.shape[0], weight_product.shape[0]))  # Adjust size
+                        adjusted_product_term[:, :product_term.shape[1]] = product_term  # Copy values
+                        product_term = adjusted_product_term  # Updated product_term
+
+                    product_term = product_term @ weight_product  # Shape: (d_h_{l+1}, d_h_j)
+                    print(f"After: product_term: {np.shape(product_term)}")
+
+                # Multiply to propagate gradients backward
+                print(np.shape(_dL_dh_n), np.shape(sigma_prime_out))
+                _dL_dh_n = (_dL_dh_n * sigma_prime_out.T).T  # Shape: (d_h_l, B)
                 
-                if l == 0:
-                    if k == 0:
-                        delta_hx[-1].append(self.activation_func_derivative(self.z[l][k]) * (np.ones_like(self.W_hx[l]) @ X_batch[:, k, :].T))
-                    else:
-                        delta_hx[-1].append(self.activation_func_derivative(self.z[l][k]) * (np.ones_like(self.W_hx[l]) @ X_batch[:, k, :].T + self.W_hh[l] @ delta_hx[0][-1]))
-                else:
-                    if k == 0:
-                        delta_hx[-1].append(self.activation_func_derivative(self.z[l][k]) * self.hidden_states[l][k])
-                    else:
-                        delta_hx[-1].append(self.activation_func_derivative(self.z[l][k]) * (self.hidden_states[l][k] + self.W_hh[l] @ delta_hx[l][-1]))
-                # print(np.shape(delta_hx[-1][k]))
-            print(np.shape(delta_hh[-1][-1]), np.shape(delta_hx[-1][-1]))
+                print(np.shape(product_term), np.shape(_dL_dh_n))
+                _dL_dh_n = product_term @ _dL_dh_n  # Shape: (d_h_l, B)
+
+                # Store the gradient for the current layer and timestep
+                dL_dh_n[-1].append(_dL_dh_n)
+
+
+                if k == 0:  # Initial condition
+                    # Base case: No temporal dependency for k=0
+                    delta = np.zeros((self.hidden_states[l][k].shape[0], self.W_hh[l].shape[0], X_batch.shape[0]))  # Shape: (d_{h_l}, d_{h_l}, B)
+                    delta_hh[-1].append(delta)
+                else:  # Recursive case
+                    # Activation derivative: Shape (d_{h_l}, B)
+                    activation_derivative = self.activation_func_derivative(self.z[l][k])
+
+                    # Previous hidden state: Shape (d_{h_l}, B)
+                    h_km1_l = self.hidden_states[l][k-1]  # Shape: (d_{h_l}, B)
+
+                    # Contribution from previous delta term: Shape (d_{h_l}, d_{h_l}, B)
+                    last_term = np.einsum('ij,jkb->ikb', self.W_hh[l], delta_hh[-1][-1])
+
+                    # Combine contributions
+                    combined_term = h_km1_l[:, np.newaxis, :] + last_term  # Shape: (d_{h_l}, d_{h_l}, B)
+
+                    # Apply activation derivative
+                    delta = activation_derivative[:, np.newaxis, :] * combined_term  # Shape: (d_{h_l}, d_{h_l}, B)
+                    delta_hh[-1].append(delta)
+
+                
+                if l == 0:  # Input layer case
+                    if k == 0:  # First time step
+                        # Compute base case for delta: Shape (d_{h_l}, d_{h_{l-1}}, B)
+                        activation_derivative = self.activation_func_derivative(self.z[l][k])  # Shape: (d_{h_l}, B)
+                        h_k_lm1 = X_batch[:, k, :].T  # Shape: (d_{h_{l-1}}, B)
+
+                        # Compute outer product for base case
+                        delta = activation_derivative[:, np.newaxis, :] * h_k_lm1[np.newaxis, :, :]  # Shape: (d_{h_l}, d_{h_{l-1}}, B)
+                        delta_hx[-1].append(delta)
+                    else:  # Subsequent time steps
+                        # Activation derivative: Shape (d_{h_l}, B)
+                        activation_derivative = self.activation_func_derivative(self.z[l][k])
+
+                        # Compute contribution from previous delta term
+                        last_term = np.einsum('ij,jkb->ikb', self.W_hh[l], delta_hx[-1][-1])  # Shape: (d_{h_l}, d_{h_{l-1}}, B)
+
+                        # Add new contribution from X_batch
+                        h_k_lm1 = X_batch[:, k, :].T  # Shape: (d_{h_{l-1}}, B)
+                        combined_term = h_k_lm1[np.newaxis, :, :] + last_term  # Shape: (d_{h_l}, d_{h_{l-1}}, B)
+
+                        # Apply activation derivative
+                        delta = activation_derivative[:, np.newaxis, :] * combined_term  # Shape: (d_{h_l}, d_{h_{l-1}}, B)
+                        delta_hx[-1].append(delta)
+                else:  # Hidden layers
+                    if k == 0:  # First time step
+                        # Compute base case for delta: Shape (d_{h_l}, d_{h_{l-1}}, B)
+                        activation_derivative = self.activation_func_derivative(self.z[l][k])  # Shape: (d_{h_l}, B)
+                        h_k_lm1 = self.hidden_states[l-1][k]  # Shape: (d_{h_{l-1}}, B)
+
+                        # Compute outer product for base case
+                        delta = activation_derivative[:, np.newaxis, :] * h_k_lm1[np.newaxis, :, :]  # Shape: (d_{h_l}, d_{h_{l-1}}, B)
+                        delta_hx[-1].append(delta)
+                    else:  # Subsequent time steps
+                        # Activation derivative: Shape (d_{h_l}, B)
+                        activation_derivative = self.activation_func_derivative(self.z[l][k])
+
+                        # Compute contribution from previous delta term
+                        last_term = np.einsum('ij,jkb->ikb', self.W_hh[l], delta_hx[-1][-1])  # Shape: (d_{h_l}, d_{h_{l-1}}, B)
+
+                        # Add new contribution from hidden states
+                        h_k_lm1 = self.hidden_states[l-1][k] # Shape: (d_{h_{l-1}}, B)
+                        combined_term = h_k_lm1[np.newaxis, :, :] + last_term  # Shape: (d_{h_l}, d_{h_{l-1}}, B)
+
+                        # Apply activation derivative
+                        delta = activation_derivative[:, np.newaxis, :] * combined_term  # Shape: (d_{h_l}, d_{h_{l-1}}, B)
+                        delta_hx[-1].append(delta)
 
 
         # Accumulate gradients for hidden weights and biases
@@ -269,49 +346,54 @@ class RNN(NeuralNetwork):
                 for k in range(n + 1):
                     # Compute the product term: product from j=k+1 to n of sigma'_h(z_j)*W_hh
                     if k == n:
-                        prod_term = 1  # Empty product
+                        prod_term = np.eye(self.hidden_states[l][k].shape[0], batch_size)
                     else:
-                        prod_term = 1
+                        prod_term = np.eye(self.hidden_states[l][k].shape[0], batch_size)
                         for j in range(k + 1, n + 1):
                             sigma_prime = self.activation_func_derivative(self.z[l][j]).T  # Shape: (batch_size, hidden_size)
-                            prod_term *= (sigma_prime @ self.W_hh[l])
+                            prod_term *= (sigma_prime @ self.W_hh[l]).T
 
                     # Compute dL/dh_n
                     # dL/dh_n is accumulated from the output layer gradients
-                    # For simplicity, assume dL/dh_n is from the output layer if last layer
                     if l == self.L - 1:
                         dL_dh_n = self.W_yh.T @ (dL_dy_pred[:, n, :] * self.activation_func_out_derivative(self.z[-1][n]).T)  # Shape: (hidden_size, batch_size)
                     else:
-                        # If not the last layer, propagate gradients from the upper layer
-                        # This requires storing additional information during the forward pass
-                        # For simplicity, we'll assume single hidden layer
                         dL_dh_n = np.zeros((self.layers[l + 1], batch_size))  # Placeholder
+                    print(np.shape(y_batch[:, k, :]), np.shape(y_pred[:, k, :]))
+                    print(np.shape(dL_dh_n), np.shape(self._loss_function.gradient(y_batch[:, k, :], y_pred[:, k, :])), 
+                          np.shape(self.activation_func_out_derivative(self.z[l][k])),
+                          np.shape(self.W_yh))
+                    
 
+                    dL_dh_n = self._loss_function.gradient(y_batch[k], y_pred[k]) * self.activation_func_out_derivative(self.z[l][k]) * self.W_yh
                     # Update gradients
-                    print(np.shape(dL_dh_n), np.shape(delta_hx[l][k]), np.shape(prod_term))
-                    print(np.shape(dL_dW_hx[l] ), np.shape(delta_hx[l][k] * prod_term))
-                    dL_dW_hh[l] += dL_dh_n @ (delta_hh[l][k] * prod_term).T 
-                    dL_dW_hx[l] += dL_dh_n @ (delta_hx[l][k] * prod_term).T 
-                    dL_db_h[l] += np.sum(delta_hh[l][k] * prod_term, axis=1, keepdims=True)
+                    print(np.linalg.norm(dL_dh_n), np.linalg.norm(prod_term), np.linalg.norm(delta_hh[l][k]))
+                    dL_dW_hh[l] += np.einsum("ik,ijk->ij", dL_dh_n * prod_term, delta_hh[l][k])
+                    dL_dW_hx[l] += np.einsum("ik,ijk->ij", dL_dh_n * prod_term, delta_hx[l][k])
+ 
+                    # y = dL_dh_n @ (np.eye(1, self.z[l][k].shape[0]) @ self.activation_func_derivative(self.z[l][k])).T         
+                    dL_db_h[l] += dL_dh_n @ (np.eye(1, self.z[l][k].shape[0]) @ self.activation_func_derivative(self.z[l][k])).T
+                    
 
 
         # Optionally, apply gradient clipping to prevent exploding gradients
         clip_value = 5.0  # You can adjust this value or make it a class parameter
         dL_dW_yh = self._clip_gradient(dL_dW_yh, clip_value)
         dL_db_y = self._clip_gradient(dL_db_y, clip_value)
-        for l in range(self.L):
+
+        # Update weights and biases using the optimizer
+        for l in range(self.L-1):
+            # print(np.linalg.norm(dL_dW_hx[l]), np.linalg.norm(dL_dW_hh[l]), l)
             dL_dW_hx[l] = self._clip_gradient(dL_dW_hx[l], clip_value)
             dL_dW_hh[l] = self._clip_gradient(dL_dW_hh[l], clip_value)
             dL_db_h[l] = self._clip_gradient(dL_db_h[l], clip_value)
 
-        # Update weights and biases using the optimizer
-        for l in range(self.L):
-            self.W_hx[l] = self.optimizer_W_hx[l].update(self.W_hx[l], dL_dW_hx[l], epoch, batch_index)
-            self.W_hh[l] = self.optimizer_W_hh[l].update(self.W_hh[l], dL_dW_hh[l], epoch, batch_index)
-            self.b_h[l] = self.optimizer_b_hh[l].update(self.b_h[l], dL_db_h[l], epoch, batch_index)
+            self.W_hx[l] = self.optimizer_W_hx[l](self.W_hx[l], dL_dW_hx[l], epoch, batch_index)
+            self.W_hh[l] = self.optimizer_W_hh[l](self.W_hh[l], dL_dW_hh[l], epoch, batch_index)
+            self.b_h[l] = self.optimizer_b_hh[l](self.b_h[l], dL_db_h[l], epoch, batch_index)
 
-        self.W_yh = self.optimizer_W_yh.update(self.W_yh, dL_dW_yh, epoch, batch_index)
-        self.b_y = self.optimizer_b_y.update(self.b_y, dL_db_y, epoch, batch_index)
+        self.W_yh = self.optimizer_W_yh(self.W_yh, dL_dW_yh, epoch, batch_index)
+        self.b_y = self.optimizer_b_y(self.b_y, dL_db_y, epoch, batch_index)
 
 
     def _clip_gradient(self, grad, clip_value):

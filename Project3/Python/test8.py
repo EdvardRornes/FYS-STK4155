@@ -53,12 +53,12 @@ eta = 0.001
 
 
 
-from test6 import RNN
+from test7 import RNN
 
 eta = 0.005
 testRNN = RNN(1, [7, 9, 11], 1, Adam(learning_rate=eta, momentum=0), scaler="standard",
               activation="tanh", activation_out="sigmoid", loss_function=WeightedBinaryCrossEntropyLoss(weight_0=weight_0, weight_1=weight_1))
-testRNN.train(X, y, epochs=100, batch_size=32, window_size=200)
+testRNN.train(X, y, epochs=100, batch_size=256, window_size=10)
 
 y_pred = testRNN.predict(X.reshape(-1, 1, 1))
 # train(X, y, W_h, b_h, W_yh, b_yh, epochs=100, batch_size=16)
