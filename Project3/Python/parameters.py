@@ -151,4 +151,4 @@ if __name__ == "__main__":
 
     parameter_scan(X, y, t, RNN, Adam(), epoch_list, gw_earlyboosts, learning_rates, regularization_values,
                    batch_size, window_size,
-                   save_path="GW_Parameter_Tuning_Results/RNN")
+                   save_path="GW_Merged_Results/RNN")
