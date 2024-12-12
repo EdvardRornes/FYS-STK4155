@@ -76,7 +76,6 @@ class RNN(NeuralNetwork):
         self.X_seq, self.y_seq = self.prepare_sequences_RNN(self.X_train_scaled, self.y_train, window_size, self.input_size)
         self.X_seq_test, self.y_seq_test = self.prepare_sequences_RNN(self.X_test_scaled, self.y_test, window_size, self.input_size)
 
-        print(np.shape(self.y_seq))
         self.truncation_steps = truncation_steps # Sent to backward propagation method 
 
         if isinstance(self._loss_function, DynamicallyWeightedLoss):
@@ -90,7 +89,7 @@ class RNN(NeuralNetwork):
         best_weights = copy.deepcopy(self.W_hx)
         best_weights_recurrent = copy.deepcopy(self.W_hh)
         best_W_yh = copy.deepcopy(self.W_yh)
-        best_b_hh = copy.deepcopy(self.b_hh)
+        best_b_hh = copy.deepcopy(self.b_h)
         best_b_y = copy.deepcopy(self.b_y)
 
         best_loss = float('inf')
@@ -104,6 +103,7 @@ class RNN(NeuralNetwork):
                 y_pred = self._forward(X_batch)
 
                 # Backward pass
+                print(f"X_batch.shape = {X_batch.shape}")
                 self._backward(X_batch, y_batch, y_pred, epoch, i)
 
             # Validation after each epoch
@@ -117,7 +117,7 @@ class RNN(NeuralNetwork):
                     'W_hx': copy.deepcopy(self.W_hx),
                     'W_hh': copy.deepcopy(self.W_hh),
                     'W_yh': copy.deepcopy(self.W_yh),
-                    'b_hh': copy.deepcopy(self.b_hh),
+                    'b_hh': copy.deepcopy(self.b_h),
                     'b_y': copy.deepcopy(self.b_y),
                 }
 
@@ -128,7 +128,7 @@ class RNN(NeuralNetwork):
             self.W_hx = best_weights['W_hx']
             self.W_hh = best_weights['W_hh']
             self.W_yh = best_weights['W_yh']
-            self.b_hh = best_weights['b_hh']
+            self.b_h = best_weights['b_hh']
             self.b_y = best_weights['b_y']
 
         print("\nTraining completed.")
@@ -157,35 +157,33 @@ class RNN(NeuralNetwork):
         batch_size, window_size, _ = X_batch.shape
 
         # Initialize hidden states and z (pre-activation values)
-        self.hidden_states = [[np.zeros((batch_size, self.layers[l + 1])) for _ in range(window_size)] for l in range(self.L)]
-        self.z = [[np.zeros((batch_size, self.layers[l + 1])) for _ in range(window_size)] for l in range(self.L)]
-
+        self.hidden_states = [[np.zeros((self.layers[l + 1], batch_size)) for _ in range(window_size)] for l in range(self.L)]
+        self.z = [[np.zeros((self.layers[l + 1], batch_size)) for _ in range(window_size)] for l in range(self.L)]
+        
+        # print(np.shape(X_batch))
+        # for i in range(len(self.hidden_states)):
+        #     print(np.shape(self.hidden_states[i]), np.shape(self.z[i]))
+        # exit()
         # Output for each timestep
         outputs = []
-
+        
         for t in range(window_size):
-            x_t = X_batch[:, t, :]  # Input at timestep t
-
-            for l in range(self.L):
-                if l == 0:
-                    # Input layer to first hidden layer
-                    prev_state = self.hidden_states[l][t - 1] if t > 0 else np.zeros_like(self.hidden_states[l][0])
-                    self.z[l][t] = x_t @ self.W_hx[l].T + prev_state @ self.W_hh[l].T + self.b_hh[l]
-                else:
-                    # Hidden layer to hidden layer
-                    prev_state = self.hidden_states[l][t - 1] if t > 0 else np.zeros_like(self.hidden_states[l][0])
-                    self.z[l][t] = self.hidden_states[l - 1][t] @ self.W_hx[l].T + prev_state @ self.W_hh[l].T + self.b_hh[l]
-
-                # Apply activation function
+            x_t = X_batch[:, t, :]
+            prev_state = np.zeros_like(self.hidden_states[0][0])
+            
+            for l in range(self.L - 1):
+                self.z[l][t] = self.W_hx[l] @ x_t.T + self.W_hh[l] @ prev_state + self.b_h[l]
                 self.hidden_states[l][t] = self.activation_func(self.z[l][t])
+                
+                # Next iteration:
+                prev_state = self.hidden_states[l+1][t]
+                x_t = self.hidden_states[l][t].T
+            
+            self.z[-1][t] = self.W_yh @ self.hidden_states[-2][t] + self.b_y 
+            
+            self.hidden_states[-1][t] = self.activation_func_out(self.z[-1][t])
 
-            # Output layer
-            # print(np.shape(self.W_yh)); print(np.shape(self.hidden_states[-1][t]))
-            y_t = self.activation_func_out(self.hidden_states[-1][t] @ self.W_yh + self.b_y)
-            outputs.append(y_t)
-
-        outputs = np.stack(outputs, axis=1)  # Shape: (batch_size, window_size, output_size)
-        return outputs
+        return self.hidden_states[-1]
 
 
     def _backward(self, X_batch: np.ndarray, y_batch: np.ndarray, y_pred: np.ndarray, epoch: int, batch_index: int):
@@ -199,45 +197,66 @@ class RNN(NeuralNetwork):
         batch_size, window_size, _ = X_batch.shape
 
         # Gradients initialization
-        dL_dW_hx = [np.zeros_like(self.W_hx[l]) for l in range(self.L)]
-        dL_dW_hh = [np.zeros_like(self.W_hh[l]) for l in range(self.L)]
-        dL_db_hh = [np.zeros_like(self.b_hh[l]) for l in range(self.L)]
+        dL_dW_hx = [np.zeros_like(self.W_hx[l]) for l in range(self.L-1)]
+        dL_dW_hh = [np.zeros_like(self.W_hh[l]) for l in range(self.L-1)]
+        dL_db_h = [np.zeros_like(self.b_h[l]) for l in range(self.L-1)]
         dL_dW_yh = np.zeros_like(self.W_yh)
         dL_db_y = np.zeros_like(self.b_y)
 
-        dh_next = [np.zeros((batch_size, self.layers[l + 1])) for l in range(self.L)]
+        delta_hx = [np.zeros_like(self.W_hx[l]) for l in range(self.L-1)]
+        delta_hh = [np.zeros_like(self.W_hh[l]) for l in range(self.L-1)]
 
-        # Loop backward through timesteps
-        for t in reversed(range(window_size)):
-            dL_dy = self._loss_function.gradient(y_batch[:, t, :], y_pred[:, t, :], epoch)
-            dy_dz = self.activation_func_out_derivative(y_pred[:, t, :])
-            dz = dL_dy * dy_dz
+        
+        for l in range(self.L-1):
+            Delta = [[1 for k in range(window_size)] for n in range(window_size)]
+            Delta = [[np.eye(self.W_hh[l].shape[0]) for k in range(window_size)] for j in range(window_size)]
 
-            # Gradients for output layer
-            print(np.shape(dz.T), np.shape(self.hidden_states[-1][t]), np.shape(dL_dW_yh))
-            dL_dW_yh += self.hidden_states[-1][t].T @ dz
-            dL_db_y += dz.sum(axis=0, keepdims=True)
-            dL_db_y += np.sum(dz, axis=0)
+            for k in range(window_size): # n= window_size - 1
+                n = window_size - 1
 
-            dh = dz @ self.W_yh  # Backpropagate error to last hidden layer
+                dL_dy_n = self._loss_function.gradient(y_batch[:, n, :], y_pred[n].T, epoch)
+                print(np.shape(dL_dy_n), np.shape(self.W_yh), np.shape(self.activation_func_out_derivative(y_pred[n])))
+                dy_n_dh_n = self.W_yh @ self.activation_func_out_derivative(y_pred[n])
+                print(np.shape(dy_n_dh_n), np.shape(self.activation_func_out_derivative(y_pred[n])), np.shape(self.W_yh))
+                dL_dh_n = dL_dy_n.T @ dy_n_dh_n
+                print(np.shape(dL_dh_n), "her")
+                # exit()
+                prod_ = np.eye(self.W_hh[l].shape[0]) 
+                for j in range(k+1, window_size):
+                    
 
-            # Loop backward through layers
-            for l in reversed(range(self.L)):
-                dz = dh * self.activation_func_derivative(self.z[l][t])  # Backprop through activation
-                dL_dW_hx[l] += dz.T @ (X_batch[:, t, :] if l == 0 else self.hidden_states[l - 1][t])
-                dL_db_hh[l] += dz.sum(axis=0, keepdims=True)
+                    activation_derivative = self.activation_func_derivative(self.z[l][j])
+                    prod_ = prod_ @ (self.W_hh[l] @ activation_derivative)
+                    Delta[j][k] = prod_
+            
 
-                if t > 0:
-                    dL_dW_hh[l] += dz.T @ self.hidden_states[l][t - 1]
-                    dh = dz @ self.W_hh[l]  # Backpropagate to previous timestep
-                else:
-                    dh = dz @ self.W_hh[l]
+                print(np.shape(dL_dh_n), np.shape(Delta[-1][k]), np.shape(delta_hh[l][k]))
+                dL_dW_hh[l] += dL_dh_n * Delta[-1][k] * delta_hh[l][k]
+                dL_dW_hx[l] += dL_dh_n * Delta[-1][k] * delta_hx[l][k]
+
+                dL_db_h[l] += dL_dh_n * self.activation_func_derivative(self.z[l][k]) 
+                
+            for n in reversed(range(window_size-1)):
+                for k in range(n):
+                    dL_dy_n = self._loss_function.gradient(y_batch[:, n, :], y_pred[n], epoch)
+                    dy_n_dh_n = self.activation_func_out_derivative(y_pred[n]) * self.W_yh
+                    dL_dh_n = dL_dy_n * dy_n_dh_n
+
+                    for j in range(k+1, n):
+                        prod = self.activation_func_derivative(self.z[l][j]) * self.W_hh[l][j] * prod
+                    
+                    dL_dW_hh[l] += dL_dh_n * delta_hh[l][k]
+                    dL_dW_hx[l] += dL_dh_n * delta_hx[l][k]
+
+                    dL_db_h[l] += dL_dh_n * self.activation_func_derivative(self.z[l][k]) 
+
+
 
         # Update weights and biases
         for l in range(self.L):
             self.W_hx[l] = self.optimizer_W_hx[l](self.W_hx[l], dL_dW_hx[l], epoch, batch_index)
             self.W_hh[l] = self.optimizer_W_hh[l](self.W_hh[l], dL_dW_hh[l], epoch, batch_index)
-            self.b_hh[l] = self.optimizer_b_hh[l](self.b_hh[l], dL_db_hh[l], epoch, batch_index)
+            self.b_h[l] = self.optimizer_b_hh[l](self.b_h[l], dL_db_h[l], epoch, batch_index)
 
         self.W_yh = self.optimizer_W_yh(self.W_yh, dL_dW_yh, epoch, batch_index)
         self.b_y = self.optimizer_b_y(self.b_y, dL_db_y, epoch, batch_index)
@@ -264,12 +283,12 @@ class RNN(NeuralNetwork):
         self.L = len(self.layers) - 1
         self.W_hx = []
         self.W_hh = []
-        self.b_hh = []
+        self.b_h = []
         self.optimizer_W_hx = []
         self.optimizer_W_hh = []
         self.optimizer_b_hh = []
 
-        for i in range(self.L):
+        for i in range(self.L-1):
             # Input weights: from input or previous hidden layer to current hidden layer
             input_dim = self.layers[i] #if i == 0 else self.layers[i + 1]
             output_dim = self.layers[i + 1] 
@@ -281,12 +300,18 @@ class RNN(NeuralNetwork):
             self.optimizer_W_hh.append(self.optimizer.copy())
 
             # Biases for hidden layers
-            self.b_hh.append(np.zeros((1, output_dim)))
+            self.b_h.append(np.zeros((output_dim, 1)))
             self.optimizer_b_hh.append(self.optimizer.copy())
 
         # Output layer weights and biases
         self.W_yh = NeuralNetwork._xavier_init(self.output_size, self.layers[-2])
 
-        self.b_y = np.zeros((1, self.output_size))
+        self.b_y = np.zeros((self.output_size, 1))
         self.optimizer_W_yh = self.optimizer.copy()
         self.optimizer_b_y = self.optimizer.copy()
+
+        # for l in range(len(self.W_hh)):
+        #     print(f"W_hx: {np.shape(self.W_hx[l])}, W_hh: {np.shape(self.W_hh[l])}, b_h: {np.shape(self.b_h[l])}")
+        
+        # print(f"W_yh: {np.shape(self.W_yh)}, b_h: {np.shape(self.b_y)}")
+        # exit()
