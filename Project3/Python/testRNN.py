@@ -54,8 +54,10 @@ X = X.reshape(-1, 1)
 eta = 0.005
 loss_function = DynamicallyWeightedLoss(initial_boost=1.3)
 loss_function = WeightedBinaryCrossEntropyLoss(weight_0=weight_0, weight_1=weight_1)
-testRNN = RNN(1, [5, 10, 2], 1, Adam(learning_rate=eta, momentum=0.1), scaler="standard",
+testRNN = RNN(1, [5, 10, 2], 1, Adam(learning_rate=eta, momentum=0), scaler="standard",
               activation="tanh", activation_out="sigmoid", loss_function=loss_function, lambda_reg=1e-7)
+
+print(np.shape(y), np.shape(X))
 testRNN.train(X, y, epochs=50, batch_size=64, window_size=50)
 
 y_pred = testRNN.predict(X.reshape(-1, 1, 1))

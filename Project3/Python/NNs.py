@@ -113,32 +113,6 @@ class NeuralNetwork:
         self.X_train = X_train; self.X_test = X_test
         self.X_train_scaled, self.X_test_scaled = self._scaler(X_train, X_test)
 
-    # def prepare_sequences_RNN(self, X:np.ndarray, y:np.ndarray, step_length:int, input_size:int):
-    #     """
-    #     Converts data into sequences for RNN training.
-        
-    #     Parameters:
-    #     * X:                scaled data 
-    #     * y:                output data.
-    #     * step_length:      length of each sequence.
-        
-    #     Returns:
-    #     * X_seq, y_seq:     sequences (3D array) and corresponding labels (1D array).
-    #     """
-    #     sequences = []
-    #     labels = []
-    #     # exit()
-    #     for i in range(len(X) - step_length + 1):
-    #         seq = X[i:i + step_length]
-    #         label_seq = y[i:i + step_length]  # Create a sequence of labels
-
-    #         sequences.append(seq)
-    #         labels.append(label_seq)
-
-    #     X_seq, y_seq = np.array(sequences).reshape(-1, step_length, input_size), np.array(labels)
-
-    #     return X_seq, y_seq  
-
     def prepare_sequences_RNN(self, X:np.ndarray, y:np.ndarray, step_length:int, input_size:int, overlap:float=50):
         """
         Converts data into sequences for RNN training.
@@ -324,7 +298,7 @@ class RNN(NeuralNetwork):
 
                 # Forward pass
                 y_pred = self._forward(X_batch)
-                y_pred[i] = 1 * (y_pred[i] <= 0.5)
+                y_pred[:, :] = 1 * (y_pred[:, :] <= 0.5)
 
                 # Backward pass
                 self._backward(X_batch, y_batch, y_pred, epoch, i)
@@ -405,7 +379,7 @@ class RNN(NeuralNetwork):
             
             self.hidden_states[-1][t] = self.activation_func_out(self.z[-1][t]).T
 
-        return self.hidden_states[-1]
+        return np.array(self.hidden_states[-1])
 
 
     def _backward(self, X_batch: np.ndarray, y_batch: np.ndarray, y_pred: np.ndarray, epoch: int, batch_index: int):

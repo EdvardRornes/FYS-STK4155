@@ -19,6 +19,13 @@ import copy
 from typing import Tuple, List
 
 ############ Utility functions ############
+# Function to save results incrementally
+def save_results_incrementally(results, base_filename, save_path="GW_Parameter_Tuning_Results"):
+    filename = f"{base_filename}.pkl"
+    with open(os.path.join(save_path, filename), "wb") as f:
+        pickle.dump(results, f)
+    print(f'File {filename} saved to {save_path}.')
+
 # Disable print
 def blockPrint():
     sys.stdout = open(os.devnull, 'w')
