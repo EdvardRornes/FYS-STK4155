@@ -249,6 +249,8 @@ with tqdm(total=len(pkl_files), desc="Loading .pkl files", ncols=100) as pbar:
             # Split the lambda_eta_key to extract lambda and eta values
             lambda_value = float(lambda_eta_key.split('_')[1])
             eta_value = float(lambda_eta_key.split('_')[3])
+            if lambda_value == 1:
+                continue
             
             # Collect the loss values
             fold_losses = [item["loss"] for item in fold_data]  # Extract losses for this lambda-eta combination
@@ -314,8 +316,8 @@ for epoch in unique_epochs:
             y_log=True,
             Reverse_cmap=False,
             annot=True,
-            savefig=False,
-            filename=f"Loss_Epoch{epoch}_Boost{boost}",
+            savefig=True,
+            filename=f"2D_Plot_Loss_Epoch{epoch}_Boost{boost}",
             on_click=lambda event, plot_info=(epoch, boost): on_click(event, lambdas, etas, losses, epochs, boosts, unique_lambdas, unique_etas, plot_info),  # Pass epoch and boost as tuple
             log_cbar=True
         )

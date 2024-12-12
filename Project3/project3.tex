@@ -39,7 +39,7 @@ aps,
 %prstper,
 %floatfix,
 ]{revtex4-2}
-
+\usepackage{adjustbox}
 \usepackage{subfiles}
 \usepackage{graphicx}% Include figure files
 \usepackage{dcolumn}% Align table columns on decimal point
@@ -52,6 +52,7 @@ aps,
 \usepackage{tcolorbox}
 \usepackage{float}
 \usepackage{tensor}
+\usepackage{subcaption}
 \usepackage{hyperref}% add hypertext capabilities
 %\usepackage[mathlines]{lineno}% Enable numbering of text and display math
 %\linenumbers\relax % Commence numbering lines
@@ -105,24 +106,24 @@ aps,
 \tableofcontents
 
 \section{Introduction}
-Gravitational waves (GWs) are the product of some of the most extreme events that occur in the universe. While, in theory, just about any accelerating object produces GWs, they are so weak that they can only be detected from the most energetic and cataclysmic events. The only sources of detectable GWs with current technology are the mergers of black holes and neutron stars \cite{LIGOScientific:2007fwp}, where the immense masses and high velocities involved generate powerful ripples in spacetime. These ripples propagate outward, traveling at the speed of light, and cause minute distortions in spacetime itself, which can be measured by highly sensitive instruments.
+Gravitational Waves (GWs) are the product of some of the most extreme events that occur in the universe. While in theory, just about any accelerating object produces GWs, they are so weak that they can only be detected from the most energetic and cataclysmic events \cite{ligo_gw_sources}. The only sources of detectable GWs with current technology are the mergers of black holes and neutron stars \cite{LIGOScientific:2007fwp}, where the immense masses and high velocities involved generate powerful ripples in spacetime. These ripples propagate outward and cause minute distortions in spacetime itself, which can be measured by highly sensitive instruments.
 
-One of the most advanced experiments to detect these waves is the Laser Interferometer Gravitational-Wave Observatory (LIGO). LIGO uses laser interferometry to measure the incredibly small displacements caused by passing gravitational waves. However, the signals from gravitational waves are often faint and easily overwhelmed by noise, making detection a complex task.
+To date, the most advanced experiment to detect these waves is the Laser Interferometer Gravitational-Wave Observatory (LIGO). LIGO uses laser interferometry to measure the incredibly small displacements caused by passing gravitational waves. However, the signals from gravitational waves are often faint and easily overwhelmed by noise, making detection a difficult task.
 
-Machine learning, particularly neural networks (NNs), has become a powerful tool in this context. By training a neural network on large datasets of both gravitational wave signals and background noise, these models can learn to distinguish between genuine gravitational wave signals and random noise. This, in theory, may allow for more accurate detection and classification of GW events, even in the presence of significant interference, and may be the future of GW detection \cite{Marx:2024wjt, skliris2024}. Neural networks can be trained to recognize patterns in the data that correspond to the characteristic signatures of gravitational waves, improving both the efficiency and reliability of detection algorithms. With the growing amount of data from observatories like LIGO, NNs are playing an increasingly important role in identifying new events and advancing our understanding of the universe.
+Neural Networks (NNs) has become a powerful tool in this context. By training a NN on large datasets of both gravitational wave signals and background noise, these models can learn to distinguish between genuine gravitational wave signals and random noise. This, in theory, may allow for more accurate detection and classification of GW events, even in the presence of significant interference, and may be the future of GW detection \cite{Marx:2024wjt, skliris2024}. NNs can be trained to recognize patterns in the data that correspond to the characteristic signatures of GWs, improving both the efficiency and reliability of detection algorithms. With the growing amount of data from observatories like LIGO, NNs are playing an increasingly important role in identifying new events and advancing our understanding of the universe.
 
-In this work we attempt to detect GWs on untreated data from \cite{gwosc} by building our own Recurrent Neural Network (RNN), along with using \texttt{tensorflow.keras}' RNN to test against our own. The performance on this untreated data is quite poor due to the untreated data having a signal to noise ratio (SNR) which is very large. The process of removing noise from GW is quite advanced, and requires state of the art techniques. Due to time constraints and lack of expertise in this field, we instead created a simple program which generates synthetic GW data. This allows us to control the SNR and focus on training neural networks on processed data, which simplifies the task vastly and allows us to evaluate our RNN's performance. The code in (cite Github) however does contain a program which automatically labels GW files granted that the user knows the duration of the GW signal, which may be of use for future work.
+In this work we attempt to detect GWs on untreated data from \cite{gwosc} by building our own Recurrent Neural Network (RNN), along with using \texttt{tensorflow.keras}' RNN to test against our own. The performance on this untreated data is quite poor due to the untreated data having a signal to noise ratio (SNR) which is very low. The process of removing noise from GW is quite advanced, and requires state of the art techniques. Due to time constraints and lack of expertise in this field, we instead created a simple program which generates synthetic GW data. This allows us to control the SNR and focus on training neural networks on processed data, which simplifies the task vastly and allows us to evaluate our RNN's performance. The code in (cite Github) however does contain a program which automatically labels GW files granted that the user knows the duration of the GW signal, which may be of use for future work.
 
 \section{Theory}
 \subsection{Gravitational Waves}
-We will simply give a quick introduction to GWs. For a more detailed analysis, please see any textbook on general relativity, e.g. \cite{Carroll} or \cite{Wald}.
+We will simply give a quick introduction to GWs. For a more detailed analysis, please see any graduate level textbook on general relativity, e.g.~\cite{Carroll} or \cite{Wald}.
 
 \subsubsection{Linearized Gravity}
-As mentioned, GWs are ripples in spacetime caused by the acceleration of massive objects, such as merging black holes or neutron stars. For sufficiently small ripples, or for an observer sufficiently far away from e.g. a black hole merger, the GWs are accurately described by first order perturbations of a flat spacetime described by the Minkowski metric, $\eta_{\mu\nu}$, with a small perturbation
+As mentioned, GWs are ripples in spacetime caused by the acceleration of massive objects, such as merging black holes or neutron stars. For sufficiently small ripples, or for an observer sufficiently far away from e.g.~a black hole merger, the GWs are accurately described by first order perturbations of a flat spacetime described by the Minkowski metric, $\eta_{\mu\nu}$, with a small perturbation:
 \begin{align}
-	g_{\mu\nu}=\eta_{\mu\nu}+h_{\mu\nu},\quad|h_{\mu\nu}|\ll1
+	g_{\mu\nu}=\eta_{\mu\nu}+h_{\mu\nu},\quad|h_{\mu\nu}|\ll1.
 \end{align}
-Then applying this to the Einstein field equations (EFE),
+where the metric signature is $(-,+,+,+)$. The Einstein field equations (EFE) are given by
 \begin{align}
 	G_{\mu\nu}=8\pi GT_{\mu\nu}
 	\label{eq:EFE}
@@ -133,7 +134,7 @@ where $G_{\mu\nu}$ is the Einstein tensor which depends solely on the metric $g_
 	&+\eta_{\mu\nu}\p^\rho\p^\sigma h_{\rho\sigma}+\p_\mu \p_\nu h-\eta_{\mu\nu}\Box h
 	\label{eq:LEFE}
 \end{align}
-where $h\equiv \tensor{h}{^\mu_\mu}=\eta^{\mu\nu}h_{\mu\nu}$ is the first order trace of $h$. Note that we do not perturb $T_{\mu\nu}$ since it is in fact a perturbation itself. Now this equation here is quite complicated, however due to a symmetry in the original Lagrangian one has a so-called \textit{gauge freedom}, i.e. a set of transformations which leave the Lagrangian invariant. This can be used to vastly simplify the equations heavily. A common choice is the Lorenz gauge: $\p^\mu h_{\mu\nu}=0$. Using this we can reduce \eqref{eq:LEFE} to the much simpler differential equation
+where $h\equiv \tensor{h}{^\mu_\mu}=\eta^{\mu\nu}h_{\mu\nu}$ is the first order trace of $h$ and $\Box$ is the flat space d'Alembertian. Note that we do not perturb $T_{\mu\nu}$ since it is in fact a perturbation itself. Now this equation here is quite complicated, however due to a symmetry in the original Lagrangian one has a so-called \textit{gauge freedom}, i.e.~a set of transformations which leave the Lagrangian invariant. This can be used to vastly simplify the equations heavily. A common choice is the Lorenz gauge: $\p^\mu h_{\mu\nu}=0$. Using this we can reduce \eqref{eq:LEFE} to the much simpler differential equation
 \begin{align}
 	\Box h_{\mu\nu}=-16\pi T_{\mu\nu}
 \end{align}
@@ -150,7 +151,9 @@ where
 		0&0&0&0
 	\end{bmatrix}
 \end{align}
-for a GW travelling along the $z$-axis. The details for how this is derived is spelled out in \cite{Carroll}. $h_+$ and $h_\times$ correspond to the ``plus'' and ``cross'' polarizations which determine how the gravitational waves stretch and compress the spacetime it passes through. The stretching from these are what is measured by observatories such as LIGO and Virgo and the displacements from these are referred to as `strain'.
+for a GW traveling along the $z$-axis. The details for how this is derived is spelled out in \cite{Carroll}. $h_+$ and $h_\times$ correspond to the ``plus'' and ``cross'' polarization respectively, which determine how the gravitational waves stretch and compress the spacetime it passes through. 
+
+The stretching and compression from these polarizations are what is measured by observatories such as LIGO and Virgo. These displacements are often given as the dimensionless quantity \textbf{strain}, which is simply given by $h=\Delta L/L$ where $L$ is the effective length of the detector, and $\Delta L$ is the measured change in $L$ as the GW passes by. Note that $L$ is not simply the length of the detectors themselves, as they use mirrors to cause the beams of light to bounce back and forth multiple times, effectively increasing the length of the detector.
 
 
 \subsection{Recurrent Neural Networks}
@@ -170,7 +173,7 @@ Here, \(\sigma_h\) and \(\sigma_{\text{out}}\) is the activation function for th
 	&+ W_{hh}\sigma_h \left(\dots + b_h\right) + b_h\biggr) 
 	+b_h\biggr)
 \end{align}
-This shows that the hidden state at time \(t_n\) is dependent on the input \(X_{t}\) for \(t\in[0, t_n]\), i.e. all previous times. 
+This shows that the hidden state at time \(t_n\) is dependent on the input \(X_{t}\) for \(t\in[0, t_n]\), i.e.~all previous times. 
 
 \subsubsection{General Algorithm}
 Consider some general data output \(y\), of shape \((N, p_{\text{out}})\) and some data input \(X\), of shape \((N, p_{\text{in}})\), where \(N\) corresponds to the total amount of time points, and \(p_{\text{out}}, \ p_{\text{in}}\) the dimension of the output and input, respectively. Generally, \(X\) could correspond to a large sampling frequency in time, making the computation of the hidden state \(h_t\) in \eqref{eq:hidden_state_computation_RNN} computationally demanding. One typical way of dealing with this is to split the data into `windows' of size \(N_{W}\) in time. These windows should generally overlap, such that no temporal dependencies across windows are left out. 
@@ -244,7 +247,7 @@ For the output layer, \(\partial h_n/\partial W_{yh}\) is only non zero of \(n=N
 	\frac{\partial L}{\partial b_{h}} &= \frac{\partial L}{\partial h_{N}}  \left[ \prod_{j=N-k-1}^{0} \sigma'_{h}(z_{n-j})W_{hh}\right] \sigma'_{\text{out}}(z_N).
 \end{align}
 
-The dependency for each error term \(\delta^{N-n}\) on `past' error terms leads to a much greater computation time, compared to that of FFNN. Every gradient computation needs an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm, commonly referred to as `truncated backpropagation through time' (see e.g. \cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on.
+The dependency for each error term \(\delta^{N-n}\) on `past' error terms leads to a much greater computation time, compared to that of FFNN. Every gradient computation needs an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm, commonly referred to as `truncated backpropagation through time' (see e.g.~\cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on.
 
 Implementing the stacked RNN is then done by essentially creating a hidden state for each `stack' of RNN. The output of the stacked RNN is computed by feeding the hidden states to each other in succession, starting from the first hidden layer. The hidden states in some time window \(n\) are given by
 \begin{align}
@@ -260,7 +263,7 @@ and the output of the stacked RNN in time window \(n\) as
 Here, the dimensions are \(W^{l}_{hx}\in\mathbb{R}^{d_{l}\times d_{l-1}}\), \(W^{l}_{hh}\in\mathbb{R}^{d_{l}\times d_{l}}\), with \(d_l\) being the dimension of the \(l\)-th hidden state, \(l_0\) the dimension of the input and \(l^{L}\) the dimension of the output. The BTT algorithm for a stacked RNN takes on the same form, except that we now have \(L\) hidden states. 
 
 \subsubsection{Gradient Clipping}
-A common method for dealing with exploding gradients, is the method of gradient clipping (see e.g. \cite{Goodfellow-et-al-2016}). This method prevents checks whether the magnitude of the gradient is moving past a certain threshold. If this is true it truncates the current gradient. This can be summarized as:
+A common method for dealing with exploding gradients, is the method of gradient clipping (see e.g.~\cite{Goodfellow-et-al-2016}). This method prevents checks whether the magnitude of the gradient is moving past a certain threshold. If this is true it truncates the current gradient. This can be summarized as:
 \begin{align}
 	\nabla L \rightarrow \frac{\epsilon}{||\nabla L||}\nabla L\quad\text{if}\quad||\nabla L|| > \epsilon.
 \end{align}
@@ -270,29 +273,76 @@ A common method for dealing with exploding gradients, is the method of gradient 
 We opted into using early stopping for the majority of our parameter scans. Given that our program did not improve in a certain number of epochs (between $15\%$ and $40\%$ depending on number of epochs), and the loss was sufficiently high, we ended the learning process early. If the loss was sufficiently good, we however still kept on going, in the hopes that we would be able to improve the model further. This is mostly done to not waste time on parameter combinations which perform poorly. 
 
 \subsubsection{Dynamic Class Weights}
-To handle the large class imbalance between the noise and gravitational events, we introduced a dynamic class weight adjustment based on the hyperparameter $\phi$. If we define $l_i=1$ when there is a signal, and $l_i=0$ when there is only noise and normalize the class weight for the noise to $1$. Then a simple way to compute a linear dynamical weights for the signal class is:
+To handle the large class imbalance between the noise and gravitational events, we introduced a dynamic class weight adjustment based on the hyperparameter $\phi$. If we define $l_i=1$ when there is a signal, and $l_i=0$ when there is only noise and normalize the class weight for the noise class to $1$. Then a simple way to compute a linear dynamical weights for the signal class is:
 \begin{align}
 	S_{\rm CW}&=\left[\phi-(\phi-1)\frac{{\rm epoch}}{N}\right]\times\left[\frac{{\rm len}(l)}{\sum_i l_i}-1\right]
 \end{align}
-where $S_{\rm CW}$ refers to the signal class weight (GWs in our case), epoch is the current epoch, $N$ is the total number of epochs and $l$ is the labels. This essentially gives an early boost to the signal class, causing the program to be punished for only guessing noise, and gradually converges to a balanced class weight system, where the NN would perform equally poorly from guessing all in either of the classes. A simple example is show in Fig. \ref{fig:DynamicCW}. This is important in our case since GW events are so rare. Due to this the program may simply decide that it is best not to guess it at all as it is much more likely to be punished for guessing GWs.
+where $S_{\rm CW}$ refers to the signal class weight (GWs in our case), epoch is the current epoch, $N$ is the total number of epochs and $l$ is the labels. This essentially gives an early boost to the signal class, causing the program to be punished for only guessing noise, and gradually converges to a balanced class weight system, where the NN would perform equally poorly from guessing all in either of the classes. A simple example is show in Fig. \ref{fig:DynamicCW}. Note that the noise-signal label ratio is \textit{not} SNR, one refers to the time axis in the case of GW (i.e.~the percentage of time there is a signal), whilst the latter refers to the strain ratio (i.e.~how visible the signal is at any given time). Dynamical class labels are important in our case since GW events are so rare. Due to this the program may simply decide that it is best not to guess it at all as it is much more likely to be punished for guessing GWs.
 \begin{figure}[ht!]
 	\includegraphics[width=0.49\textwidth]{Figures/DynamicCW.pdf}
-	\caption{Dynamic class weight shown for a simple example with $\phi=2$ where we have a 4:1 noise-signal ratio over 100 epochs.}
+	\caption{Dynamic class weight shown for a simple example with $\phi=2$ where we have a 4:1 noise-signal label ratio over 100 epochs.}
 	\label{fig:DynamicCW}
 \end{figure}
 
 \section{Implementation}
-We implemented a program which downloads the data from gwosc, and when given the duration of the GW signal of interest, automatically labels the data accordingly. Further we made a class \texttt{GWSignalGenerator}, which adds a synthetic GW signal to any arbitrary sequence, and adds corresponding labels to the dataset. This was originally meant to be our test runs before working with the real deal. However due to the complicated nature of detecting GWs, this ended up being what our NNs where working with instead.
+We implemented a program which downloads the data from gwosc, and when given the duration of the GW signal of interest, automatically labels the data accordingly. Our definition for `duration' of an event is rather arbitrary. What we did is simply look at a relevant research paper (found for each event at \cite{gwosc_all_events}) which contains plots of the treated data and made an educated guess for where it would be reasonable to detect it. Further we made a class \texttt{GWSignalGenerator}, which adds a synthetic GW signal to any arbitrary sequence, and adds corresponding labels to the dataset. This was originally meant to be our test runs before working with the real deal. However due to the complicated nature of detecting GWs, this ended up being what our NNs where working with instead. We explain the reasoning for this in the next section.
 
 The structure of the programs are...
 
-We then performed large parameter sca
+We then performed large parameter scans with keras' SimpleRNN where we considered the following parameters:
+\begin{itemize}
+	\item $N\in\{10,25,50,100\}$
+	\item $\phi\in\{1.0,1.1,...,1.5\}$
+	\item $\lambda\in\{10^{-10},10^{-9},...,10^{-1}\}$
+	\item $\eta\in\{10^{-4},5\times10^{-4},...,10^{-1},5\times10^{-1}\}$
+\end{itemize}
+where $N$ is the number of epochs. Due to the program being incredibly slow, we only managed to finish half the parameter scan with $N=100$. Similarly, due to spending much time implementing our own RNN, we only had time to perform the parameter scans with the following parameters:
+\begin{itemize}
+	\item $N\in\{\}$
+	\item $\phi\in\{\}$
+	\item $\lambda\in\{\}$
+	\item $\eta\in\{\}$
+\end{itemize}
+The implementation of both RNN's consist of starting with 5 separate signals which we generate, and perform $5$-fold cross validation on them. Within each training loop we again split the training data into a validation set. Since keras does not support dynamical class weights, we needed to perform the fitting with a single epoch, but still loop over each of these fittings $N$ number of times. We then perform the training and validate after each epoch. Every time we reach a new best validation loss, we save the weights and continue with them the next epoch. The model is then tested with the remaining test set with the best weights and the data corresponding to the run is saved to a \texttt{.pkl} file to be used later. Due to the program running very slowly, we saved a separate file for each parameter combination, and later used another program to merge all this data into larger data files.
 
-\section{Discussion}
+\section{Challenges}
+As we have mentioned prior, we did not end up using our RNN on actual GW data, or at least not long enough to gather any meaningful results. The reason for this is simple; gravitational wave detection is very difficult! The RNN's simply ended up just randomly guessing due to the near impossibility of the task, so we just want to show off how difficult this actually is.
+
+Consider for example Fig.~\ref{fig:GW170104GWEvent} which shows the raw strain data surrounding the event GW170104 acquired from \cite{gwosc}. The small partition in red is where the GW signal was detected by both LIGO detectors and Virgo, whilst the rest is simply noise. This event has a roughly average peak SNR $\sim13$ (after treatment) and a rather common duration of roughly $0.04\,$s, so this would be around what would be expected of a NN to be able to detect. Whilst the strain here is of the order $10^{-18}$, after cleaning the data, \cite{LIGOScientific:2017bnn} shows that the actual strain stemming from the GW event peaks around $10^{-21}$. Clearly it is unreasonable to give this to a NN and expect it to learn anything when the SNR of the raw data is $\lesssim10^{-3}$, and this is even with data which is over a relatively short timespan of under 20 seconds. Note that even if we picked the GW with highest (treated) SNR, this is only $\sim3$ times higher than this particular example. Thus even in this most ideal case, we still have a raw data SNR $\sim10^{-3}$.
+
+\begin{figure}[ht!]
+	\includegraphics[width=0.5\textwidth]{Figures/GW170104GWEvent.pdf}
+	\label{fig:GW170104GWEvent}
+	\caption{Raw strain data for GW170104. Blue corresponds to noise whilst red is where the GW event has been detected.}
+\end{figure}
+
+What academics do is they remove all the noise from known sources which occur at this time, e.g. seismic activity, local disturbances and afterwards perform a Bayesian analysis of the data to determine the properties of the source \cite{LIGOScientific:2017bnn}. Finally, they reconstruct the signal and check against the original data. For this particular event, they arrived at the signal shown in Fig. \ref{fig:GW170104Reconstructed}. This is clearly much easier to work with than the raw data, and a much more realistic task for a NN to be able to detect. However at this point all the work has already been done, and requires far more work than we can manage given our lack of expertise and time for this project.
+
+\begin{figure}[ht!]
+	\includegraphics[width=0.45\textwidth]{Figures/GW170104_waveform_reconstructions.svg.png}
+	\label{fig:GW170104Reconstructed}
+	\caption{Treated data and reconstructed signal for GW170104. This figure has been taken from \cite{LIGOScientific:2017bnn}.}
+\end{figure}
+
+\section{Results \& Discussion}
+We begin by considering \texttt{tensorflow.keras}'s \texttt{SimpleRNN} for various combinations of the learning rate $\eta$ and $L^2$ regularization parameter $\lambda$ as shown in Fig. \ref{fig:PhiShowcase}. Here we have used 50 epochs for both the figures, where the above uses a dynamical class weights with $\phi=1.4$ and the below uses static class weights, i.e. $\phi=1$. The difference for high $\lambda$ and suboptimal $\eta$ can be seen to be relatively small. In both the cases, large $\lambda$ corresponds to underfitting the model with the high suppression for the weights, and too high (low) value for the initial learning rate causes the model to overshoot (undershoot) the minima. For the combinations of $\eta$ and $\lambda$ where the model performs well, we see that there is a clear distinction between the two figures. The model performs much better when it initially starts with higher class weights for the signal class.
+\begin{figure}[ht!]
+	\begin{subfigure}{0.499\textwidth}
+		\includegraphics[width=\textwidth]{Figures/2D_Plot_Loss_Epoch50_Boost1.4.pdf}
+	\end{subfigure}
+	\newline
+	\begin{subfigure}{0.499\textwidth}
+		\includegraphics[width=\textwidth]{Figures/2D_Plot_Loss_Epoch50_Boost1.0.pdf}
+	\end{subfigure}
+	\caption{Average test loss for the $5$-fold cross validation using \texttt{tensorflow.keras}' \texttt{SimpleRNN} for various parameter combinations with 50 epochs. These plots have been chosen to show the effect of an ideal initial boost, $\phi=1.4$, compared to the simpler case $\phi=1$ which corresponds to static class weights. Note that we have taken the logarithm of the colorbar to get more sensitivity at lower loss.}
+	\label{fig:PhiShowcase}	
+\end{figure}
 
 
 \section{Conclusion}
-As mentioned prior, actual gravitational wave detection is very difficult, and requires advanced techniques such as matched filtering and adaptive noise subtraction. In the limited time and resources we were not able to properly clean the data. Thus we opted into...
+As mentioned prior, actual gravitational wave detection is very difficult, and requires advanced techniques such as matched filtering and adaptive noise subtraction. In the limited time and resources we were not able to properly clean the data. Thus we opted into simply creating our own signal in a very ideal situation. 
+
+In retrospect, this task was not ideal for this project as it was simply too difficult given our limited time. As such, our results are lackluster and not of much practical use.
 
 % Bibliography
 \bibliographystyle{JHEP}

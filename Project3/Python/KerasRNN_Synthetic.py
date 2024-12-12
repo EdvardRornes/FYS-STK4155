@@ -100,8 +100,6 @@ class KerasRNN:
         n_samples = len(X) - step_length + 1
         X_seq = np.array([X[i:i + step_length] for i in range(n_samples)]).reshape(-1, step_length, 1)
         y_seq = y[step_length-1:]
-        print(X_seq.shape)
-        print(y_seq.shape)
         return X_seq, y_seq
 
     def compute_class_weights(self, epoch: int, total_epochs: int):
