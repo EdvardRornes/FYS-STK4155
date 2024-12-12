@@ -2,19 +2,20 @@
 import matplotlib.pyplot as plt 
 import numpy as np
 from utils import Activation, Adam
-from test5 import WeightedBinaryCrossEntropyLoss
+from test5 import WeightedBinaryCrossEntropyLoss, DynamicallyWeightedLoss
 from sklearn.utils.class_weight import compute_class_weight
 import time 
 
-T = 10; N = 10000
+T = 10; N = 1000
 t = np.linspace(0, T, N)
 
 X = np.sin(t*20) + np.sin(t*2) + np.random.random(N) + np.sin(t)* np.random.random(N)
+X = X/2
 
 event_start = 250; event_end = 350
-tmp = 2*np.exp(-(t-t[event_start])**2)
+tmp = 4*np.exp(-(t-t[event_start] - abs(t-t[event_start])/2)**2/(0.5)**2)
 
-X[event_start:event_end] += tmp[event_start: event_end]
+X += tmp
 
 y = np.zeros(N); y[event_start:event_end] = 1
 
@@ -56,9 +57,11 @@ eta = 0.001
 from test7 import RNN
 
 eta = 0.005
-testRNN = RNN(1, [7, 9, 11], 1, Adam(learning_rate=eta, momentum=0), scaler="standard",
-              activation="tanh", activation_out="sigmoid", loss_function=WeightedBinaryCrossEntropyLoss(weight_0=weight_0, weight_1=weight_1))
-testRNN.train(X, y, epochs=100, batch_size=256, window_size=10)
+loss_function = DynamicallyWeightedLoss(initial_boost=1.3)
+loss_function = WeightedBinaryCrossEntropyLoss(weight_0=weight_0, weight_1=weight_1)
+testRNN = RNN(1, [5, 10, 2], 1, Adam(learning_rate=eta, momentum=0.1), scaler="standard",
+              activation="tanh", activation_out="sigmoid", loss_function=loss_function, lambda_reg=1e-7)
+testRNN.train(X, y, epochs=50, batch_size=64, window_size=50)
 
 y_pred = testRNN.predict(X.reshape(-1, 1, 1))
 # train(X, y, W_h, b_h, W_yh, b_yh, epochs=100, batch_size=16)
@@ -68,6 +71,6 @@ y_pred = testRNN.predict(X.reshape(-1, 1, 1))
 # print(np.array(y_pred))
 plt.plot(t, X[:,0])
 plt.plot(t, y[:,0], label="true")
-plt.plot(t, y_pred[:,0], label="my shit")
+plt.plot(t, y_pred[:,0], label="my")
 plt.legend()
 plt.show()
