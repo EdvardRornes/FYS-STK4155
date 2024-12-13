@@ -18,7 +18,7 @@ class NeuralNetwork:
     def __init__(self, activation_func:str, activation_func_output:str, scaler:str, 
                  test_percentage:float, random_state:int):
         """
-        Parent class for FFNN, RNN and KeirasRNN. Contains methods shared for all child-classes. 
+        Parent class for FFNN, RNN and KerasRNN. Contains methods shared for all child-classes. 
 
         Arguments:
         * activation_func:  activation function for hidden layers
