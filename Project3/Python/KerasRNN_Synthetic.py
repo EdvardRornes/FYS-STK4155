@@ -4,8 +4,8 @@ import pickle
 import os
 
 from utils import latex_fonts, GWSignalGenerator
-from NNs import KerasRNN
-
+from NNs import KerasRNN2 as KerasRNN
+from utils import * 
 np.random.seed(0)
 
 latex_fonts()
@@ -15,7 +15,7 @@ savefigs = True
 time_steps = 5000
 time_for_1_sample = 50
 num_samples = 5
-step_length = time_steps//100
+window_size = time_steps//100
 batch_size = time_steps//50*(num_samples-1)
 learning_rates = [1e-3, 5e-3, 1e-2, 5e-2]
 regularization_values = np.logspace(-12, -6, 7)
@@ -113,30 +113,30 @@ for epochs in epoch_list:
                     
                     # Initialize the KerasRNN model with the current learning rate and regularization
                     hidden_layers = [5, 10, 2]  # Example hidden layers
-                    model = KerasRNN(
+                    model = KerasRNN(1,
                         hidden_layers, 
-                        dim_output=1, 
-                        dim_input=1, 
-                        labels=train_labels, 
-                        gw_class_early_boost=boost, 
-                        learning_rate=lr,
-                        l2_regularization=reg_value
+                        1,
+                        Adam(),
+                        "tanh",
+                        activation_out="sigmoid",
+                        lambda_reg=reg_value
                     )
 
                     # Recompile the model with updated regularization
+                    # model.create_model()
                     model.model.compile(
-                        loss=model.loss_function, 
-                        optimizer=model.optimizer, 
+                        loss=model._loss_function.type, 
+                        optimizer=model.optimizer.name, 
                         metrics=['accuracy']
                     )
                     # Train the model for this fold
-                    model.train(y_train, train_labels, epochs=int(epochs), batch_size=batch_size, step_length=step_length, verbose=0)
+                    model.train(y_train, train_labels, int(epochs), batch_size, window_size)
 
                     # Predict with the trained model
-                    predictions, loss, accuracy = model.predict(y_test, test_labels, step_length, verbose=0)
+                    predictions, loss, accuracy = model.predict(y_test, test_labels, window_size, verbose=0)
                     predictions = predictions.reshape(-1)
                     predicted_labels = (predictions > 0.5).astype(int)
-                    x_pred = x[step_length - 1:]
+                    x_pred = x[window_size - 1:]
 
                     results.append({
                         "epochs": epochs,

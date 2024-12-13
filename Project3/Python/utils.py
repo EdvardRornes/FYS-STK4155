@@ -661,6 +661,7 @@ class PlaneGradient(Optimizer):
         Class implementing basic Gradient Descent with optional momentum. Does support stochastic GD as well.
         """
         super().__init__(learning_rate, momentum)
+        self.name = "PlaneGradient"
 
     def __call__(self, *args):
 
@@ -700,6 +701,7 @@ class Adagrad(Optimizer):
 
         super().__init__(learning_rate, epsilon=epsilon)
         self.G = None  # Accumulated squared gradients
+        self.name = "Adagrad"
     
     def initialize_accumulation(self, theta):
         # Initializes accumulation matrix G if not already initialized
@@ -742,6 +744,7 @@ class RMSprop(Optimizer):
 
         super().__init__(learning_rate, epsilon=epsilon, decay_rate=decay_rate)
         self.G = None
+        self.name = "RMSprop"
 
     def initialize_accumulation(self, theta):
         # Initializes accumulation matrix G if not already initialized
@@ -785,6 +788,8 @@ class Adam(Optimizer):
         self.m = None  # First moment vector
         self.v = None  # Second moment vector
         self.t = 0  # Time step
+
+        self.name = "Adam"
 
     def initialize_moments(self, theta):
         # Initializes first and second moment vectors if not already initialized
@@ -862,3 +867,159 @@ class Scalers:
         X_test = scaler.transform(X_test)
         
         return X_train, X_test
+
+class Loss:
+    data = {}
+
+    def __call__(self, y_true, y_pred, epoch=None):
+        """
+        Computes the loss value.
+
+        Arguments:
+        - y_true: True labels.
+        - y_pred: Predicted outputs.
+
+        Returns:
+        - Loss value.
+        """
+        raise NotImplementedError("Forward method not implemented.")
+
+    def gradient(self, y_true, y_pred, epoch=None):
+        """
+        Computes the gradient of the loss with respect to y_pred.
+
+        Arguments:
+        - y_true: True labels.
+        - y_pred: Predicted outputs.
+
+        Returns:
+        - Gradient of the loss with respect to y_pred.
+        """
+        raise NotImplementedError("Backward method not implemented.")
+
+
+class DynamicallyWeightedLoss(Loss):
+
+    def __init__(self, initial_boost=1, epochs=None, labels=None, weight_0=1, epsilon=1e-8):
+        self.initial_boost = initial_boost; self.epochs = epochs
+        self.labels = labels; self.weight_0 = weight_0
+        self._epsilon = epsilon 
+
+        self.data = {"initial_boost": self.initial_boost,
+                  "epochs": epochs,
+                  "weight_0": weight_0}
+        self.type = "binary_crossentropy"         
+        
+        self._current_epoch = None
+        self.weight_1 = None
+        
+    def __call__(self, y_true:np.ndarray, y_pred:np.ndarray, epoch=None):
+        """
+        Computes the weighted binary cross-entropy loss.
+        """
+        if epoch != self._current_epoch:
+            self.calculate_weights(epoch)
+
+        y_pred = np.clip(y_pred, 1e-8, 1 - 1e-8)  # To prevent log(0)
+        loss = -np.mean(
+            self.weight_1 * y_true * np.log(y_pred) +
+            self.weight_0 * (1 - y_true) * np.log(1 - y_pred)
+        )
+        return loss
+
+    def gradient(self, y_true:np.ndarray, y_pred:np.ndarray, epoch=None):
+        """
+        Computes the gradient of the loss with respect to y_pred.
+        """
+        if epoch != self._current_epoch:
+            self.calculate_weights(epoch)
+
+        y_pred = np.clip(y_pred, 1e-8, 1 - 1e-8)  # To prevent division by zero
+        grad = - (self.weight_1 * y_true / y_pred) + (self.weight_0 * (1 - y_true) / (1 - y_pred))
+        return grad
+    
+    def calculate_weights(self, epoch:int) -> None:
+        self._current_epoch = epoch 
+        initial_boost = self.initial_boost
+        scale = initial_boost - (initial_boost - 1) * epoch / self.epochs
+        self.weight_1 = (len(self.labels) - np.sum(self.labels)) / np.sum(self.labels) * scale
+        
+        return {0: self.weight_0, 1: self.weight_1}
+
+class WeightedBinaryCrossEntropyLoss(Loss):
+    def __init__(self, weight_0, weight_1):
+        """
+        Initializes the loss function with class weights.
+
+        Arguments:
+        - class_weight: Dictionary with weights for each class {0: weight_0, 1: weight_1}.
+        """
+        self.weight_1 = weight_1
+        self.weight_0 = weight_0
+
+        self.data = {"weight_0": weight_0,
+                     "weight_1": weight_1}
+        self.type = "binary_crossentropy"
+
+
+    def __call__(self, y_true, y_pred, epoch=None):
+        """
+        Computes the weighted binary cross-entropy loss.
+        """
+        y_pred = np.clip(y_pred, 1e-8, 1 - 1e-8)  # To prevent log(0)
+        loss = -np.mean(
+            self.weight_1 * y_true * np.log(y_pred) +
+            self.weight_0 * (1 - y_true) * np.log(1 - y_pred)
+        )
+        return loss
+
+    def gradient(self, y_true, y_pred, epoch=None):
+        """
+        Computes the gradient of the loss with respect to y_pred.
+        """
+        y_pred = np.clip(y_pred, 1e-8, 1 - 1e-8)  # To prevent division by zero
+        grad = - (self.weight_1 * y_true / y_pred) + (self.weight_0 * (1 - y_true) / (1 - y_pred))
+        return grad
+    
+    def calculate_weights(self, epoch:int) -> None:
+        return {0: self.weight_0, 1: self.weight_1}
+    
+class FocalLoss(Loss):
+    def __init__(self, alpha=0.25, gamma=2.0):
+        """
+        Initializes the focal loss function.
+
+        Arguments:
+        - alpha: Weighting factor for the positive class.
+        - gamma: Focusing parameter.
+        """
+        self.alpha = alpha
+        self.gamma = gamma
+
+        self.data = {"alpha": alpha,
+                     "gamma": gamma}
+
+
+    def __call__(self, y_true, y_pred, epoch=None):
+        """
+        Computes the focal loss.
+        """
+        y_pred = np.clip(y_pred, 1e-8, 1 - 1e-8)
+        pt = y_pred * y_true + (1 - y_pred) * (1 - y_true)
+        alpha_t = self.alpha * y_true + (1 - self.alpha) * (1 - y_true)
+        loss = -np.mean(alpha_t * (1 - pt) ** self.gamma * np.log(pt))
+        return loss
+
+    def gradient(self, y_true, y_pred, epoch=None):
+        """
+        Computes the gradient of the loss with respect to y_pred.
+        """
+        y_pred = np.clip(y_pred, 1e-8, 1 - 1e-8)
+        pt = y_pred * y_true + (1 - y_pred) * (1 - y_true)
+        alpha_t = self.alpha * y_true + (1 - self.alpha) * (1 - y_true)
+        grad = -alpha_t * (1 - pt) ** (self.gamma - 1) * (
+            self.gamma * pt * np.log(pt) + (1 - pt)
+        ) / pt
+        grad *= y_pred - y_true
+        return grad
+    
