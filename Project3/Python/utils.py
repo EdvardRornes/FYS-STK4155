@@ -16,6 +16,7 @@ import sys, os
 import time 
 import pickle
 import copy
+import random
 from typing import Tuple, List
 
                         
@@ -26,6 +27,11 @@ def save_results_incrementally(results, base_filename, save_path="GW_Parameter_T
     with open(os.path.join(save_path, filename), "wb") as f:
         pickle.dump(results, f)
     print(f'File {filename} saved to {save_path}.')
+
+# Function to load the results
+def load_results(filepath):
+    with open(filepath, "rb") as f:
+        return pickle.load(f)
 
 # Disable print
 def blockPrint():
@@ -84,6 +90,307 @@ class Franke:
         term3 = 0.5*np.exp(-(9*x - 7)**2/4.0 - 0.25*((9*y - 3)**2))
         term4 = -0.2*np.exp(-(9*x - 4)**2 - (9*y - 7)**2)
         return term1 + term2 + term3 + term4
+    
+def plot_2D_parameter_lambda_eta(
+        lambdas,
+        etas,
+        value,
+        title=None,
+        x_log=False,
+        y_log=False,
+        savefig=False,
+        filename='',
+        Reverse_cmap=False,
+        annot=True,
+        only_less_than=None,
+        only_greater_than=None,
+        xaxis_fontsize=None,
+        yaxis_fontsize=None,
+        xlim=None,
+        ylim=None,
+        ylabel=r"$\eta$",
+        on_click=None,
+        log_cbar=False
+        ):
+    """
+    Plots a 2D heatmap with lambda and eta as inputs, and adds interactivity for clicks.
+    """
+    cmap = 'plasma'
+    if Reverse_cmap == True:
+        cmap = 'plasma_r'
+    fig, ax = plt.subplots(figsize = (12, 7))
+    tick = ticker.ScalarFormatter(useOffset=False, useMathText=True)
+    tick.set_powerlimits((0, 0))
+
+    lambda_indices = np.array([True]*len(lambdas))
+    eta_indices = np.array([True]*len(etas))
+
+    if not (xlim is None):
+        xmin = xlim[0]; xmax = xlim[1]
+        lambda_indices = [i for i, l in enumerate(lambdas) if xmin <= l <= xmax]
+
+    if not (ylim is None):
+        ymin = ylim[0]; ymax = ylim[1]
+        eta_indices = [i for i, e in enumerate(etas) if ymin <= e <= ymax]
+
+    lambdas = np.array(lambdas)[lambda_indices]
+    etas = np.array(etas)[eta_indices]
+    value = value[np.ix_(eta_indices, lambda_indices)]
+
+    if x_log:
+        t_x = [u'${}$'.format(tick.format_data(lambd)) for lambd in lambdas]
+    else:
+        t_x = [fr'${lambd}$' for lambd in lambdas]
+
+    if y_log:
+        t_y = [u'${}$'.format(tick.format_data(eta)) for eta in etas]
+    else:
+        t_y = [fr'${eta}$' for eta in etas]
+
+    if only_less_than is not None and only_greater_than is None:
+        annot_data = np.where(value < only_less_than, np.round(value, 3).astype(str), "")
+    elif only_greater_than is not None and only_less_than is None:
+        annot_data = np.where(value > only_greater_than, np.round(value, 3).astype(str), "")
+    else:
+        annot_data = np.round(value, 3).astype(str) if annot else None
+
+    if log_cbar:
+        value = np.log(value)
+        # value = np.sqrt(value)
+
+    sns.heatmap(
+        data=value,
+        ax=ax,
+        cmap=cmap,
+        annot=annot_data,
+        fmt="",
+        xticklabels=t_x,
+        yticklabels=t_y,
+    )
+
+    # Adjust x and y tick labels
+    ax.set_xticks(np.arange(len(lambdas)) + 0.5)
+    ax.set_xticklabels([f"{float(label):.1e}" for label in lambdas], rotation=45, ha='right', fontsize=14)
+
+    ax.set_yticks(np.arange(len(etas)) + 0.5)
+    ax.set_yticklabels([f"{float(label):.1e}" for label in etas], rotation=0, fontsize=14)
+
+    # Add title and labels
+    if title:
+        if log_cbar:
+            title += rf'. Color bar is logged.'
+        plt.title(title)
+
+    plt.xlabel(r'$\lambda$', fontsize=xaxis_fontsize or 12)
+    plt.ylabel(ylabel, fontsize=yaxis_fontsize or 12)
+
+    # Register the click event to trigger a new plot
+    if on_click:
+        fig.canvas.mpl_connect('button_press_event', on_click)
+
+    plt.tight_layout()
+
+    if savefig:
+        plt.savefig(f'../Figures/{filename}.pdf')
+
+    return fig, ax
+
+def on_click(event, lambdas, etas, epochs, boosts, unique_lambdas, unique_etas, plot_info, time_steps, SNR, pkl_dir, save_option):
+    """
+    This function identifies when a certain grid has been clicked and loads the data from the data file for plotting.
+    """
+    # Check if the click is within the axes
+    if event.inaxes:
+        # Get the clicked coordinates (in axis space)
+        x, y = event.xdata, event.ydata
+
+        # Floor the coordinates to align with displayed plot indices
+        x = int(np.floor(x))
+        y = int(np.floor(y))
+
+        print(f"Clicked coordinates: x={x}, y={y}, Plot Info (Epoch, Boost): {plot_info}")
+
+        # Map the clicked coordinates to the closest lambda and eta indices
+        lambda_idx = x
+        eta_idx = y
+
+        # Retrieve the parameter values for the clicked indices
+        clicked_lambda = unique_lambdas[lambda_idx]
+        clicked_eta = unique_etas[eta_idx]
+
+        # Extract epoch and boost from the plot_info tuple
+        epoch, boost = plot_info
+
+        # Filter data based on the clicked parameters
+        mask = (lambdas == clicked_lambda) & (etas == clicked_eta) & (epochs == epoch) & (boosts == boost)
+        
+        x_test = np.linspace(0, 50, time_steps)
+
+        if np.any(mask):
+            print(f"Clicked Lambda: {clicked_lambda}, Eta: {clicked_eta}, Epochs: {epoch}, Boost: {boost:.1f}")
+
+            # Load results from the corresponding file
+            filepath = f'{pkl_dir}/Synthetic_GW_Merged_Results_timesteps{time_steps}_SNR{SNR}_epoch{epoch}_boost{boost:.1f}.pkl'
+            results = load_results(filepath)
+            key = f"lambda_{clicked_lambda}_eta_{clicked_eta}"
+
+            folds_data = results["data"][key]
+
+            # Create a new figure for displaying results
+            plt.figure(figsize=(20, 12))
+            plt.suptitle(fr"$\eta={clicked_eta}$, $\lambda={clicked_lambda}$, Epochs$\,={epoch}$, $\phi={boost:.1f}$")
+
+            # Loop through results and plot each fold
+            for fold_idx, fold in enumerate(folds_data):
+                plt.subplot(2, 3, fold_idx + 1)
+                plt.title(f"Round {fold_idx + 1}")
+
+                # Data preparation
+                predictions = np.array(fold['predictions'])
+                y_test = np.array(fold['y_test'])
+                test_labels = np.array(fold['test_labels'])
+                predicted_labels = (predictions > 0.5).astype(int)
+
+                # Plot original and solution data
+                plt.plot(x_test, y_test, label=f'Data {fold_idx+1}', lw=0.5, color='b')
+                plt.plot(x_test, test_labels, label=f"Solution {fold_idx+1}", lw=1.6, color='g')
+
+                # Highlight predicted events
+                predicted_gw_indices = np.where(predicted_labels == 1)[0]
+                if len(predicted_gw_indices) != 0:
+                    threshold = 2
+                    grouped_gw_indices = []
+                    current_group = [predicted_gw_indices[0]]
+
+                    for i in range(1, len(predicted_gw_indices)):
+                        if predicted_gw_indices[i] - predicted_gw_indices[i - 1] <= threshold:
+                            current_group.append(predicted_gw_indices[i])
+                        else:
+                            grouped_gw_indices.append(current_group)
+                            current_group = [predicted_gw_indices[i]]
+
+                    grouped_gw_indices.append(current_group)
+                    for i, group in zip(range(len(grouped_gw_indices)), grouped_gw_indices):
+                        plt.axvspan(x_test[group[0]], x_test[group[-1]], color="red", alpha=0.3, label="Predicted event" if i == 0 else "")
+
+                plt.legend()
+
+            # Adjust layout and show the plot
+            plt.tight_layout()
+            plt.show()
+
+            # Optionally save the plot
+            if save_option.lower() == 'y':
+                save_fig = input("Would you like to save the previously generated figure? y/n\n")
+                if save_fig.lower() == 'y':
+                    save_path = f'../Figures/Synthetic_GW_Results_timesteps{time_steps}_SNR{SNR}_epoch{epoch}_lamd{clicked_lambda}_eta{clicked_eta}_boost{boost:.1f}.pdf'
+                    plt.savefig(save_path)
+                    print(f"Figure saved to {save_path}")
+
+class GWSignalGenerator:
+    def __init__(self, signal_length: int):
+        """
+        Initialize the GWSignalGenerator with a signal length.
+        """
+        self.signal_length = signal_length
+        self.labels = np.zeros(signal_length, dtype=int)  # Initialize labels to 0 (background noise)
+        self.regions = []  # Store regions for visualization or further analysis
+
+    def add_gw_event(self, y, start, end, amplitude_factor=0.2, spike_factor=0.5, spin_start=1, spin_end=20, scale=10):
+        """
+        Adds a simulated gravitational wave event to the signal and updates labels for its phases.
+        Includes a spin factor that increases during the inspiral phase.
+
+        Parameters:
+        y:                Signal to append GW event to.
+        start:            Start index for GW event.
+        end:              End index for GW event.
+        amplitude_factor: Peak of the oscillating signal in the insipral phase.
+        spike_factor:     Peak of the signal in the merge phase.
+        spin_start:       Oscillation frequency of the start of the inspiral phase.
+        spin_end:         Oscillation frequency of the end of the inspiral phase.
+        scale:            Scale the amplitude of the entire event.
+
+        returns:
+        Various parameters to be used by apply_events function
+        """
+        event_sign = np.random.choice([-1, 1])  # Random polarity for the GW event
+
+        amplitude_factor=amplitude_factor*scale
+        spike_factor=spike_factor*scale
+
+        # Inspiral phase
+        inspiral_end = int(start + 0.7 * (end - start))  # Define inspiral region as 70% of event duration
+        time_inspiral = np.linspace(0, 1, inspiral_end - start)  # Normalized time for the inspiral
+        amplitude_increase = np.linspace(0, amplitude_factor, inspiral_end - start)
+        
+        # Spin factor: linearly increasing frequency
+        spin_frequency = np.linspace(spin_start, spin_end, inspiral_end - start)  # Spin frequency in Hz
+        spin_factor = np.sin(2 * np.pi * spin_frequency * time_inspiral)
+        
+        y[start:inspiral_end] += event_sign * amplitude_increase * spin_factor
+        # self.labels[start:inspiral_end] = 1  # Set label to 1 for inspiral
+
+        # Merger phase
+        merge_start = inspiral_end
+        merge_end = merge_start + int(0.1 * (end - start))  # Define merger as 10% of event duration
+        y[merge_start:merge_end] += event_sign * spike_factor * np.exp(-np.linspace(3, 0, merge_end - merge_start))
+        # self.labels[merge_start:merge_end] = 2  # Set label to 2 for merger
+
+        # Ringdown phase
+        dropoff_start = merge_end
+        dropoff_end = dropoff_start + int(0.2 * (end - start))  # Define ringdown as 20% of event duration
+        dropoff_curve = spike_factor * np.exp(-np.linspace(0, 15, dropoff_end - dropoff_start))
+        y[dropoff_start:dropoff_end] += event_sign * dropoff_curve
+        # self.labels[dropoff_start:dropoff_end] = 3  # Set label to 3 for ringdown
+
+        # We cut off 2/3rds of the ringdown event due to the harsh exponential supression.
+        # It is not expected that the NN will detect anything past this and may cause confusion for the program.
+        self.labels[start:(2*dropoff_start+dropoff_end)//3] = 1
+
+        # Store region details for visualization or debugging
+        self.regions.append((start, end, inspiral_end, merge_start, merge_end, dropoff_start, dropoff_end))
+
+    def generate_random_events(self, num_events: int, event_length_range: tuple, scale=1, 
+                               amplitude_factor_range = (0, 0.5), spike_factor_range = (0.2, 1.5),
+                               spin_start_range = (1, 5), spin_end_range = (5, 20)):
+        """
+        Generate random gravitational wave events with no overlaps.
+        """
+        events = []
+        used_intervals = []
+
+        for _ in range(num_events):
+            while True:
+                # Randomly determine start and length of event
+                event_length = random.randint(*event_length_range)
+                event_start = random.randint(0, self.signal_length - event_length)
+                event_end = event_start + event_length
+
+                # Ensure no overlap
+                if not any(s <= event_start <= e or s <= event_end <= e for s, e in used_intervals):
+                    used_intervals.append((event_start, event_end))
+                    break  # Valid event, exit loop
+
+            # Randomize event properties
+            amplitude_factor = random.uniform(*amplitude_factor_range)
+            spike_factor = random.uniform(*spike_factor_range)
+            
+            # Randomize spin start and end frequencies
+            spin_start = random.uniform(*spin_start_range)  # Starting spin frequency (in Hz)
+            spin_end = random.uniform(*spin_end_range)  # Ending spin frequency (in Hz)
+
+            events.append((event_start, event_end, amplitude_factor * scale, spike_factor * scale, spin_start, spin_end))
+
+        return events
+
+    def apply_events(self, y, events):
+        """
+        Apply generated events generated by add_gw_signal function to the input signal.
+        Can be manually created using this function 
+        """
+        for start, end, amplitude, spike, spin_start, spin_end in events:
+            self.add_gw_event(y, start, end, amplitude_factor=amplitude, spike_factor=spike, spin_start=spin_start, spin_end=spin_end)
     
 ############ Metric functions ############
 def MSE(y,ytilde):

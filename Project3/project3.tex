@@ -326,20 +326,20 @@ Consider for example Fig.~\ref{fig:GW170104GWEvent} which shows the raw strain d
 
 \begin{figure}[ht!]
 	\includegraphics[width=0.5\textwidth]{Figures/GW170104GWEvent.pdf}
-	\label{fig:GW170104GWEvent}
 	\caption{Raw strain data for GW170104 v2 from the H1 LIGO detector \cite{gwosc}. Blue corresponds to noise whilst red is where the GW event has been detected.}
+	\label{fig:GW170104GWEvent}
 \end{figure}
 
 What academics do is they remove all the noise from known sources which occur at this time, e.g. seismic activity, local disturbances and afterwards perform a Bayesian analysis of the data to determine the properties of the source \cite{LIGOScientific:2017bnn}. Finally, they reconstruct the signal using the found properties and check against the original data. For this particular event, they arrived at the signal shown in Fig. \ref{fig:GW170104Reconstructed}. This is clearly much easier to work with than the raw data, and a much more realistic task for a NN to be able to detect. However at this point all the work has already been done, and requires far more work than we can manage given our lack of expertise and time for this project.
 
 \begin{figure}[ht!]
 	\includegraphics[width=0.45\textwidth]{Figures/GW170104_waveform_reconstructions.svg.png}
-	\label{fig:GW170104Reconstructed}
 	\caption{Treated data and reconstructed signal for GW170104. This figure has been taken from \cite{LIGOScientific:2017bnn}.}
+	\label{fig:GW170104Reconstructed}
 \end{figure}
 
 \section{Results \& Discussion}
-We begin by considering \texttt{tensorflow.keras}'s \texttt{SimpleRNN} for various combinations of the learning rate $\eta$ and $L^2$ regularization parameter $\lambda$ as shown in Fig. \ref{fig:PhiShowcase}. Here we have used 50 epochs for both the figures, where the above uses a dynamical class weights with $\phi=1.4$ and the below uses static class weights, i.e. $\phi=1$. The difference for high $\lambda$ and suboptimal $\eta$ can be seen to be relatively small. In both the cases, large $\lambda$ corresponds to underfitting the model with the high suppression for the weights, and too high (low) value for the initial learning rate causes the model to overshoot (undershoot) the minima. For the combinations of $\eta$ and $\lambda$ where the model performs well, we see that there is a clear distinction between the two figures. The model performs much better when it initially starts with higher class weights for the signal class.
+We begin by considering \texttt{tensorflow.keras}'s \texttt{SimpleRNN} for various combinations of the learning rate $\eta$ and $L^2$ regularization parameter $\lambda$ as shown in Fig. \ref{fig:PhiShowcase}. Here we have used 50 epochs for both the figures, where the upper plot uses a dynamical class weights with $\phi=1.4$ and the lower plot uses static class weights, i.e. $\phi=1$. The difference for high $\lambda$ and suboptimal $\eta$ can be seen to be relatively small between the two. In both the cases, large $\lambda$ corresponds to underfitting the model with the high suppression for the weights, and too high (low) value for the initial learning rate causes the model to overshoot (undershoot) the desired minima. For the combinations of $\eta$ and $\lambda$ where the model performs well, we see that there is a clear distinction between the two figures. The model performs much better when it initially starts with higher class weights for the signal class.
 \begin{figure}[ht!]
 	\begin{subfigure}{0.499\textwidth}
 		\includegraphics[width=\textwidth]{Figures/2D_Plot_Loss_Epoch50_Boost1.4.pdf}
@@ -354,7 +354,7 @@ We begin by considering \texttt{tensorflow.keras}'s \texttt{SimpleRNN} for vario
 
 
 \section{Conclusion}
-As mentioned prior, actual gravitational wave detection is very difficult, and requires advanced techniques such as matched filtering and adaptive noise subtraction. In the limited time and resources we were not able to properly clean the data. Thus we opted into simply creating our own signal in a very ideal situation. 
+As mentioned prior, actual gravitational wave detection is very difficult, and requires advanced techniques such as matched filtering and adaptive noise subtraction. With our limited time and resources we were not able to properly clean the data to perform such an analysis. Thus we opted into simply creating our own signal in a very ideal situation. 
 
 In retrospect, this task was not ideal for this project as it was simply too difficult given our limited time. As such, our results are lackluster and not of much practical use.
 
