@@ -3,8 +3,8 @@ import pickle
 from collections import defaultdict
 
 # Define the input and output paths
-input_path = "GW_Parameter_Tuning_Results"
-output_path = "GW_Merged_Results"
+input_path = "GW_Parameter_Search_SNR5"
+output_path = "GW_Merged_Results_SNR5"
 time_steps = 5000
 SNR = 100
 

@@ -116,7 +116,7 @@ def plot_2D_parameter_lambda_eta(
 
 def on_click(event, lambdas, etas, losses, epochs, boosts, unique_lambdas, unique_etas, plot_info):
     """
-    Handle the click event on the plot.
+    This function identifies when a certain grid has been clicked and loads the data from the data file for plotting.
     """
     # Check if the click is within the axes
     if event.inaxes:
@@ -216,7 +216,7 @@ def load_results(filepath):
 save_option = input("Would you like to be prompted to save files? y/n\nNB! If you choose yes, THE TERMINAL WILL CRASH if you do not give the later prompts an answer!! \n")
 
 # Define the input and output paths
-pkl_dir = "GW_Merged_Results"  # Merged results path
+pkl_dir = "GW_Merged_Results_SNR5"  # Merged results path
 time_steps = 5000
 SNR = 100
 
@@ -316,7 +316,7 @@ for epoch in unique_epochs:
             y_log=True,
             Reverse_cmap=False,
             annot=True,
-            savefig=True,
+            savefig=False,
             filename=f"2D_Plot_Loss_Epoch{epoch}_Boost{boost}",
             on_click=lambda event, plot_info=(epoch, boost): on_click(event, lambdas, etas, losses, epochs, boosts, unique_lambdas, unique_etas, plot_info),  # Pass epoch and boost as tuple
             log_cbar=True

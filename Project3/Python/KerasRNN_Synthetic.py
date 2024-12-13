@@ -26,13 +26,16 @@ from tensorflow.keras import mixed_precision # type: ignore
 # tf.config.threading.set_intra_op_parallelism_threads(12)  # Adjust number of threads
 # tf.config.threading.set_inter_op_parallelism_threads(12)
 
+np.random.seed(0)
+random.seed(0)
+
 latex_fonts()
 savefigs = True
 
 class KerasRNN:
     def __init__(self, hidden_layers: list, dim_output: int, dim_input: int,  
                  loss_function="binary_crossentropy", optimizer="adam", labels=None, 
-                 gw_class_early_boost=1, learning_rate=1e-2, l2_regularization=0.0, activation_func='tanh'):
+                 gw_class_early_boost=1, learning_rate=1e-2, l2_regularization=0.0, activation_func='tanh', grad_clip=2):
         """
         Initializes an RNN model for multi-class classification.
         """
@@ -46,6 +49,7 @@ class KerasRNN:
         self.learning_rate = learning_rate
         self.l2_regularization = l2_regularization
         self.activation_func = activation_func
+        self.grad_clip = grad_clip
 
         # Initialize the RNN model
         self.model = self.create_model()  # Call create_model during initialization to set up the model
@@ -79,9 +83,9 @@ class KerasRNN:
         Compiles the model with the selected optimizer and learning rate.
         """
         optimizers = {
-            "adam": Adam(learning_rate=self.learning_rate),
-            "sgd": SGD(learning_rate=self.learning_rate),
-            "rmsprop": RMSprop(learning_rate=self.learning_rate)
+            "adam": Adam(learning_rate=self.learning_rate, clipnorm=self.grad_clip),
+            "sgd": SGD(learning_rate=self.learning_rate, clipnorm=self.grad_clip),
+            "rmsprop": RMSprop(learning_rate=self.learning_rate, clipnorm=self.grad_clip)
         }
 
         if self.optimizer not in optimizers:
@@ -93,14 +97,31 @@ class KerasRNN:
             metrics=['accuracy']
         )
 
-    def prepare_sequences_RNN(self, X: np.ndarray, y: np.ndarray, step_length: int):
+    def prepare_sequences_RNN(self, X: np.ndarray, y: np.ndarray, step_length: int, overlap = 0.9):
         """
-        Converts data into sequences for RNN training.
+        Converts data into sequences for RNN training with control over the non-overlapping part of sequences.
+        
+        Parameters:
+        - X: Input data as a numpy array.
+        - y: Target data as a numpy array.
+        - step_length: Length of each sequence.
+        - overlap: Fractional overlap between consecutive sequences.
+        
+        Returns:
+        - X_seq: Sequences of input data.
+        - y_seq: Corresponding target data.
         """
-        n_samples = len(X) - step_length + 1
-        X_seq = np.array([X[i:i + step_length] for i in range(n_samples)]).reshape(-1, step_length, 1)
-        y_seq = y[step_length-1:]
+        # Calculate the step size based on non-overlap
+        step_size = int(step_length*overlap)
+        # Calculate the total number of sequences we can generate
+        n_samples = (len(X) - step_length) // step_size + 1
+
+        # Create sequences with the specified non-overlap
+        X_seq = np.array([X[i:i + step_length] for i in range(0, n_samples * step_size, step_size)]).reshape(-1, step_length, 1)
+        y_seq = y[step_length - 1:step_length - 1 + len(X_seq)]
+
         return X_seq, y_seq
+
 
     def compute_class_weights(self, epoch: int, total_epochs: int):
         """
@@ -135,7 +156,7 @@ class KerasRNN:
         best_weights = None  # Keep track of the best model's weights, not the entire model
 
         # Define thresholds
-        patience_threshold = int(np.ceil(0.15 * epochs))  # Early stopping threshold
+        patience_threshold = int(np.ceil(0.5 * epochs))  # Early stopping threshold
         epochs_without_improvement = 0
         low_loss_threshold = 0.2  # Continue training even without improvement if loss is below this value
 
@@ -201,7 +222,7 @@ class GWSignalGenerator:
         self.labels = np.zeros(signal_length, dtype=int)  # Initialize labels to 0 (background noise)
         self.regions = []  # Store regions for visualization or further analysis
 
-    def add_gw_event(self, y, start, end, amplitude_factor=0.2, spike_factor=0.5, spin_start=1, spin_end=20, scale=1):
+    def add_gw_event(self, y, start, end, amplitude_factor=0.2, spike_factor=0.5, spin_start=1, spin_end=20, scale=10):
         """
         Adds a simulated gravitational wave event to the signal and updates labels for its phases.
         Includes a spin factor that increases during the inspiral phase.
@@ -305,11 +326,11 @@ x = np.linspace(0, time_for_1_sample, time_steps)
 num_samples = 5
 step_length = time_steps//100
 batch_size = time_steps//50*(num_samples-1)
-learning_rates = [1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]
-regularization_values = np.logspace(-10, 0, 11)
+learning_rates = [1e-3, 5e-3, 1e-2, 5e-2]
+regularization_values = np.logspace(-12, -6, 7)
 gw_earlyboosts = np.linspace(1, 1.5, 6)
 epoch_list = [10, 25, 50, 100]
-SNR = 100
+SNR = 30
 
 # epoch_list=[50]
 # learning_rates=[5e-3, 1e-2]
@@ -331,6 +352,7 @@ y = [
 
 for i in range(len(y)):
     y[i] /= SNR # Quick rescaling, the division factor is ~ SNR
+
 
 # y = []
 
@@ -357,7 +379,7 @@ labels = np.array(labels)
 y = y.reshape((y.shape[0], y.shape[1], 1))
 
 # Prepare to save data
-save_path = "GW_Parameter_Tuning_Results"
+save_path = "GW_Parameter_Search_SNR30"
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
