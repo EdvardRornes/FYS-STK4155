@@ -112,7 +112,7 @@ To date, the most advanced experiment to detect these waves is the Laser Interfe
 
 Neural Networks (NNs) has become a powerful tool in this context. By training a NN on large datasets of both gravitational wave signals and background noise, these models can learn to distinguish between genuine gravitational wave signals and random noise. This, in theory, may allow for more accurate detection and classification of GW events, even in the presence of significant interference, and may be the future of GW detection \cite{Marx:2024wjt, skliris2024}. NNs can be trained to recognize patterns in the data that correspond to the characteristic signatures of GWs, improving both the efficiency and reliability of detection algorithms. With the growing amount of data from observatories like LIGO, NNs are playing an increasingly important role in identifying new events and advancing our understanding of the universe.
 
-In this work we attempt to detect GWs on untreated data from \cite{gwosc} by building our own Recurrent Neural Network (RNN), along with using \texttt{tensorflow.keras}' RNN to test against our own. The performance on this untreated data is quite poor due to the untreated data having a signal to noise ratio (SNR) which is very low. The process of removing noise from GW is quite advanced, and requires state of the art techniques. Due to time constraints and lack of expertise in this field, we instead created a simple program which generates synthetic GW data. This allows us to control the SNR and focus on training neural networks on processed data, which simplifies the task vastly and allows us to evaluate our RNN's performance. The code in (cite Github) however does contain a program which automatically labels GW files granted that the user knows the duration of the GW signal, which may be of use for future work.
+In this work we attempt to detect GWs on untreated data from \cite{gwosc} by building our own Recurrent Neural Network (RNN), along with using \texttt{tensorflow.keras}' RNN to test against our own. The performance on this untreated data is quite poor due to the untreated data having a signal to noise ratio (SNR) which is very low. The process of removing noise from GW is quite advanced, and requires state of the art techniques. Due to time constraints and lack of expertise in this field, we instead created a simple program which generates synthetic GW data. This allows us to control the SNR and focus on training neural networks on processed data, which simplifies the task vastly and allows us to evaluate our RNN's performance. The code in \href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project3}{project 3} however does contain a program which automatically labels GW files granted that the user knows the duration of the GW signal, which may be of use for future work.
 
 \section{Theory}
 \subsection{Gravitational Waves}
@@ -156,7 +156,7 @@ for a GW traveling along the $z$-axis. The details for how this is derived is sp
 The stretching and compression from these polarizations are what is measured by observatories such as LIGO and Virgo. These displacements are often given as the dimensionless quantity \textbf{strain}, which is simply given by $h=\Delta L/L$ where $L$ is the effective length of the detector, and $\Delta L$ is the measured change in $L$ as the GW passes by. Note that $L$ is not simply the length of the detectors themselves, as they use mirrors to cause the beams of light to bounce back and forth multiple times, effectively increasing the length of the detector.
 
 
-\subsection{Recurrent Neural Networks}
+\subsection{Recurrent Neural Networks}	\label{{sec:RNNs}}
 The Recurrent Neural Networks (RNNs) are a class of neural networks specifically designed to handle sequential data or data with temporal dependencies. Unlike traditional Feed Forward Neural Networks, RNNs are capable of ``remembering'' information from previous time steps. This is done through the so called `hidden state', which acts as a form of memory by retaining information about prior computations. The hidden state is essentially an array of data that is updated at each time step based on the input data and the previous hidden state. Although this enables RNN to access the temporal dependencies of the data at hand, it greatly increases the computation time compared to that of the FFNN. The standard RNN consists of only one hidden layer, but it is certainly possible to have more than one hidden layer. In fact, this is commonly referred to as the stacked RNN (SRNN), and we will arrive at this neural network further down. However, firstly, we present the structure and general algorithm for the RNN.
 
 \subsubsection{Structure}
@@ -199,57 +199,27 @@ For some learning rate \(\eta\), the standard update rule for the weights and bi
 \end{subequations}
 This transformation may be extended using optimization methods aimed at handling exploding gradient, faster convergence, avoiding local minimas, etc. We covered three of these optimization methods in \cite{project2}; the root mean squared propagation (RMSprop), the adaptive gradient (AdaGrad) and the adaptive moment estimation (Adam). 
 
-Compared to FFNN, computing the gradient of \(L\) with respect to the weights leads to a somewhat more complicated expression. Consider now the partial derivative of the loss function with respect to the weight \(W\),  being either \(W_{hx}\) or \(W_{hh}\) (cf. \cite{superGood}):
+Compared to FFNN, computing the gradient of \(L\) with respect to the weights leads to a somewhat more complicated expression due to the temporal dependencies between the hiden states. This can be seen by writing out the partial derivative of the loss function with respect to the weight \(W\),  being either \(W_{hx}\) or \(W_{hh}\) (cf. \cite{superGood}):
 \begin{align}
 	\frac{\partial L}{\partial W} &= \sum_{n=1}^{N}\frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial \tilde{y}_{n}}{\partial W}\\
 	&= \sum_{n=1}^{N}\frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial \tilde{y}_{n}}{\partial h_{n}}\frac{\partial h_{n}}{\partial W},
 \end{align}
 where we can use backpropagation through time (BPTT) to write \cite{superGood}:
-\begin{align}
+\begin{align}	\label{eq:dL_dW_bare}
 	\frac{\partial L}{\partial W} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial \tilde{y}_{n}}{\partial h_{n}} \frac{\partial h_{n}}{\partial h_{k}} \frac{\partial h_{k}}{\partial W}.
 \end{align}
-Notice here that,
+Applying the chain rule in succession we obtain: 
 \begin{align}
 	\frac{\partial h_n}{\partial h_k} &= \frac{\partial h_n}{\partial h_{n-1}} \frac{\partial h_{n-1}}{\partial h_{n-1}} ... \frac{\partial h_{k+1}}{\partial h_{k}} \notag \\
-	&= \left( \sigma'_{h}(z_n)W_{hh} \right)\left( \sigma'_{h}(z_{n-1})W_{hh} \right) ... \left( \sigma'_{h}(z_{k+1})W_{hh} \right) \notag\\
-	&= \prod_{j=k+1}^{n} \sigma'_{h}(z_{j})W_{hh}.
+	&= \left[ W_{hh}^{T}\cdot\sigma'_{h}(z_n) \right]\left[ W_{hh}^{T}\cdot\sigma'_{h}(z_{n-1}) \right] ... \left[ W_{hh}^{T}\cdot\sigma'_{h}(z_{k+1}) \right] \notag\\
+	&= \prod_{j=k+1}^{n}\left[ W_{hh}^{T}\cdot\sigma'_{h}(z_{j})\right],
+\end{align}
+meaning that
+\begin{align}	\label{eq:dL_dW_alone}
+	\frac{\partial L}{\partial W} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial \tilde{y}_{n}}{\partial h_{n}} \prod_{j=k+1}^{n}\left[ W_{hh}^{T}\cdot\sigma'_{h}(z_{j})\right] \frac{\partial h_{k}}{\partial W}.
 \end{align}
 
-Define now the errors,
-\begin{align}
-	\delta^{k}_{hh}\equiv \frac{\partial h_{k}}{\partial W_{hh}}, \ \delta^{k}_{hx}\equiv \frac{\partial h_{k}}{\partial W_{hx}}.
-\end{align}
-Computing these errors leads to the recursive formula,
-\begin{align}
-	\delta^{1}_{hh} &= 0, \notag\\
-	\delta^{2}_{hh} &= \sigma'_{h}(z_2) h_1,  \notag\\
-	\delta^{3}_{hh} &= \sigma'_{h}(z_3) \left( h_2 + W_{hh}\sigma'_{h}(z_2)h_1 \right), \\
-	&\dots, \notag \\
-	\delta^{k}_{hh} &= \sigma'_{h}(z_{k}) \left( h_{k-1} + W_{hh}\delta^{k-1}_{hh}\right),
-\end{align}
-with a similar behavior for \(\delta^{N-n}_{hx}\). On the other hand, the last product in the gradient for the (hidden) biases, \(\partial h_{N-n}/\partial b_{h}\), do not lead to a recursive formula (c.f. \cite{superGood}). Hence, for the hidden weights and biases, we have the gradients 
-\begin{subequations}
-\begin{align}
-	\frac{\partial L}{\partial W_{hh}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j})W_{hh}\right] \delta^{k}_{hh}, \\
-	\frac{\partial L}{\partial W_{hx}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j})W_{hh}\right] \delta^{k}_{hx}, \\
-	\frac{\partial L}{\partial b_{h}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j})W_{hh}\right] \sigma'_{h}(z_k).
-\end{align}
-\end{subequations}
-For the output layer, \(\partial h_n/\partial W_{yh}\) is only non zero of \(n=N\), hence
-\begin{subequations}
-	\begin{align}
-		\frac{\partial L}{\partial W_{yh}} &= \frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial z_N}{\partial h_{n}} \sigma'_{\text{out}} h_{N}, \\
-		\frac{\partial L}{\partial b_{y}} &= \frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial z_N}{\partial h_{n}} \sigma'_{\text{out}}.
-	\end{align}
-\end{subequations}
-\begin{align}
-	\frac{\partial L}{\partial W_{yh}} &= \frac{\partial L}{\partial h_{N}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j})W_{hh}\right] \sigma'_{\text{out}}(z_N)h_N, \\
-	\frac{\partial L}{\partial b_{h}} &= \frac{\partial L}{\partial h_{N}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j})W_{hh}\right] \sigma'_{\text{out}}(z_N).
-\end{align}
-
-The dependency for each error term \(\delta^{N-n}\) on `past' error terms leads to a much greater computation time, compared to that of FFNN. Every gradient computation needs an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm, commonly referred to as `truncated backpropagation through time' (see e.g.~\cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on.
-
-Implementing the stacked RNN is then done by essentially creating a hidden state for each `stack' of RNN. The output of the stacked RNN is computed by feeding the hidden states to each other in succession, starting from the first hidden layer. The hidden states in some time window \(n\) are given by
+Up until now we have considered only one hidden layer. Implementing the stacked RNN is done by essentially creating a hidden state for each `stack' of RNN. The output of the stacked RNN is computed by feeding the hidden states to each other in succession, starting from the first hidden layer. The \(l\)-th hidden states in some time window \(n\) are given by
 \begin{align}
 	h^{l}_{n} = \begin{cases}
 		\sigma^{(h)}\left( W_{hx}^{1}X_{n} + W_{hh}^{1}h_{n-1}^{1} + b_{h}^{1}\right), &l=1, \\
@@ -258,13 +228,54 @@ Implementing the stacked RNN is then done by essentially creating a hidden state
 \end{align}	
 and the output of the stacked RNN in time window \(n\) as
 \begin{align}
-	\tilde{y}_{n} &= \sigma^{(\text{out})}\left( W_{yh}h^{L}_{n} + b_{y} \right).
+	\tilde{y}_{n} &= \sigma^{(\text{out})}\left( W_{yh}h^{L}_{n} + b_{y} \right),
 \end{align}
+with \(L\) being the total amount of hidden layers. 
 Here, the dimensions are \(W^{l}_{hx}\in\mathbb{R}^{d_{l}\times d_{l-1}}\), \(W^{l}_{hh}\in\mathbb{R}^{d_{l}\times d_{l}}\), with \(d_l\) being the dimension of the \(l\)-th hidden state, \(l_0\) the dimension of the input and \(l^{L}\) the dimension of the output. The BTT algorithm for a stacked RNN takes on the same form, except that we now have \(L\) hidden states. 
+
+
+Define now the errors:
+\begin{align}
+	\delta^{k,l}_{hh}\equiv \frac{\partial h_{k}^{l}}{\partial W_{hh}^{l}}, \ \delta^{k,l}_{hx}\equiv \frac{\partial h_{k}^{l}}{\partial W_{hx}^{l}}.
+\end{align}
+These errors can be computed recursively. For \(\delta^{k,l}_{hh}\), through time:
+\begin{align}
+	\delta^{1,l}_{hh} &= 0, \notag\\
+	\delta^{2,l}_{hh} &= \sigma'_{h}(z_2^{l}) h_1^{l},  \notag\\
+	\delta^{3,l}_{hh} &= \sigma'_{h}(z_3^{l}) \left( h_2^{l} + W_{hh}\sigma'_{h}(z_2^{l})h_1^{l} \right), \\
+	&\dots, \notag \\
+	\delta^{k,l}_{hh} &= \sigma'_{h}(z_{k}^{l}) \left( h_{k-1}^{l} + W_{hh}\delta^{k-1,l}_{hh}\right).
+\end{align}
+and for \(\delta^{k,l}_{hx}\), through the layers:
+\begin{align}
+	\delta^{k,1}_{hx} &= \sigma'(z_{k}^{1})X_{k}, \notag\\
+	\delta^{k,2}_{hx} &= \sigma'_{h}(z_{k}^{2}) \left( h_{k}^{1} + W^{2}_{hh}\sigma'(z_{k-1}^{2})X_{k} \right),  \notag\\
+	% \delta^{k,3}_{hx} &= \sigma'_{h}(z_{k}^{3}) \left( h_{k}^{2} + W_{hh}^{3}\delta^{k,2}_{hx} \right), \\
+	&\dots, \notag \\
+	\delta^{k,l}_{hx} &= \sigma'_{h}(z_{k}^{l}) \left( h_{k}^{l-1} + W_{hh}^{l}\delta^{k,l-1}_{hh}\right).
+\end{align}
+
+We can then summarize how the hidden-layer weights and biases are updated (cf. \cite{superGood}):
+\begin{subequations}	\label{eq:gradients_hidden}
+	\begin{align}
+		\frac{\partial L}{\partial W_{hh}^{l}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}^{l}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j}^{l})W_{hh}^{l}\right] \delta^{k,l}_{hh}, \\
+		\frac{\partial L}{\partial W_{hx}^{l}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}^{l}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j}^{l})W_{hh}^{l}\right] \delta^{k,l}_{hx}, \\
+		\frac{\partial L}{\partial b_{h}^{l}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}^{l}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j}^{l})W_{hh}^{l}\right] \sigma'_{h}(z_k^l),
+	\end{align}
+\end{subequations}
+since \(\partial h^{l}_{n}/\partial b_{h}^{l} = \sigma'_{h}(z_k^l)\). For the output layer, \(\partial h_n/\partial W_{yh}\) is only non zero of \(n=N\), hence
+\begin{subequations}	\label{eq:gradients_out}
+	\begin{align}
+		\frac{\partial L}{\partial W_{yh}} &= \frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial z_N}{\partial h_{n}} \sigma'_{\text{out}} h_{N}, \\
+		\frac{\partial L}{\partial b_{y}} &= \frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial z_N}{\partial h_{n}} \sigma'_{\text{out}}.
+	\end{align}
+\end{subequations}
+
+The dependency for each error term \(\delta^{k,l}\) on `past' error terms leads to a much greater computation time, compared to that of FFNN. Every gradient computation needs an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm, commonly referred to as `truncated backpropagation through time' (see e.g.~\cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on.
 
 \subsubsection{Gradient Clipping}
 A common method for dealing with exploding gradients, is the method of gradient clipping (see e.g.~\cite{Goodfellow-et-al-2016}). This method prevents checks whether the magnitude of the gradient is moving past a certain threshold. If this is true it truncates the current gradient. This can be summarized as:
-\begin{align}
+\begin{align}	\label{eq:clipping}
 	\nabla L \rightarrow \frac{\epsilon}{||\nabla L||}\nabla L\quad\text{if}\quad||\nabla L|| > \epsilon.
 \end{align}
 
@@ -287,7 +298,9 @@ where $S_{\rm CW}$ refers to the signal class weight (GWs in our case), epoch is
 \section{Implementation}
 We implemented a program which downloads the data from gwosc, and when given the duration of the GW signal of interest, automatically labels the data accordingly. Our definition for `duration' of an event is rather arbitrary. What we did is simply look at a relevant research paper (found for each event at \cite{gwosc_all_events}) which contains plots of the treated data and made an educated guess for where it would be reasonable to detect it. Further we made a class \texttt{GWSignalGenerator}, which adds a synthetic GW signal to any arbitrary sequence, and adds corresponding labels to the dataset. This was originally meant to be our test runs before working with the real deal. However due to the complicated nature of detecting GWs, this ended up being what our NNs where working with instead. We explain the reasoning for this in the next section.
 
-The structure of the programs are...
+\subsection{The Neural Networks}
+We have implemented two classes, \texttt{RNN} and \texttt{KerasRNN}, both of which inherits from a parent class called \texttt{NeuralNetwork} which contains methods handling saving data (\texttt{save\_data}), 
+scaling and splitting data (\texttt{store\_train\_test\_from\_data}), and dividing the data into sequences (\texttt{prepare\_sequences\_RNN}). The class \texttt{RNN} is our own implementation of the stacked RNN architecture described in \ref{sec:RNNs}, using the equations in \eqref{eq:gradients_hidden} and \eqref{eq:gradients_out} when training. On the other hand, the class \texttt{KerasRNN}, uses \texttt{keras}'s RNN \cite{keras_recurrent_layers}. Common to both classes are their public methods—\texttt{train}, \texttt{predict}, \texttt{cross\_validate} and \texttt{calculate\_loss}—which function as their names suggest. Both classes are initialized with key parameters, including a hidden-layer activation function, an output-layer activation function, a scaler type, and an optimizer, which can be set to plain gradient descent, Adagrad, RMSprop, or Adam. During training, the models require the input data, the number of epochs, batch size, window size, and optionally a clip value for gradient clipping, as implemented in \eqref{eq:clipping}. For details on the specific file structure, we refer to the README file at \href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project3}{project 3}.
 
 We then performed large parameter scans with keras' SimpleRNN where we considered the following parameters:
 \begin{itemize}

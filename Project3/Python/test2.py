@@ -8,7 +8,6 @@ import time
 import pickle
 import copy
 from utils import Activation, Scalers, Optimizer
-from sklearn.model_selection import KFold
 
 
 class NeuralNetwork:
@@ -274,7 +273,7 @@ class RNN(NeuralNetwork):
         self.clip_value = clip_value
 
         # Prepare sequences for training
-        self.store_train_test_from_data(X, y, split_data=split_data) # applies scaling
+        self.store_train_test_from_data(X, y, split_data=False) # applies scaling
         self.X_seq, self.y_seq = self.prepare_sequences_RNN(self.X_train_scaled, self.y_train, window_size, self.input_size)
         self.X_seq_test, self.y_seq_test = self.prepare_sequences_RNN(self.X_test_scaled, self.y_test, window_size, self.input_size)
 
@@ -341,64 +340,7 @@ class RNN(NeuralNetwork):
     
     def predict(self, X:np.ndarray):
         return np.array(self._forward(X)).transpose(1, 0, 2)
-
-    def cross_validate(self, X:np.ndarray, y:np.ndarray, k_folds:int=5, epochs:int=100, batch_size:int=32, window_size:int=10, 
-                       truncation_steps:int=None, clip_value:float=1e12) -> None:
-        """
-        Performs k-fold cross-validation on the RNN.
-
-        Positional Arguments:
-         * X:                   Input features.
-         * y:                   Target labels.
-        
-        Keyword Arguments:
-         * k_folds:             Number of folds for cross-validation.
-         * epochs:              Number of epochs for training.
-         * batch_size:          Batch size for training.
-         * window_size:         Window size for RNN sequences.
-         * truncation_steps:    Truncation steps for backpropagation.
-         * clip_value:          Gradient clipping value.
-        """
-        self.clip_value = clip_value
-        self.truncation_steps = truncation_steps
-
-        # Initialize KFold
-        kf = KFold(n_splits=k_folds, shuffle=True, random_state=42)
-        fold_metrics = []  # To store metrics for each fold
-
-        for fold, (train_idx, val_idx) in enumerate(kf.split(X)):
-            print(f"Training on fold {fold + 1}/{k_folds}...")
-            
-            # Split data into training and validation sets
-            X_train, X_val = X[train_idx], X[val_idx]
-            y_train, y_val = y[train_idx], y[val_idx]
-
-            # Prepare sequences
-            self.store_train_test_from_data(X_train, y_train, split_data=False)  # applies scaling
-            self.X_seq, self.y_seq = self.prepare_sequences_RNN(self.X_train_scaled, self.y_train, window_size, self.input_size)
-            self.X_seq_val, self.y_seq_val = self.prepare_sequences_RNN(X_val, y_val, window_size, self.input_size)
-
-            # Train the model
-            for epoch in range(epochs):
-                for i in range(0, self.X_seq.shape[0], batch_size):
-                    X_batch = self.X_seq[i:i + batch_size]
-                    y_batch = self.y_seq[i:i + batch_size]
-
-                    # Forward pass
-                    y_pred = self._forward(X_batch)
-
-                    # Backward pass
-                    self._backward(X_batch, y_batch, y_pred, epoch, i)
-
-            # Evaluate on the validation set
-            val_loss = self._evaluate(self.X_seq_val, self.y_seq_val)
-            print(f"Fold {fold + 1} - Validation Loss: {val_loss}")
-            fold_metrics.append(val_loss)
-
-        # Report cross-validation results
-        mean_loss = np.mean(fold_metrics)
-        print(f"Cross-Validation Results: Mean Loss = {mean_loss:.4f}, Std Loss = {np.std(fold_metrics):.4f}")
-
+    
     #################### Private Methods ####################
     def _forward(self, X_batch: np.ndarray):
         """
@@ -555,8 +497,9 @@ class RNN(NeuralNetwork):
          ## W_{hx}: 
         delta_hx.append([])
         activation_derivative = self.activation_func_derivative(self.z[l][k])  # Shape: (d_{h_l}, B)
+        h_k_lm1 = X_batch[:, k, :].T  # Shape: (d_{h_{l-1}}, B)
 
-        delta = activation_derivative[:, np.newaxis, :] * X_batch[:, k, :].T[np.newaxis, :, :]  # Shape: (d_{h_l}, d_{h_{l-1}}, B)
+        delta = activation_derivative[:, np.newaxis, :] * h_k_lm1[np.newaxis, :, :]  # Shape: (d_{h_l}, d_{h_{l-1}}, B)
         delta_hx[-1].append(delta)
 
          # W_{hh}: 
@@ -636,6 +579,8 @@ class RNN(NeuralNetwork):
 
                 delta = activation_derivative * combined_term  # shape: (d_{h_l}, d_{h_{l-1}}, B)
                 delta_hx[-1].append(delta)
+
+
 
         ### Accumulate gradients for hidden weights and biases
         # Computing l=0 first, just to compute the gradients for the output layer, instead of having a seperate loop for it

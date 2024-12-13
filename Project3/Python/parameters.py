@@ -1,12 +1,14 @@
 from GW_generator import GWSignalGenerator
 from NNs import NeuralNetwork, RNN, DynamicallyWeightedLoss, WeightedBinaryCrossEntropyLoss
 from sklearn.metrics import accuracy_score
+from sklearn.utils.class_weight import compute_class_weight
 from utils import * 
 
 
 def parameter_scan(X:np.ndarray, y:np.ndarray, t:np.ndarray, model:NeuralNetwork, optimizer:Optimizer,
                    epoch_list:list, gw_earlyboosts:list, learning_rates:list, regularization_values:list, 
                    batch_size:int, window_size:int, 
+                   clip_value=1e12,
                    save_path="GW_Parameter_Tuning_Results",
                    activation_str="tanh", activation_str_out="sigmoid"):
     
@@ -55,15 +57,26 @@ def parameter_scan(X:np.ndarray, y:np.ndarray, t:np.ndarray, model:NeuralNetwork
                         # Initialize the KerasRNN model with the current learning rate and regularization
                         hidden_layers = [5, 10, 2]  # Example hidden layers
                         optimizer.learning_rate = lr
+
+                        unique_classes = np.unique(y[:,0])
+                        class_weights = compute_class_weight('balanced', classes=unique_classes, y=y[:,0])
+
+                        # Extract weights
+                        weight_0 = class_weights[0]  # Weight for class 0
+                        weight_1 = class_weights[1]  # Weight for class 1
+
+                        loss_func = WeightedBinaryCrossEntropyLoss(weight_0=weight_0, weight_1=weight_1)
+                        # loss_func = DynamicallyWeightedLoss(initial_boost=1.4)
+
                         I_am_the_trainer = model(
                             1, hidden_layers, 1,
                             optimizer, activation=activation_str, activation_out=activation_str_out,
                             lambda_reg=reg_value,
-                            loss_function=DynamicallyWeightedLoss(initial_boost=boost)
+                            loss_function=loss_func
                         )
 
                         y_train = y_train.reshape(-1, 1); train_labels = train_labels.reshape(-1, 1)
-                        I_am_the_trainer.train(y_train, train_labels, epochs, batch_size=batch_size, window_size=window_size)
+                        I_am_the_trainer.train(y_train, train_labels, epochs, batch_size=batch_size, window_size=window_size, clip_value=clip_value)
 
                         # Predict with the trained model
                         predictions = I_am_the_trainer.predict(y_test.reshape(-1, 1, 1))
@@ -150,5 +163,5 @@ if __name__ == "__main__":
     y = np.array(y)
 
     parameter_scan(X, y, t, RNN, Adam(), epoch_list, gw_earlyboosts, learning_rates, regularization_values,
-                   batch_size, window_size,
-                   save_path="GW_Merged_Results/RNN")
+                   batch_size, window_size, 
+                   save_path="GW_Merged_Results/RNN", clip_value=2)
