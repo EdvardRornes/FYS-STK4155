@@ -1,5 +1,5 @@
 import os
-# Removes some print out details
+# Removes some print out details from tensorflow
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
 
@@ -8,6 +8,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, accuracy_score
 
+# I get warnings which dont do anything, thus type: ignore on these
 import tensorflow.keras as ker # type: ignore
 from keras.models import Sequential, load_model # type: ignore
 from keras.optimizers import Adam, SGD, RMSprop # type: ignore
@@ -622,15 +623,30 @@ class RNN(NeuralNetwork):
         self.optimizer_W_yh = self.optimizer.copy()
         self.optimizer_b_y = self.optimizer.copy()
 
+
+
 class KerasRNN:
     def __init__(self, hidden_layers: list, dim_output: int, dim_input: int,  
                  loss_function="binary_crossentropy", optimizer="adam", labels=None, 
                  gw_class_early_boost=1, learning_rate=1e-2, l2_regularization=0.0, activation_func='tanh', grad_clip=2):
         """
         Initializes an RNN model for multi-class classification.
+
+        Parameters:
+        - hidden_layers (list): List of integers specifying the number of units in each hidden layer.
+        - dim_output (int): Number of output classes.
+        - dim_input (int): Dimension of the input data.
+        - loss_function (str): Loss function for training the model (default is 'binary_crossentropy').
+        - optimizer (str): Optimizer for training the model (default is 'adam').
+        - labels (list or None): Labels used for dynamic class weight computation.
+        - gw_class_early_boost (float): Boost factor for the gravitational wave class during early epochs (default is 1).
+        - learning_rate (float): Learning rate for the optimizer (default is 1e-2).
+        - l2_regularization (float): L2 regularization parameter for the layers (default is 0.0).
+        - activation_func (str): Activation function used in RNN layers (default is 'tanh').
+        - grad_clip (float): Gradient clipping norm value to prevent exploding gradients (default is 2).
         """
         self.hidden_layers = hidden_layers
-        self.dim_output = dim_output  # Number of output classes
+        self.dim_output = dim_output
         self.dim_input = dim_input
         self.loss_function = loss_function
         self.optimizer = optimizer
@@ -647,6 +663,9 @@ class KerasRNN:
     def create_model(self):
         """
         Creates and returns a fresh RNN model with the specified configurations.
+
+        Returns:
+        - model: A compiled Keras RNN model with the defined layers, loss function, and optimizer.
         """
         model = ker.models.Sequential()
 
@@ -671,6 +690,9 @@ class KerasRNN:
     def compile_model(self, model):
         """
         Compiles the model with the selected optimizer and learning rate.
+
+        Parameters:
+        - model: The Keras model to compile.
         """
         optimizers = {
             "adam": Adam(learning_rate=self.learning_rate, clipnorm=self.grad_clip),
@@ -687,7 +709,7 @@ class KerasRNN:
             metrics=['accuracy']
         )
 
-    def prepare_sequences_RNN(self, X: np.ndarray, y: np.ndarray, step_length: int, overlap = 0.9):
+    def prepare_sequences_RNN(self, X: np.ndarray, y: np.ndarray, step_length: int, overlap=0.9):
         """
         Converts data into sequences for RNN training with control over the non-overlapping part of sequences.
         
@@ -695,27 +717,33 @@ class KerasRNN:
         - X: Input data as a numpy array.
         - y: Target data as a numpy array.
         - step_length: Length of each sequence.
-        - overlap: Fractional overlap between consecutive sequences.
+        - overlap: Fractional overlap between consecutive sequences (default is 0.9, meaning 90% overlap).
         
         Returns:
         - X_seq: Sequences of input data.
         - y_seq: Corresponding target data.
         """
-        # Calculate the step size based on non-overlap
-        step_size = int(step_length*overlap)
+        # Calculate the step size based on overlap
+        step_size = int(step_length * overlap)
         # Calculate the total number of sequences we can generate
         n_samples = (len(X) - step_length) // step_size + 1
 
-        # Create sequences with the specified non-overlap
+        # Create sequences with the specified overlap
         X_seq = np.array([X[i:i + step_length] for i in range(0, n_samples * step_size, step_size)]).reshape(-1, step_length, 1)
         y_seq = y[step_length - 1:step_length - 1 + len(X_seq)]
 
         return X_seq, y_seq
 
-
     def compute_class_weights(self, epoch: int, total_epochs: int):
         """
         Compute class weights dynamically based on the label distribution.
+
+        Parameters:
+        - epoch (int): The current epoch number.
+        - total_epochs (int): The total number of training epochs.
+        
+        Returns:
+        - dict: A dictionary with the computed class weights for each class.
         """
         if self.labels is not None:
             initial_boost = self.gw_class_early_boost
@@ -730,6 +758,15 @@ class KerasRNN:
         """
         Train the RNN model using dynamically computed class weights, stopping early if no improvement occurs for 30% of the epochs.
         Continues training if the loss is sufficiently low, even if no improvement is observed.
+        
+        Parameters:
+        - X_train (np.ndarray): Training input data.
+        - y_train (np.ndarray): Training target data.
+        - epochs (int): Number of training epochs.
+        - batch_size (int): Size of each training batch.
+        - step_length (int): Length of the input sequences.
+        - verbose (int): Verbosity level (0 = silent, 1 = progress bar, 2 = one line per epoch).
+        - verbose1 (int): Additional verbosity control for printing epoch updates (default is 1).
         """
         # Split training data into a validation set
         X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=42)
@@ -757,7 +794,7 @@ class KerasRNN:
             # Fit the model for one epoch and save the history
             history = self.model.fit(
                 X_train_seq, y_train_seq,
-                epochs=1, # 1 epoch due to dynamic class weight, still doing "epoch" epochs due to loop
+                epochs=1,  # 1 epoch due to dynamic class weight, still doing "epoch" epochs due to loop
                 batch_size=batch_size,
                 verbose=verbose,
                 class_weight=class_weights,
@@ -795,12 +832,21 @@ class KerasRNN:
 
     def predict(self, X_test, y_test, step_length, verbose=1):
         """
-        Generate predictions for test data.
+        Predicts labels for the test set using the trained RNN model.
+        
+        Parameters:
+        - X_test: Input data for prediction.
+        - y_test: True labels for the test data.
+        - step_length: Length of the input sequences.
+        - verbose: Verbosity level (default is 1, progress bar style).
+        
+        Returns:
+        - y_pred: Predicted labels for the test data.
         """
-        X_test_seq, y_test_seq = self.prepare_sequences_RNN(X_test, y_test, step_length)
-        prediction = self.model.predict(X_test_seq, verbose=verbose)
-        loss, accuracy = self.model.evaluate(X_test_seq, y_test_seq, verbose=verbose)
-        return prediction, loss, accuracy
+        X_test_seq, _ = self.prepare_sequences_RNN(X_test, y_test, step_length)
+        y_pred = self.model.predict(X_test_seq, verbose=verbose)
+        return y_pred
+
 
 class Loss:
     data = {}
