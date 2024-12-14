@@ -4,7 +4,7 @@ import pickle
 import os
 
 from utils import latex_fonts, GWSignalGenerator
-from NNs import KerasRNN2 as KerasRNN
+from NNs import KerasRNN
 from utils import * 
 np.random.seed(0)
 
@@ -130,7 +130,7 @@ for epochs in epoch_list:
                         metrics=['accuracy']
                     )
                     # Train the model for this fold
-                    model.train(y_train, train_labels, int(epochs), batch_size, window_size)
+                    model.train(y_train, train_labels.reshape(-1,1), int(epochs), batch_size, window_size)
 
                     # Predict with the trained model
                     predictions, loss, accuracy = model.predict(y_test, test_labels, window_size, verbose=0)

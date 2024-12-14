@@ -33,8 +33,4 @@ Contains subfolders for figures generated during the project. These figures are 
 - **revtex4-2.cls.txt**: A copy of the revtex 4.2 class file used for formatting the report.
 
 ## Running the Code
-
-1. Navigate to the `Python/` folder.
-2. Execute the relevant scripts based on the desired regression model or task. For example:
-   - To run OLS regression: `python OLS.py`
-3. Figures will be saved in the corresponding subfolders under `Figures/` if `save` is set to `True`.
+Running **2d_parameter_plot.py** will read existing data and display multiple interactive 2D parameter plots. To simply test either the RNN class or the KerasRNN class on synthetic GW data, modify and run **Train_Synthetic.py** with chosen variables.

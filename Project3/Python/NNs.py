@@ -142,22 +142,13 @@ class NeuralNetwork:
         * X_seq, y_seq:     sequences (3D array) and corresponding labels (1D array).
         """
         if overlap is None:
-            sequences = []
-            labels = []
+            step_size = 1
+        else:
+            if not (0 <= overlap < 100):
+                raise ValueError("Overlap percentage must be between 0 and 100 (exclusive).")
+            
+            step_size = max(1, int(window_size * (1 - overlap / 100)))  # Calculate step size based on overlap percentage
 
-            for i in range(len(X) - window_size + 1):
-                seq = X[i:i + window_size]
-                sequences.append(seq)
-                label = y[i + window_size - 1]
-                labels.append(label)
-
-            X_seq, y_seq = np.array(sequences).reshape(-1, window_size, 1), np.array(labels)
-            return X_seq, y_seq
-        
-        if not (0 <= overlap < 100):
-            raise ValueError("Overlap percentage must be between 0 and 100 (exclusive).")
-
-        step_size = max(1, int(window_size * (1 - overlap / 100)))  # Calculate step size based on overlap percentage
         sequences = []
         labels = []
 
@@ -257,7 +248,6 @@ class RNN(NeuralNetwork):
         self.store_train_test_from_data(X, y, split_data=split_data) # applies scaling
         self.X_seq, self.y_seq = self.prepare_sequences_RNN(self.X_train_scaled, self.y_train, window_size, self.input_size)
         self.X_seq_test, self.y_seq_test = self.prepare_sequences_RNN(self.X_test_scaled, self.y_test, window_size, self.input_size)
-
         self.truncation_steps = truncation_steps # Sent to backward propagation method 
 
         if isinstance(self._loss_function, DynamicallyWeightedLoss):
@@ -286,7 +276,6 @@ class RNN(NeuralNetwork):
 
             # Validation after each epoch
             y_pred = self.predict(self.X_seq_test)
-            # print(np.shape(y_pred.T), np.shape(self.y_seq_test))
             test_loss = self.calculate_loss(self.y_seq_test, y_pred, epoch)
 
             if test_loss < best_loss:
@@ -366,7 +355,6 @@ class RNN(NeuralNetwork):
 
                     # Forward pass
                     y_pred = self._forward(X_batch)
-
                     # Backward pass
                     self._backward(X_batch, y_batch, y_pred, epoch, i)
 
@@ -412,7 +400,7 @@ class RNN(NeuralNetwork):
             
             self.hidden_states[-1][t] = self.activation_func_out(self.z[-1][t]).T
 
-        return np.array(self.hidden_states[-1])
+        return self.hidden_states[-1]
 
     def _compute_next_dL_dh_n(self, dL_dh_n:list, l:int, k_start:int, k_stop:int, 
                               y_batch:np.ndarray, y_pred:np.ndarray, epoch:int):
@@ -497,7 +485,7 @@ class RNN(NeuralNetwork):
         
         return delta_hh, delta_hx, dL_dh_n
     
-    def _backward(self, X_batch: np.ndarray, y_batch: np.ndarray, y_pred: np.ndarray, epoch: int, batch_index: int):
+    def _backward(self, X_batch:np.ndarray, y_batch:np.ndarray, y_pred:np.ndarray, epoch:int, batch_index: int):
         """
         Backward pass for the RNN.
 
@@ -664,13 +652,7 @@ class RNN(NeuralNetwork):
                     tmp = np.sum(tmp, axis=0, keepdims=True).T  # (256,7) -> (1,7) -> (7,1) 
 
                     dL_db_h[l] += tmp
-
-        ### Clipping:
-        dL_dW_yh = self._clip_gradient(dL_dW_yh, self.clip_value)
-        dL_db_y = self._clip_gradient(dL_db_y, self.clip_value)
-
-        ### Updating weights and biases 
-        for l in range(self.L-1):
+            
             dL_dW_hx[l] = self._clip_gradient(dL_dW_hx[l], self.clip_value)
             dL_dW_hh[l] = self._clip_gradient(dL_dW_hh[l], self.clip_value)
             dL_db_h[l] = self._clip_gradient(dL_db_h[l], self.clip_value)
@@ -678,6 +660,20 @@ class RNN(NeuralNetwork):
             self.W_hx[l] = self.optimizer_W_hx[l](self.W_hx[l], dL_dW_hx[l], epoch, batch_index)
             self.W_hh[l] = self.optimizer_W_hh[l](self.W_hh[l], dL_dW_hh[l], epoch, batch_index)
             self.b_h[l] = self.optimizer_b_hh[l](self.b_h[l], dL_db_h[l], epoch, batch_index)
+
+        ### Clipping:
+        dL_dW_yh = self._clip_gradient(dL_dW_yh, self.clip_value)
+        dL_db_y = self._clip_gradient(dL_db_y, self.clip_value)
+
+        # ### Updating weights and biases 
+        # for l in range(self.L-1):
+        #     dL_dW_hx[l] = self._clip_gradient(dL_dW_hx[l], self.clip_value)
+        #     dL_dW_hh[l] = self._clip_gradient(dL_dW_hh[l], self.clip_value)
+        #     dL_db_h[l] = self._clip_gradient(dL_db_h[l], self.clip_value)
+
+        #     self.W_hx[l] = self.optimizer_W_hx[l](self.W_hx[l], dL_dW_hx[l], epoch, batch_index)
+        #     self.W_hh[l] = self.optimizer_W_hh[l](self.W_hh[l], dL_dW_hh[l], epoch, batch_index)
+        #     self.b_h[l] = self.optimizer_b_hh[l](self.b_h[l], dL_db_h[l], epoch, batch_index)
 
         self.W_yh = self.optimizer_W_yh(self.W_yh, dL_dW_yh, epoch, batch_index)
         self.b_y = self.optimizer_b_y(self.b_y, dL_db_y, epoch, batch_index)
@@ -835,7 +831,7 @@ class KerasRNN(NeuralNetwork):
             metrics=['accuracy']
         )
 
-    def train(self, X:np.ndarray, y:np.ndarray, epochs:int, batch_size:int, window_size:int, verbose=1, verbose1=1):
+    def train(self, X:np.ndarray, y:np.ndarray, epochs:int, batch_size:int, window_size:int, verbose=1, verbose1=1, clip_value=1e12):
         """
         Trains the RNN model using (possibly dynamically) calculated weights, stopping early if no improvement occurs for 30% of the epochs.
         Continues training if the loss is sufficiently low, even if no improvement is observed.
@@ -875,7 +871,6 @@ class KerasRNN(NeuralNetwork):
         # Compute class weights dynamically based on training labels
         for epoch in range(epochs):
             class_weights = self._loss_function.calculate_weights(epoch)
-
             # Fit the model for one epoch and save the history
             history = self.model.fit(
                 X_train_seq, y_train_seq,
