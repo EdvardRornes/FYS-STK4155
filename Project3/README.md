@@ -1,4 +1,4 @@
-# Project1: Application of Regression and Resampling on USGS Terrain Data
+# Project2: Recurrent Neural Networks and Synthetic Gravitational Waves
 
 ## Abstract
 Insert Abstract
@@ -12,14 +12,14 @@ This folder contains all the Python scripts used in the project.
 - **Clean_Data.py**: Utility file used to remove certain parts from the data which did not need to be saved.
 - **KerasRNN_Synthetic.py**: Performs a parameter scan with using Keras' RNN which is initialized in **NNs.py**.
 - **Merge_data.py**: Merges parameter combinations of the learning rate and l2 regularization into larger files.
-- **parameters.py**: 
+- **parameters.py**: Runs a parameter scan, saving the data to a chosen folder (`GW_Merged_Resulst` by default).
+- **read_GW.py**: Downloads data surrounding a GW event from gwosc. Given the duration of the signal, this program automatically labels the data, saving it to the `Data` folder.
 - **PlotGWExample.py**: A simple plot of the GW data downloaded from gwosc with **read_GW.py**
-- **read_GW.py**: Downloads data surrounding a GW event from gwosc. Given the duration of the signal, this program automatically labels the 
-- **.py**: 
+- **NNs.py**: Contains the Neural Network classes, RNN and KerasRNN.
 - **utils.py**: Contains utility functions used across all the scripts.
 
 ### Data
-
+Actual gravitational event data.
 
 ### Figures
 Contains subfolders for figures generated during the project. These figures are categorized by the type of analysis or model:

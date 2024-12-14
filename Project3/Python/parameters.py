@@ -1,4 +1,4 @@
-from GW_generator import GWSignalGenerator
+from utils import GWSignalGenerator
 from NNs import NeuralNetwork, RNN, DynamicallyWeightedLoss, WeightedBinaryCrossEntropyLoss
 from sklearn.metrics import accuracy_score
 from sklearn.utils.class_weight import compute_class_weight
