@@ -1,5 +1,5 @@
-from GW_generator import GWSignalGenerator
-from NNs import NeuralNetwork, RNN, DynamicallyWeightedLoss, WeightedBinaryCrossEntropyLoss
+from utils import GWSignalGenerator
+from NNs import NeuralNetwork, RNN, KerasRNN, DynamicallyWeightedLoss, WeightedBinaryCrossEntropyLoss
 from sklearn.metrics import accuracy_score
 from sklearn.utils.class_weight import compute_class_weight
 from utils import * 
@@ -66,7 +66,7 @@ def parameter_scan(X:np.ndarray, y:np.ndarray, t:np.ndarray, model:NeuralNetwork
                         weight_1 = class_weights[1]  # Weight for class 1
 
                         loss_func = WeightedBinaryCrossEntropyLoss(weight_0=weight_0, weight_1=weight_1)
-                        # loss_func = DynamicallyWeightedLoss(initial_boost=1.4)
+                        loss_func = DynamicallyWeightedLoss(initial_boost=1.4)
 
                         I_am_the_trainer = model(
                             1, hidden_layers, 1,
@@ -162,6 +162,6 @@ if __name__ == "__main__":
     X = np.array(X)
     y = np.array(y)
 
-    parameter_scan(X, y, t, RNN, Adam(), epoch_list, gw_earlyboosts, learning_rates, regularization_values,
+    parameter_scan(X, y, t, KerasRNN, Adam(), epoch_list, gw_earlyboosts, learning_rates, regularization_values,
                    batch_size, window_size, 
                    save_path="GW_Merged_Results/RNN", clip_value=2)
