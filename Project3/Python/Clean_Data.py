@@ -1,8 +1,10 @@
 import os
 import pickle
 
+#### This program simply removes some part of the unmerged results so that they take up less space
+
 # Define the path where your data files are stored
-data_path = "GW_Parameter_Tuning_Results"
+data_path = "GW_Parameter_Search"
 
 # # Loop through all files in the directory
 for filename in os.listdir(data_path):

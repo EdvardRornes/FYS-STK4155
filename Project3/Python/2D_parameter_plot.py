@@ -43,7 +43,7 @@ with tqdm(total=len(pkl_files), desc="Loading .pkl files", ncols=100) as pbar:
             # Split the lambda_eta_key to extract lambda and eta values
             lambda_value = float(lambda_eta_key.split('_')[1])
             eta_value = float(lambda_eta_key.split('_')[3])
-            if lambda_value == 1: # These make the colorbars not very instructive due to terrible results
+            if lambda_value == 1: # These make the colorbars not very instructive due to terrible results so we skip them
                 continue
             
             # Collect the loss values

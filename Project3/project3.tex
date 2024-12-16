@@ -90,7 +90,7 @@ aps,
 
 \begin{document}
 	
-\title{Project 3}
+\title{Recurrent Neural Networks and Synthetic Gravitational Waves}
 \author{Edvard B. Rørnes}
 \email{e.b.rornes@fys.uio.no}
 \author{Isak O. Rukan}
@@ -137,11 +137,11 @@ where $G_{\mu\nu}$ is the Einstein tensor which depends solely on the metric $g_
 \end{align}
 where $h\equiv \tensor{h}{^\mu_\mu}=\eta^{\mu\nu}h_{\mu\nu}$ is the first order trace of $h$ and $\Box$ is the flat space d'Alembertian. Note that we do not perturb $T_{\mu\nu}$ since it is in fact a perturbation itself. Now this equation here is quite complicated, however due to a symmetry in the original Lagrangian one has a so-called \textit{gauge freedom}, i.e.~a set of transformations which leave the Lagrangian invariant. This can be used to vastly simplify the equations heavily. A common choice is the Lorenz gauge: $\p^\mu h_{\mu\nu}=0$. Using this we can reduce \eqref{eq:LEFE} to the much simpler differential equation
 \begin{align}
-	\Box h_{\mu\nu}=-16\pi T_{\mu\nu}
+	\Box h_{\mu\nu}=-16\pi T_{\mu\nu}.
 \end{align}
 Specializing to the case corresponding to a vacuum ($T_{\mu\nu}=0$) then we simply have a plane wave equation
 \begin{align}
-	\Box h_{\mu\nu}=0,\implies h_{\mu\nu}=C_{\mu\nu}e^{ikx},\quad k_\mu k^\mu=0
+	\Box h_{\mu\nu}=0,\implies h_{\mu\nu}=C_{\mu\nu}e^{ikx},\quad k_\mu k^\mu=0,
 \end{align}
 where
 \begin{align}
@@ -150,14 +150,14 @@ where
 		0&h_+&h_\times&0\\
 		0&h_\times&-h_+&0\\
 		0&0&0&0
-	\end{bmatrix}
+	\end{bmatrix},
 \end{align}
-for a GW traveling along the $z$-axis. The details for how this is derived is spelled out in \cite{Carroll}. $h_+$ and $h_\times$ correspond to the ``plus'' and ``cross'' polarization respectively, which determine how the gravitational waves stretch and compress the spacetime it passes through. 
+for a GW traveling along the $z$-axis. The details for how this is derived and why it must take on this form is spelled out in \cite{Carroll}. $h_+$ and $h_\times$ correspond to the ``plus'' and ``cross'' polarization respectively, which determine how the gravitational waves stretch and compress the spacetime it passes through. 
 
 The stretching and compression from these polarizations are what is measured by observatories such as LIGO and Virgo. These displacements are often given as the dimensionless quantity \textbf{strain}, which is simply given by $\Delta L/L$ where $L$ is the effective length of the detector, and $\Delta L$ is the measured change in $L$ as the GW passes by. Note that in the case of detection, $L$ is not simply the length of the detectors themselves, as they use mirrors to cause the beams of light to bounce back and forth multiple times, effectively increasing the length of the detector.
 
 
-\subsection{Recurrent Neural Networks}	\label{{sec:RNNs}}
+\subsection{Recurrent Neural Networks} \label{sec:RNNs}
 The Recurrent Neural Networks (RNNs) are a class of neural networks specifically designed to handle sequential data or data with temporal dependencies. Unlike traditional Feed Forward Neural Networks, RNNs are capable of ``remembering'' information from previous time steps. This is done through the so called `hidden state', which acts as a form of memory by retaining information about prior computations. The hidden state is essentially an array of data that is updated at each time step based on the input data and the previous hidden state. Although this enables RNN to access the temporal dependencies of the data at hand, it greatly increases the computation time compared to that of the FFNN. The standard RNN consists of only one hidden layer, but it is certainly possible to have more than one hidden layer. In fact, this is commonly referred to as the stacked RNN (SRNN), and we will arrive at this neural network further down. However, firstly, we present the structure and general algorithm for the RNN.
 
 \subsubsection{Structure}
@@ -275,6 +275,9 @@ since \(\partial h^{l}_{n}/\partial b_{h}^{l} = \sigma'_{h}(z_k^l)\). For the ou
 The dependency for each error term \(\delta^{k,l}\) on `past' error terms leads to a much greater computation time, compared to that of FFNN. Every gradient computation needs an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm, commonly referred to as `truncated backpropagation through time' (see e.g.~\cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on.
 
 \subsection{Additional Techniques}
+\subsubsection{Regularization}
+We used $L^2$ regularization for all our results. We refer to \cite{project1} for an introduction.
+
 \subsubsection{Gradient Clipping}
 A common method for dealing with exploding gradients, is the method of gradient clipping (see e.g.~\cite{Goodfellow-et-al-2016}). This method prevents checks whether the magnitude of the gradient is moving past a certain threshold. If this is true it truncates the current gradient. This can be summarized as:
 \begin{align}	\label{eq:clipping}
@@ -301,7 +304,7 @@ We implemented a program which downloads the data from gwosc, and when given the
 
 \subsection{The Neural Networks}
 We have implemented two classes, \texttt{RNN} and \texttt{KerasRNN}, both of which inherits from a parent class called \texttt{NeuralNetwork} which contains methods handling saving data (\texttt{save\_data}), 
-scaling and splitting data (\texttt{store\_train\_test\_from\_data}), and dividing the data into sequences (\texttt{prepare\_sequences\_RNN}). The class \texttt{RNN} is our own implementation of the stacked RNN architecture described in \ref{sec:RNNs}, using the equations in \eqref{eq:gradients_hidden} and \eqref{eq:gradients_out} when training. On the other hand, the class \texttt{KerasRNN}, uses \texttt{keras}'s RNN \cite{keras_recurrent_layers}. Common to both classes are their public methods—\texttt{train}, \texttt{predict}, \texttt{cross\_validate} and \texttt{calculate\_loss}—which function as their names suggest. Both classes are initialized with key parameters, including a hidden-layer activation function, an output-layer activation function, a scaler type, and an optimizer, which can be set to plain gradient descent, Adagrad, RMSprop, or Adam. During training, the models require the input data, the number of epochs, batch size, window size, and optionally a clip value for gradient clipping, as implemented in \eqref{eq:clipping}. For details on the specific file structure, we refer to the README file at \href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project3}{project 3}.
+scaling and splitting data (\texttt{store\_train\_test\_from\_data}), and dividing the data into sequences (\texttt{prepare\_sequences\_RNN}). The class \texttt{RNN} is our own implementation of the stacked RNN architecture described in section \ref{sec:RNNs}, using the equations in \eqref{eq:gradients_hidden} and \eqref{eq:gradients_out} when training. On the other hand, the class \texttt{KerasRNN}, uses \texttt{keras}'s RNN \cite{keras_recurrent_layers}. Common to both classes are their public methods—\texttt{train}, \texttt{predict}, \texttt{cross\_validate} and \texttt{calculate\_loss}—which function as their names suggest. Both classes are initialized with key parameters, including a hidden-layer activation function, an output-layer activation function, a scaler type, and an optimizer, which can be set to plain gradient descent, Adagrad, RMSprop, or Adam. During training, the models require the input data, the number of epochs, batch size, window size, and optionally a clip value for gradient clipping, as implemented in \eqref{eq:clipping}. For details on the specific file structure, we refer to the README file at \href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project3}{project 3}.
 
 A program which uses \texttt{tensorflow.keras}' SimpleRNN was then implemented and parameter scans with the following parameters were performed:
 \begin{itemize}
@@ -339,7 +342,7 @@ What academics do is they remove all the noise from known sources which occur at
 \end{figure}
 
 \section{Results \& Discussion}
-We begin by considering \texttt{tensorflow.keras}'s \texttt{SimpleRNN} for various combinations of the learning rate $\eta$ and $L^2$ regularization parameter $\lambda$ as shown in Fig. \ref{fig:PhiShowcase}. Here we have used 50 epochs for both the figures, where the upper plot uses a dynamical class weights with $\phi=1.4$ and the lower plot uses static class weights, i.e. $\phi=1$. The difference for high $\lambda$ and suboptimal $\eta$ can be seen to be relatively small between the two. In both the cases, large $\lambda$ corresponds to underfitting the model with the high suppression for the weights, and too high (low) value for the initial learning rate causes the model to overshoot (undershoot) the desired minima. For the combinations of $\eta$ and $\lambda$ where the model performs well, we see that there is a clear distinction between the two figures. The model performs much better when it initially starts with higher class weights for the signal class.
+We begin by considering \texttt{tensorflow.keras}'s \texttt{SimpleRNN} on a set of synthetic GW signals for various combinations of the learning rate $\eta$ and $L^2$ regularization parameter $\lambda$ as shown in Fig. \ref{fig:PhiShowcase}. Here we have used 50 epochs for both the figures, where the upper plot uses a dynamical class weights with $\phi=1.4$ and the lower plot uses static class weights, i.e. $\phi=1$. The difference for high $\lambda$ and suboptimal $\eta$ can be seen to be relatively small between the two. In both the cases, large $\lambda$ corresponds to underfitting the model with the high suppression for the weights, and too high (low) value for the initial learning rate causes the model to overshoot (undershoot) the desired minima. For the combinations of $\eta$ and $\lambda$ where the model performs well, we see that there is a clear distinction between the two figures. The model performs much better when it initially starts with higher class weights for the signal class.
 \begin{figure}[ht!]
 	\begin{subfigure}{0.499\textwidth}
 		\includegraphics[width=\textwidth]{Figures/2D_Plot_Loss_Epoch50_Boost1.4.pdf}

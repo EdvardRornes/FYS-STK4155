@@ -1,4 +1,4 @@
-# Project2: Recurrent Neural Networks and Synthetic Gravitational Waves
+# Project 3: Recurrent Neural Networks and Synthetic Gravitational Waves
 
 ## Abstract
 Insert Abstract

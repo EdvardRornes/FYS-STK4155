@@ -67,7 +67,7 @@ labels = np.array(labels)
 y = y.reshape((y.shape[0], y.shape[1], 1))
 
 # Prepare to save data
-save_path = "GW_Parameter_Search_SNR30"
+save_path = "GW_Parameter_Search"
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 

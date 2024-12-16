@@ -9,7 +9,7 @@ def parameter_scan(X:np.ndarray, y:np.ndarray, t:np.ndarray, model:NeuralNetwork
                    epoch_list:list, gw_earlyboosts:list, learning_rates:list, regularization_values:list, 
                    batch_size:int, window_size:int, 
                    clip_value=1e12,
-                   save_path="GW_Parameter_Tuning_Results",
+                   save_path="GW_Parameter_Search",
                    activation_str="tanh", activation_str_out="sigmoid"):
     
 

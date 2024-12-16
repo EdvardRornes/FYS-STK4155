@@ -2,9 +2,11 @@ import os
 import pickle
 from collections import defaultdict
 
+##### This program merges the files created by the NN's #####
+
 # Define the input and output paths
-input_path = "GW_Parameter_Search_SNR5"
-output_path = "GW_Merged_Results_SNR5"
+input_path = "GW_Parameter_Search"
+output_path = "GW_Merged_Results"
 time_steps = 5000
 SNR = 100
 
