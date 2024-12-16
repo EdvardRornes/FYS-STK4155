@@ -5,10 +5,10 @@ from collections import defaultdict
 ##### This program merges the files created by the NN's #####
 
 # Define the input and output paths
-input_path = "GW_Parameter_Search"
-output_path = "GW_Merged_Results"
+input_path = "GW_Parameter_Search_V2"
+output_path = "GW_Parameter_Search_V2"#"GW_Merged_Results"
 time_steps = 5000
-SNR = 100
+SNR = 30
 
 if not os.path.exists(output_path):
     os.makedirs(output_path)

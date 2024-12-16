@@ -5,14 +5,14 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from utils import latex_fonts, plot_2D_parameter_lambda_eta, on_click
 
-# latex_fonts() 
+latex_fonts() 
 
 save_option = input("Would you like to be prompted to save files? y/n\nNB! If you choose yes, THE TERMINAL WILL CRASH if you do not give the later prompts an answer!! \n")
 
 # Define the input and output paths
-pkl_dir = "GW_Merged_Results"  # Merged results path
+pkl_dir = "GW_Merged_Results_SNR5"  # Merged results path
 time_steps = 5000
-SNR = 100
+SNR = 30
 
 # Containers for the parameters and results
 lambdas = []

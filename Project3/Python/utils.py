@@ -286,9 +286,10 @@ def on_click(event, lambdas, etas, epochs, boosts, unique_lambdas, unique_etas, 
             plt.suptitle(fr"$\eta={clicked_eta}$, $\lambda={clicked_lambda}$, Epochs$\,={epoch}$, $\phi={boost:.1f}$")
 
             # Loop through results and plot each fold
+            threshold = int(input('Threshhold: '))
             for fold_idx, fold in enumerate(folds_data):
                 plt.subplot(2, 3, fold_idx + 1)
-                plt.title(f"Round {fold_idx + 1}")
+                plt.title(f"Fold {fold_idx + 1}")
 
                 # Data preparation
                 predictions = np.array(fold['predictions'])
@@ -303,20 +304,25 @@ def on_click(event, lambdas, etas, epochs, boosts, unique_lambdas, unique_etas, 
                 # Highlight predicted events
                 predicted_gw_indices = np.where(predicted_labels == 1)[0]
                 if len(predicted_gw_indices) != 0:
-                    threshold = 2
                     grouped_gw_indices = []
                     current_group = [predicted_gw_indices[0]]
 
                     for i in range(1, len(predicted_gw_indices)):
-                        if predicted_gw_indices[i] - predicted_gw_indices[i - 1] <= threshold:
+                        if predicted_gw_indices[i] - predicted_gw_indices[i - 1] <= 1:  # Points are consecutive
                             current_group.append(predicted_gw_indices[i])
                         else:
-                            grouped_gw_indices.append(current_group)
+                            if len(current_group) >= threshold:  # Only keep groups meeting the threshold
+                                grouped_gw_indices.append(current_group)
                             current_group = [predicted_gw_indices[i]]
 
-                    grouped_gw_indices.append(current_group)
+                    # Check the last group
+                    if len(current_group) >= threshold:
+                        grouped_gw_indices.append(current_group)
+
+                    # Highlight the regions for valid groups
                     for i, group in zip(range(len(grouped_gw_indices)), grouped_gw_indices):
                         plt.axvspan(x_test[group[0]], x_test[group[-1]], color="red", alpha=0.3, label="Predicted event" if i == 0 else "")
+
 
                 plt.legend()
 

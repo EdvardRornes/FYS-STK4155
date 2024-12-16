@@ -355,6 +355,13 @@ We begin by considering \texttt{tensorflow.keras}'s \texttt{SimpleRNN} on a set 
 	\label{fig:PhiShowcase}	
 \end{figure}
 
+The particular example with $\eta=0.01$, $\lambda=10^{-8}$, $\phi=1.4$ with 50 epochs for SNR $\sim100$ is given in Fig.~\ref{fig:bestPred}. Here we have shaded the region in red where the RNN predicted a signal in two neighboring points. The blue line corresponds to the signal itself, whilst the green line is the labels. Here we have much more than just ideal conditions with a rather large SNR, so obviously the task is not nearly as difficult as actual GW events. 
+\begin{figure}
+	\includegraphics[width=0.49\textwidth]{Figures/BestPrediction_Epochs50_Phi1.4.pdf}
+	\caption{Keras RNN with $\eta=0.01$, $\lambda=10^{-8}$, $\phi=1.4$ with 50 epochs for SNR $\sim100$. The blue line corresponds to the generated data, the green line is the labels whilst the shaded red regions are where the RNN predicted a signal. The $x$- and $y$-axes correspond to the time and strain respectively.}
+	\label{fig:bestPred}
+\end{figure}
+
 
 \section{Conclusion}
 As mentioned prior, actual gravitational wave detection is very difficult, and requires advanced techniques such as matched filtering and adaptive noise subtraction. With our limited time and resources we were not able to properly clean the data to perform such an analysis. Thus we opted into simply creating our own signal in a very ideal situation. 

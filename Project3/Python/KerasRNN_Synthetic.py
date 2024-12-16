@@ -17,10 +17,11 @@ time_for_1_sample = 50
 num_samples = 5
 window_size = time_steps//100
 batch_size = time_steps//50*(num_samples-1)
-learning_rates = [1e-3, 5e-3, 1e-2, 5e-2]
-regularization_values = np.logspace(-12, -6, 7)
+learning_rates = [1e-2]
+regularization_values = [1e-8]#np.logspace(-12, -6, 7)
 gw_earlyboosts = np.linspace(1, 1.5, 6)
-epoch_list = [10, 25, 50, 100]
+gw_earlyboosts = [1.4]
+epoch_list = [50]#[10, 25, 50, 100]
 SNR = 30
 
 x = np.linspace(0, time_for_1_sample, time_steps)
@@ -67,7 +68,7 @@ labels = np.array(labels)
 y = y.reshape((y.shape[0], y.shape[1], 1))
 
 # Prepare to save data
-save_path = "GW_Parameter_Search"
+save_path = "GW_Parameter_Search_V2"
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
@@ -99,27 +100,25 @@ for epochs in epoch_list:
                     continue  # Skip the calculation and move to the next combination
 
                 print(f"\nTraining with eta = {lr}, lambda = {reg_value}, epochs = {epochs}, early boost = {boost:.1f}")
+                
 
-                for fold in range(num_samples):                    
+                for fold in range(num_samples):
+                    best_val_loss=float('inf')
+                    best_weights=None
                     # Split the data into train and test sets for this fold
-                    x_test = x  
                     y_test = y[fold]  # Use the fold as the test set
                     test_labels = labels[fold] # Corresponding labels for the test set
-
+                    print(np.sum(labels[fold])/len(labels[fold]))
                     # Create the training set using all other samples
-                    x_train = np.linspace(0, (num_samples - 1) * time_for_1_sample, time_steps * (num_samples - 1))  # Just for plotting
-                    y_train = np.concatenate([y[i] for i in range(num_samples) if i != fold], axis=0)
-                    train_labels = np.concatenate([labels[i] for i in range(num_samples) if i != fold], axis=0)
+                    # x_train = np.linspace(0, (num_samples - 1) * time_for_1_sample, time_steps * (num_samples - 1))  # Just for plotting
+                    # y_train = np.concatenate([y[i] for i in range(num_samples) if i != fold], axis=0)
+                    # train_labels = np.concatenate([labels[i] for i in range(num_samples) if i != fold], axis=0)
                     
                     # Initialize the KerasRNN model with the current learning rate and regularization
-                    hidden_layers = [5, 10, 2]  # Example hidden layers
-                    model = KerasRNN(1,
-                        hidden_layers, 
-                        1,
-                        Adam(),
-                        "tanh",
+                    hidden_layers = [5, 10, 2]
+                    model = KerasRNN(1, hidden_layers, 1, Adam(), "tanh",
                         activation_out="sigmoid",
-                        lambda_reg=reg_value
+                        lambda_reg=reg_value,
                     )
 
                     # Recompile the model with updated regularization
@@ -129,13 +128,16 @@ for epochs in epoch_list:
                         optimizer=model.optimizer.name, 
                         metrics=['accuracy']
                     )
+                    
+                    for i in range(num_samples):
+                        if i != fold:
+                            best_val_loss, best_weights = model.train(y[i], labels[i].reshape(-1,1), int(epochs), batch_size, window_size, best_weights=best_weights, best_val_loss=best_val_loss)
                     # Train the model for this fold
-                    model.train(y_train, train_labels.reshape(-1,1), int(epochs), batch_size, window_size)
+                    
 
                     # Predict with the trained model
                     predictions, loss, accuracy = model.predict(y_test, test_labels, window_size, verbose=0)
                     predictions = predictions.reshape(-1)
-                    predicted_labels = (predictions > 0.5).astype(int)
                     x_pred = x[window_size - 1:]
 
                     results.append({
@@ -144,7 +146,7 @@ for epochs in epoch_list:
                         "learning_rate": lr,
                         "regularization": reg_value,
                         "fold": fold,
-                        "train_labels": train_labels.tolist(),
+                        # "train_labels": train_labels.tolist(),
                         "y_test": y_test.tolist(),
                         "test_labels": test_labels.tolist(),
                         "predictions": predictions.tolist(),
@@ -159,5 +161,5 @@ for epochs in epoch_list:
                     ETA = elapsed_time*(100/percentage_progress-1)
 
                     print(f"Progress: {progress}/{total_iterations} ({percentage_progress:.2f}%), Time elapsed = {elapsed_time:.1f}s, ETA = {ETA:.1f}s, Test loss = {loss:.3f}, Test accuracy = {100*accuracy:.1f}%\n")
-
+                    
                 save_results_incrementally(results, base_filename)
