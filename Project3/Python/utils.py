@@ -296,7 +296,7 @@ class GWSignalGenerator:
         self.labels = np.zeros(signal_length, dtype=int)  # Initialize labels to 0 (background noise)
         self.regions = []  # Store regions for visualization or further analysis
 
-    def add_gw_event(self, y, start, end, amplitude_factor=0.2, spike_factor=0.5, spin_start=1, spin_end=20, scale=10):
+    def add_gw_event(self, y, start, end, amplitude_factor=0.2, spike_factor=0.5, spin_start=1, spin_end=20, scale=1):
         """
         Adds a simulated gravitational wave event to the signal and updates labels for its phases.
         Includes a spin factor that increases during the inspiral phase.
@@ -352,7 +352,7 @@ class GWSignalGenerator:
         self.regions.append((start, end, inspiral_end, merge_start, merge_end, dropoff_start, dropoff_end))
 
     def generate_random_events(self, num_events: int, event_length_range: tuple, scale=1, 
-                               amplitude_factor_range = (0, 0.5), spike_factor_range = (0.2, 1.5),
+                               amplitude_factor_range = (0, 0.5), spike_factor_range = (0.2, 0.8),
                                spin_start_range = (1, 5), spin_end_range = (5, 20)):
         """
         Generate random gravitational wave events with no overlaps.
@@ -1022,4 +1022,27 @@ class FocalLoss(Loss):
         ) / pt
         grad *= y_pred - y_true
         return grad
+
+def weighted_Accuracy(y_true:np.ndarray, y_pred:np.ndarray, eps:float=1e-13) -> float:
+    """
+    Calculates a weighted accuracy, usage is in particular for binary unbiased features.  
+    """
+    # Making sure the correct dim
+    y_true = y_true.flatten()
+    y_pred = y_pred.flatten()
     
+    N = len(y_true)
+    TP = np.sum((np.abs(y_true-1)< eps) & (np.abs(y_pred-1)< eps))
+    TN = np.sum((np.abs(y_true)< eps) & (np.abs(y_pred)< eps))
+
+    tmp = np.sum(y_true)
+    if tmp == 0:
+        return TN / N 
+    
+    W_1 = N / tmp - 1
+
+    A_w = 1 / (2*N * (1 - np.sum(y_true)/N)) * (TN + W_1 * TP)
+
+    B = 1 / (2*(N - np.sum(y_true)))
+    A_w = B * (TN + W_1*TP)
+    return A_w 

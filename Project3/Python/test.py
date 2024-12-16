@@ -288,13 +288,29 @@ class RNN(NeuralNetwork):
         best_loss = float('inf')
         best_weights = None
         for epoch in range(epochs):
-            for i in range(0, self.X_seq.shape[0], batch_size):
+            i = 0
+            X_batch = self.X_seq[i:i + batch_size]
+            y_batch = self.y_seq[i:i + batch_size]
+
+            # Forward pass
+            self.hidden_states_seq = [np.zeros(self.layers[l + 1], window_size) for l in range(self.L)] # Including output
+            
+
+            self.z = [np.zeros((self.layers[l + 1], window_size)) for l in range(self.L)] # including output
+
+            y_pred = self._forward(X_batch) # shape(batch_size, window_size, input_size)
+
+            # Backward pass
+            self._backward(X_batch, y_batch, y_pred, epoch, i)
+
+            self.hidden_states.append(self.hidden_states_seq)
+            
+            for i in range(batch_size, self.X_seq.shape[0], batch_size):
                 X_batch = self.X_seq[i:i + batch_size]
                 y_batch = self.y_seq[i:i + batch_size]
 
                 # Forward pass
-                y_pred = self._forward(X_batch)
-                # y_pred[:, :] = 1 * (y_pred[:, :] >= 0.5)
+                y_pred = self._forward(X_batch) # shape(batch_size, window_size, input_size)
 
                 # Backward pass
                 self._backward(X_batch, y_batch, y_pred, epoch, i)
@@ -404,13 +420,9 @@ class RNN(NeuralNetwork):
             hidden_states: The hidden states of each layer for each timestep.
         """
         batch_size, window_size, _ = X_batch.shape
-
-        # Initialize hidden states and z (pre-activation values)
-        self.hidden_states = [[np.zeros((self.layers[l + 1], batch_size)) for _ in range(window_size)] for l in range(self.L)]
-        self.z = [[np.zeros((self.layers[l + 1], batch_size)) for _ in range(window_size)] for l in range(self.L)]
         
-        for t in range(window_size):
-            x_t = X_batch[:, t, :]
+        for t in range(batch_size):
+            x_t = X_batch[t, :, :]
             prev_state = np.zeros_like(self.hidden_states[0][0])
             
             for l in range(self.L - 1):
@@ -880,7 +892,7 @@ class KerasRNN(NeuralNetwork):
 
 
         # Reinitialize model (this ensures no previous weights are carried over between parameter runs)
-        # self.model = self.create_model()
+        self.model = self.create_model()
 
         # Initialize variables to track the best model and validation loss
         best_val_loss = float('inf')
