@@ -239,7 +239,7 @@ Define now the errors:
 \begin{align}
 	\delta^{k,l}_{hh}\equiv \frac{\partial h_{k}^{l}}{\partial W_{hh}^{l}}, \ \delta^{k,l}_{hx}\equiv \frac{\partial h_{k}^{l}}{\partial W_{hx}^{l}}.
 \end{align}
-These errors can be computed recursively. For \(\delta^{k,l}_{hh}\), through time:
+These errors can be computed recursively through time. For \(\delta^{k,l}_{hh}\), 
 \begin{align}
 	\delta^{1,l}_{hh} &= 0, \notag\\
 	\delta^{2,l}_{hh} &= \sigma'_{h}(z_2^{l}) h_1^{l},  \notag\\
@@ -247,13 +247,13 @@ These errors can be computed recursively. For \(\delta^{k,l}_{hh}\), through tim
 	&\dots, \notag \\
 	\delta^{k,l}_{hh} &= \sigma'_{h}(z_{k}^{l}) \left( h_{k-1}^{l} + W_{hh}\delta^{k-1,l}_{hh}\right).
 \end{align}
-and for \(\delta^{k,l}_{hx}\), through the layers:
+and for \(\delta^{k,l}_{hx}\),:
 \begin{align}
 	\delta^{k,1}_{hx} &= \sigma'(z_{k}^{1})X_{k}, \notag\\
 	\delta^{k,2}_{hx} &= \sigma'_{h}(z_{k}^{2}) \left( h_{k}^{1} + W^{2}_{hh}\sigma'(z_{k-1}^{2})X_{k} \right),  \notag\\
 	% \delta^{k,3}_{hx} &= \sigma'_{h}(z_{k}^{3}) \left( h_{k}^{2} + W_{hh}^{3}\delta^{k,2}_{hx} \right), \\
 	&\dots, \notag \\
-	\delta^{k,l}_{hx} &= \sigma'_{h}(z_{k}^{l}) \left( h_{k}^{l-1} + W_{hh}^{l}\delta^{k,l-1}_{hh}\right).
+	\delta^{k,l}_{hx} &= \sigma'_{h}(z_{k}^{l}) \left( h_{k}^{l-1} + W_{hh}^{l}\delta^{k-1,l}_{hx}\right).
 \end{align}
 
 We can then summarize how the hidden-layer weights and biases are updated (cf. \cite{superGood}):

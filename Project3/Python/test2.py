@@ -8,13 +8,13 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, accuracy_score
 
-# # I get warnings which dont do anything, thus type: ignore on these
-# import tensorflow.keras as ker # type: ignore
-# from keras.models import Sequential, load_model # type: ignore
-# from keras.optimizers import Adam, SGD, RMSprop # type: ignore
-# from keras.layers import SimpleRNN, Dense, Input # type: ignore
-# from keras.callbacks import ModelCheckpoint # type: ignore
-# from keras.regularizers import l2 # type: ignore
+# I get warnings which dont do anything, thus type: ignore on these
+import tensorflow.keras as ker # type: ignore
+from keras.models import Sequential, load_model # type: ignore
+from keras.optimizers import Adam, SGD, RMSprop # type: ignore
+from keras.layers import SimpleRNN, Dense, Input # type: ignore
+from keras.callbacks import ModelCheckpoint # type: ignore
+from keras.regularizers import l2 # type: ignore
 
 import time 
 import pickle
@@ -127,43 +127,6 @@ class NeuralNetwork:
         self.X_train = X_train; self.X_test = X_test
         self.X_train_scaled, self.X_test_scaled = self._scaler(X_train, X_test)
 
-    # def prepare_sequences_RNN(self, X:np.ndarray, y:np.ndarray, window_size:int, input_size:int=1, overlap:float=None):
-    #     """
-    #     Converts data into sequences for RNN training.
-        
-    #     Parameters:
-    #     * X:                scaled data 
-    #     * y:                output data.
-    #     * window_size:      length of each sequence.
-    #     * input_size:       number of features in input data.
-    #     * overlap:          overlap percentage between sequences (0 to 100).
-        
-    #     Returns:
-    #     * X_seq, y_seq:     sequences (3D array) and corresponding labels (1D array).
-    #     """
-    #     if overlap is None:
-    #         step_size = 1
-    #     else:
-    #         if not (0 <= overlap < 100):
-    #             raise ValueError("Overlap percentage must be between 0 and 100 (exclusive).")
-            
-    #         step_size = max(1, int(window_size * (1 - overlap / 100)))  # Calculate step size based on overlap percentage
-
-    #     sequences = []
-    #     labels = []
-
-    #     for i in range(0, len(X) - window_size + 1, step_size):
-    #         seq = X[i:i + window_size]
-    #         label_seq = y[i:i + window_size]  # Create a sequence of labels
-
-    #         sequences.append(seq)
-    #         average_label = self.window_to_binary(label_seq)
-    #         labels.append(average_label)
-
-    #     X_seq, y_seq = np.array(sequences).reshape(-1, window_size, input_size), np.array(labels)
-
-    #     return X_seq, y_seq
-    
     def prepare_sequences_RNN(self, X:np.ndarray, y:np.ndarray, window_size:int, input_size:int=1, overlap:float=None):
         """
         Converts data into sequences for RNN training.
@@ -194,14 +157,12 @@ class NeuralNetwork:
             label_seq = y[i:i + window_size]  # Create a sequence of labels
 
             sequences.append(seq)
-            labels.append(label_seq)
+            average_label = np.mean(label_seq)
+            labels.append(average_label)
 
         X_seq, y_seq = np.array(sequences).reshape(-1, window_size, input_size), np.array(labels)
-        print(np.shape(X_seq), np.shape(y_seq))
+
         return X_seq, y_seq
-    
-    def window_to_binary(self, y:np.ndarray):
-        return np.max(y)
 
     def split_scale_data(self, X:np.ndarray, y:np.ndarray, window_size:int):
         X_seq, y_seq = self.prepare_sequences_RNN(X, y, window_size)
@@ -298,30 +259,25 @@ class RNN(NeuralNetwork):
         self._initialize_weights_and_b_hh()
 
     #################### Public Methods ####################
-    def _train_on_given_batches(self, X:np.ndarray, y:np.ndarray, epochs:int, window_size:int, truncation_steps=None, split_data=False, clip_value=1e12) -> None:
+    def train(self, X:np.ndarray, y:np.ndarray, epochs=100, batch_size=32, window_size=10, truncation_steps=None, split_data=False, clip_value=1e12) -> None:
         """
-        Trains the RNN on the given batched dataset. The different batches are assumed to have no cross dependencies.
-
-        Positional Arguments:
-        * X:        batched input data, shape: (batches, window_size, input_size)
-        * y:        batched output data, shape:(batches, output_size)
+        Trains the RNN on the given dataset.
         """
         self._trained = True
         self.clip_value = clip_value
 
-        X_train_batches = []; y_train_batches = []
-        X_val_batches = []; y_val_batches = []
-        for i in range(len(X)):
-            self.split_scale_data(X[i], y[i], window_size) # Stored as self.X_train_seq, self.X_val_seq, self.y_train_seq, self.y_val_seq 
+        # # Prepare sequences for training
+        # self.store_train_test_from_data(X, y, split_data=split_data) # applies scaling
+        # self.X_seq, self.y_seq = self.prepare_sequences_RNN(self.X_train_scaled, self.y_train, window_size, self.input_size)
+        # self.X_seq_test, self.y_seq_test = self.prepare_sequences_RNN(self.X_test_scaled, self.y_test, window_size, self.input_size)
 
-            X_train_batches.append(self.X_train_seq); y_train_batches.append(self.y_train_seq)
-            X_val_batches.append(self.X_val_seq); y_val_batches.append(self.y_val_seq)
+        self.split_scale_data(X, y, window_size) # Stored as self.X_train_seq, self.X_val_seq, self.y_train_seq, self.y_val_seq 
 
         self.truncation_steps = truncation_steps # Sent to backward propagation method 
 
         if isinstance(self._loss_function, DynamicallyWeightedLoss):
             self._loss_function.epochs = epochs
-            self._loss_function.labels = y[0] # NEEDS FIX
+            self._loss_function.labels = y[:,0]
 
         start_time = time.time()
         best_loss = 1e4
@@ -331,21 +287,21 @@ class RNN(NeuralNetwork):
 
         best_loss = float('inf')
         best_weights = None
-        for epoch in range(epochs): 
-            test_loss = 0           
-            for i in range(len(X_train_batches)):
-                X_batch = X_train_batches[i]
-                y_batch = y_train_batches[i]
+        for epoch in range(epochs):
+            for i in range(0, self.X_seq.shape[0], batch_size):
+                X_batch = self.X_seq[i:i + batch_size]
+                y_batch = self.y_seq[i:i + batch_size]
 
                 # Forward pass
-                y_pred = self._forward(X_batch) # shape(batch_size, window_size, input_size)
+                y_pred = self._forward(X_batch)
 
+                y_pred[:, :] = np.mean(y_pred[:,])
                 # Backward pass
                 self._backward(X_batch, y_batch, y_pred, epoch, i)
 
-                # Validation after each epoch
-                y_pred = self.predict(X_val_batches[i])
-                test_loss += self.calculate_loss(y_val_batches[i], y_pred, epoch) / len(y_val_batches) # average
+            # Validation after each epoch
+            y_pred = self.predict(self.X_seq_test)
+            test_loss = self.calculate_loss(self.y_seq_test, y_pred, epoch)
 
             if test_loss < best_loss:
                 best_loss = test_loss
@@ -371,14 +327,85 @@ class RNN(NeuralNetwork):
         print("\nTraining completed.")
 
 
+    def train_multiple_data(self, X_batches, y_batches, epochs, batch_size, window_size, clip_value=1e12):
+        """
+        Train the RNN on given batches of data.
+
+        Parameters:
+            X_batches: List of input batches (e.g., [X1, X2, ...]).
+            y_batches: List of label batches (e.g., [y1, y2, ...]).
+            epochs: Number of epochs to train.
+            window_size: Length of input sequences.
+            clip_value: Gradient clipping value (if needed).
+        """
+        self.clip_value = clip_value
+        test_losses = [np.nan for i in range(len(X_batches))]
+
+        start_time = time.time()
+        for epoch in range(epochs):
+            for batch_index, (X_batch, y_batch) in enumerate(zip(X_batches, y_batches)):
+                
+                self.split_scale_data(X_batch, y_batch, window_size) # Stored as self.X_train_seq, self.X_val_seq, self.y_train_seq, self.y_val_seq 
+
+                if isinstance(self._loss_function, DynamicallyWeightedLoss):
+                    self._loss_function.epochs = epochs
+                    self._loss_function.labels = y_batch[:,0] 
+                    self._loss_function.calculate_weights(epoch)
+
+                # Train on the shuffled sequences in mini-batches
+                for i in range(0, len(self.X_train_seq), batch_size):
+                    X_mini_batch = self.X_train_seq[i:i + batch_size]
+                    y_mini_batch = self.y_train_seq[i:i + batch_size]
+                    y_mini_batch = y_mini_batch.reshape(-1,self.output_size)
+                    
+                    # Forward pass
+                    y_pred = self._forward(X_mini_batch)
+                    
+                    # Reduce predictions if sequence-to-single-output task
+                    # y_pred = y_pred[:, -1, :]  # Take the last timestep's prediction
+                    y_pred = np.mean(y_pred, axis=1)  # Average over the time (window_size) dimension
+
+                    # Backward pass
+                    self._backward(X_mini_batch, y_mini_batch, y_pred, epoch, i)
+
+                y_pred = self._forward(self.X_val_seq)
+                # y_pred = y_pred[:, -1, :]
+                y_pred = np.mean(y_pred, axis=1)
+
+                test_losses[batch_index] = self._loss_function(self.y_val_seq, y_pred, epoch) 
+                msg = f"Epoch {epoch + 1}/{epochs} completed, loss:"
+                for q in range(len(X_batches)):
+                    msg += f" X_{q}: {test_losses[q]:.3f}, "
+                
+                msg += f"time elapsed: {time.time()-start_time:.1f}s"
+                print(msg, end="\r")
+
+            # Log epoch loss
+            # print(f"Epoch {epoch + 1}/{epochs}, Loss: {epoch_loss / len(X_batches)}")
+
+
     def calculate_loss(self, y_true, y_pred, epoch_index):
         """
         Calculate the loss value using the provided loss function.
         """
         return self._loss_function(y_true, y_pred, epoch_index)
     
-    def predict(self, X:np.ndarray):
-        return np.array(self._forward(X)).transpose(1, 0, 2)
+    def predict(self, X_test, y_test, window_size, verbose=1):
+        """
+        Predicts labels for the test set using the trained RNN model.
+        
+        Parameters:
+        - X_test: Input data for prediction.
+        - y_test: True labels for the test data.
+        - window_size: Length of the input sequences.
+        - verbose: Verbosity level (default is 1, progress bar style).
+        
+        Returns:
+        - y_pred: Predicted labels for the test data.
+        """
+        X_test_seq, _ = self.prepare_sequences_RNN(X_test, y_test, window_size)
+        y_pred = self._forward(X_test_seq)
+        return y_pred
 
     def cross_validate(self, X:np.ndarray, y:np.ndarray, k_folds:int=5, epochs:int=100, batch_size:int=32, window_size:int=10, 
                        truncation_steps:int=None, clip_value:float=1e12) -> None:
@@ -442,24 +469,29 @@ class RNN(NeuralNetwork):
         Forward pass for the RNN.
         Parameters:
             X_batch: The input data for a batch (batch_size, window_size, input_size).
-        Stores:
+        Returns:
             y_pred: The predicted output for the batch.
             z: Pre-activation values for hidden layers.
             hidden_states: The hidden states of each layer for each timestep.
-        Returns:
-         * self.hidden_states[-1]:          `last` hidden layer, shape: (batch_size, window_size, output_size)
         """
         batch_size, window_size, _ = X_batch.shape
+
+        # Initialize hidden states and z (pre-activation values)
+        self.hidden_states = [[np.zeros((self.layers[l + 1], batch_size)) for _ in range(window_size)] for l in range(self.L)]
+        self.z = [[np.zeros((self.layers[l + 1], batch_size)) for _ in range(window_size)] for l in range(self.L)]
         
-        self.hidden_states = [[np.zeros((self.layers[l + 1], window_size)) for _ in range(batch_size)] for l in range(self.L)]
-        self.z = [[np.zeros((self.layers[l + 1], window_size)) for _ in range(batch_size)] for l in range(self.L)]
-        
-        for t in range(batch_size):
-            x_t = X_batch[t, :, :]
-            prev_state = np.zeros_like(self.hidden_states[0][0])
+        for t in range(window_size):
+            x_t = X_batch[:, t, :]
+            # prev_state = np.zeros_like(self.hidden_states[0][0])
             
             for l in range(self.L - 1):
-                self.z[l][t] = self.W_hx[l] @ x_t.T + self.W_hh[l] @ prev_state + self.b_h[l]
+                # self.z[l][t] = self.W_hx[l] @ x_t.T + self.W_hh[l] @ prev_state + self.b_h[l]
+                if l == 0:  # First layer takes input
+                    self.z[l][t] = self.W_hx[l] @ x_t.T #+ self.W_hh[l] @ prev_state + self.b_h[l]
+                    # z_t = np.dot(x_t, self.W_hx[l].T) + np.dot(self.hidden_states[l], self.W_hh[l].T) + self.b_h[l].T
+                else:  # Subsequent layers take the previous hidden state as input
+                    self.z[l][t] = self.W_hx[l] @ self.hidden_states[l-1][t] + self.W_hh[l] @ self.hidden_states[l][t-1] + self.b_h[l]
+                    # z_t = np.dot(self.hidden_states[l - 1], self.W_hx[l].T) + np.dot(self.hidden_states[l], self.W_hh[l].T) + self.b_h[l].T
                 self.hidden_states[l][t] = self.activation_func(self.z[l][t])
                 
                 # Next iteration:
@@ -470,8 +502,7 @@ class RNN(NeuralNetwork):
             
             self.hidden_states[-1][t] = self.activation_func_out(self.z[-1][t]).T
 
-        # print(np.shape(self.hidden_states[-1]), "her")
-        return self.hidden_states[-1]
+        return np.array(self.hidden_states[-1]).transpose(1, 0, 2)
 
     def _compute_next_dL_dh_n(self, dL_dh_n:list, l:int, k_start:int, k_stop:int, 
                               y_batch:np.ndarray, y_pred:np.ndarray, epoch:int):
@@ -480,7 +511,7 @@ class RNN(NeuralNetwork):
         """
         for k in range(k_start, k_stop):
             # Gradient from output layer
-            dL_dy = self._loss_function.gradient(y_batch[k, :, :], y_pred[k, :, :], epoch)  # (B, d_out)
+            dL_dy = self._loss_function.gradient(y_batch[k, :], y_pred[k, :], epoch)  # (B, d_out)
             dL_dhL = dL_dy * self.activation_func_out_derivative(self.z[-1][k]).T  # (d_out, B) * (d_out, B)
             
             # Starting from layer l+1:
@@ -511,7 +542,7 @@ class RNN(NeuralNetwork):
         for k in range(k_start, k_stop):
             ### dL_dh_n:
             # Gradient from output layer
-            dL_dy = self._loss_function.gradient(y_batch[k, :, :], y_pred[k, :, :], epoch)  # (B, d_out)
+            dL_dy = self._loss_function.gradient(y_batch[k, :], y_pred[k, :], epoch)  # (B, d_out)
             dL_dhL = dL_dy * self.activation_func_out_derivative(self.z[-1][k]).T  # (d_out, B) * (d_out, B)
             
             # Starting from layer l+1:
@@ -532,16 +563,15 @@ class RNN(NeuralNetwork):
 
             ### \delta's:
             activation_derivative = self.activation_func_derivative(self.z[l][k])
-            activation_derivative = activation_derivative[np.newaxis, :, :]
+            activation_derivative = activation_derivative[:, np.newaxis, :]
 
                 # W_{hh}:
             # Previous hidden state: shape (d_{h_l}, B)
             h_l_kprev = self.hidden_states[l][k-1]
             # Previous delta term: shape (d_{h_l}, d_{h_l}, B)
-            print(np.shape(self.W_hh[l]), np.shape(delta_hh[-1][-1]))
             prev_term = np.einsum('ij,jkb->ikb', self.W_hh[l], delta_hh[-1][-1])
 
-            combined_term = h_l_kprev[np.newaxis, :, :] + prev_term  # shape: (d_{h_l}, d_{h_l}, B)
+            combined_term = h_l_kprev[:, np.newaxis, :] + prev_term  # shape: (d_{h_l}, d_{h_l}, B)
             delta_hh[-1].append(activation_derivative * combined_term)  # shape: (d_{h_l}, d_{h_l}, B)
 
                 # W_{hx}:
@@ -549,8 +579,8 @@ class RNN(NeuralNetwork):
             last_term = np.einsum('ij,jkb->ikb', self.W_hh[l], delta_hx[-1][-1])  
 
             # Previous hidden states: shape: (d_{h_{l-1}}, B)
-            prev_hidden = X_batch[k, :, :].T
-            combined_term = prev_hidden[:, np.newaxis, :] + last_term  # shape: (d_{h_l}, d_{h_{l-1}}, B)
+            prev_hidden = X_batch[:, k, :].T
+            combined_term = prev_hidden[np.newaxis, :, :] + last_term  # shape: (d_{h_l}, d_{h_{l-1}}, B)
 
             delta = activation_derivative * combined_term  # shape: (d_{h_l}, d_{h_{l-1}}, B)
             delta_hx[-1].append(delta)
@@ -568,8 +598,6 @@ class RNN(NeuralNetwork):
             epoch: Current epoch number
             batch_index: Index of the batch in the current epoch
         """
-        y_batch = np.array(y_batch)
-        y_pred = np.array(y_pred)
         batch_size, window_size, _ = X_batch.shape
 
         # Initialize gradients for output layer
@@ -582,11 +610,7 @@ class RNN(NeuralNetwork):
         dL_db_h = [np.zeros_like(b) for b in self.b_h]
 
         # Compute the derivative of the loss with respect to the output (dL/dy_pred)
-        print(np.shape(y_batch), np.shape(y_pred))
-        # y_pred = np.array(y_pred).transpose(1, 0, 2)
-        print(np.shape(y_batch), np.shape(y_pred))
         dL_dy_pred = self._loss_function.gradient(y_batch, y_pred, epoch)  # Shape: (batch_size, window_size, output_size)
-
         # Compute gradients for hidden layers using BPTT
         # Initialize delta terms for each hidden layer
         delta_hh = []
@@ -600,7 +624,7 @@ class RNN(NeuralNetwork):
         delta_hx.append([])
         activation_derivative = self.activation_func_derivative(self.z[l][k])  # Shape: (d_{h_l}, B)
 
-        delta = activation_derivative[np.newaxis, :, :] * X_batch[k, :, :].T[:, np.newaxis, :]  # Shape: (d_{h_l}, d_{h_{l-1}}, B)
+        delta = activation_derivative[:, np.newaxis, :] * X_batch[:, k, :].T[np.newaxis, :, :]  # Shape: (d_{h_l}, d_{h_{l-1}}, B)
         delta_hx[-1].append(delta)
 
          # W_{hh}: 
@@ -609,10 +633,10 @@ class RNN(NeuralNetwork):
         
         ### dL_dh_n:
         dL_dh_n.append([])
-        dL_dh_n = self._compute_next_dL_dh_n(dL_dh_n, l, 0, batch_size, y_batch, y_pred, epoch)
+        dL_dh_n = self._compute_next_dL_dh_n(dL_dh_n, l, 0, window_size, y_batch, y_pred, epoch)
         
         ### l=0, k>0:
-        delta_hh, delta_hx, dL_dh_n = self._compute_next_gradients(1, batch_size, [delta_hh, delta_hx, dL_dh_n],
+        delta_hh, delta_hx, dL_dh_n = self._compute_next_gradients(1, window_size, [delta_hh, delta_hx, dL_dh_n],
                                                                    y_batch, y_pred, epoch, X_batch)
         
         ### Looping thorugh all layers
@@ -635,10 +659,10 @@ class RNN(NeuralNetwork):
             ############## dL_dh_n: ##############
             dL_dh_n = self._compute_next_dL_dh_n(dL_dh_n, l, 0, 1, y_batch, y_pred, epoch)
 
-            for k in range(1, batch_size):
+            for k in range(1, window_size):
                 ############## dL_dh_n: ##############
                 # Gradient from output layer
-                dL_dy = self._loss_function.gradient(y_batch[k, :, :], y_pred[k, :, :], epoch)  # (B, d_out)
+                dL_dy = self._loss_function.gradient(y_batch[k, :], y_pred[k, :], epoch)  # (B, d_out)
                 dL_dhL = dL_dy * self.activation_func_out_derivative(self.z[-1][k]).T  # (d_out, B) * (d_out, B)
                 
                 # Starting from layer l+1:
@@ -667,7 +691,7 @@ class RNN(NeuralNetwork):
                 # Previous delta term: shape (d_{h_l}, d_{h_l}, B)
                 prev_term = np.einsum('ij,jkb->ikb', self.W_hh[l], delta_hh[-1][-1])
 
-                combined_term = h_l_kprev[np.newaxis, :, :] + prev_term  # shape: (d_{h_l}, d_{h_l}, B)
+                combined_term = h_l_kprev[:, np.newaxis, :] + prev_term  # shape: (d_{h_l}, d_{h_l}, B)
                 delta_hh[-1].append(activation_derivative * combined_term)  # shape: (d_{h_l}, d_{h_l}, B)
 
                     ####### W_{hx}: 
@@ -676,7 +700,7 @@ class RNN(NeuralNetwork):
 
                 # Previous hidden states: shape: (d_{h_{l-1}}, B)
                 h_k_lm1 = self.hidden_states[l-1][k] 
-                combined_term = h_k_lm1[:, np.newaxis, :] + last_term  # shape: (d_{h_l}, d_{h_{l-1}}, B)
+                combined_term = h_k_lm1[np.newaxis, :, :] + last_term  # shape: (d_{h_l}, d_{h_{l-1}}, B)
 
                 delta = activation_derivative * combined_term  # shape: (d_{h_l}, d_{h_{l-1}}, B)
                 delta_hx[-1].append(delta)
@@ -705,7 +729,7 @@ class RNN(NeuralNetwork):
             h_prev = self.hidden_states[-2][n].T  # shape: (batch_size, hidden_size)
 
             d_activation_out = self.activation_func_out_derivative(self.z[-1][n].T)  # shape: (batch_size, output_size)
-            dL_dz_y = dL_dy_pred[n, :, :] * d_activation_out  # shape: (batch_size, output_size)
+            dL_dz_y = dL_dy_pred[n, :] * d_activation_out  # shape: (batch_size, output_size)
 
             # Accumulate gradients for W_yh and b_y
             dL_dW_yh += dL_dz_y.T @ h_prev  # (output_size, batch_size) @ (batch_size, hidden_size) -> (output_size, hidden_size)
@@ -931,7 +955,7 @@ class KerasRNN(NeuralNetwork):
 
 
         # Reinitialize model (this ensures no previous weights are carried over between parameter runs)
-        self.model = self.create_model()
+        # self.model = self.create_model()
 
         # Initialize variables to track the best model and validation loss
         best_val_loss = float('inf')
