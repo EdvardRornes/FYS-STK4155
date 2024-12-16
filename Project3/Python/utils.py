@@ -607,7 +607,6 @@ class LearningRate:
             if const is None:
                 self.name = f"callable({t0}, {t1})"
             else:
-                print("hei")
                 self.name = str(const)
 
         self.t0 = t0; self.t1 = t1
@@ -703,6 +702,9 @@ class Optimizer:
 
     def __str__(self):
         return "Not defined"
+    
+    def __float__(self):
+        return self._learning_rate.const
 
 class PlaneGradient(Optimizer):
 

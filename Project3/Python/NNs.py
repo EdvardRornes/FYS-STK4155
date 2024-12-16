@@ -9,10 +9,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score, accuracy_score
 
 # I get warnings which dont do anything, thus type: ignore on these
-import tensorflow.keras as ker # type: ignore
 from keras.models import Sequential, load_model # type: ignore
-from keras.optimizers import Adam, SGD, RMSprop # type: ignore
-from keras.layers import SimpleRNN, Dense, Input # type: ignore
+from keras.layers import SimpleRNN, Dense, Input, Conv2D, MaxPooling2D, Flatten # type: ignore
 from keras.callbacks import ModelCheckpoint # type: ignore
 from keras.regularizers import l2 # type: ignore
 
@@ -22,6 +20,8 @@ import copy
 from utils import Activation, Scalers, Optimizer
 from sklearn.model_selection import KFold
 from utils import * 
+from tensorflow.keras.optimizers import Adam as Ker_Adam, SGD as Ker_SGD, RMSprop as Ker_RMSprop, Adagrad as Ker_AdaGrad #type:ignore
+
 
 
 class NeuralNetwork:
@@ -40,6 +40,8 @@ class NeuralNetwork:
         * test_percentage:          percentage of data converted to test-data when training
         * random_state:             argument in sklearn.train_test_split allowing for consistency
         """
+        self.activation_func_name = activation_func
+        self.activation_func_out_name = activation_func_output
         self.activation_func = Activation(activation_func)
         self.activation_func_derivative = self.activation_func.derivative()
         self.test_percentage = test_percentage
@@ -157,7 +159,7 @@ class NeuralNetwork:
             label_seq = y[i:i + window_size]  # Create a sequence of labels
 
             sequences.append(seq)
-            average_label = np.max(label_seq)
+            average_label = np.mean(label_seq)
             labels.append(average_label)
 
         X_seq, y_seq = np.array(sequences).reshape(-1, window_size, input_size), np.array(labels)
@@ -199,7 +201,7 @@ class NeuralNetwork:
         return np.random.randn(layer1, layer2) * np.sqrt(2 / layer1)
 
 class RNN(NeuralNetwork):
-    def __init__(self, input_size:int, hidden_layers:list, output_size:int, optimizer: Optimizer, activation:str,
+    def __init__(self, input_size:int, hidden_layers:list, output_size:int, optimizer:Optimizer, activation:str,
                  activation_out=None, lambda_reg=0.0, alpha=0.1, loss_function=None, scaler="standard",
                  test_percentage=0.2, random_state=None):
         """
@@ -294,8 +296,8 @@ class RNN(NeuralNetwork):
 
                 # Forward pass
                 y_pred = self._forward(X_batch)
-                # y_pred[:, :] = 1 * (y_pred[:, :] >= 0.5)
 
+                y_pred[:, :] = np.mean(y_pred[:,])
                 # Backward pass
                 self._backward(X_batch, y_batch, y_pred, epoch, i)
 
@@ -327,14 +329,85 @@ class RNN(NeuralNetwork):
         print("\nTraining completed.")
 
 
+    def train_multiple_data(self, X_batches, y_batches, epochs, batch_size, window_size, clip_value=1e12):
+        """
+        Train the RNN on given batches of data.
+
+        Parameters:
+            X_batches: List of input batches (e.g., [X1, X2, ...]).
+            y_batches: List of label batches (e.g., [y1, y2, ...]).
+            epochs: Number of epochs to train.
+            window_size: Length of input sequences.
+            clip_value: Gradient clipping value (if needed).
+        """
+        self.clip_value = clip_value
+        test_losses = [np.nan for i in range(len(X_batches))]
+
+        start_time = time.time()
+        for epoch in range(epochs):
+            for batch_index, (X_batch, y_batch) in enumerate(zip(X_batches, y_batches)):
+                
+                self.split_scale_data(X_batch, y_batch, window_size) # Stored as self.X_train_seq, self.X_val_seq, self.y_train_seq, self.y_val_seq 
+
+                if isinstance(self._loss_function, DynamicallyWeightedLoss):
+                    self._loss_function.epochs = epochs
+                    self._loss_function.labels = y_batch[:,0] 
+                    self._loss_function.calculate_weights(epoch)
+
+                # Train on the shuffled sequences in mini-batches
+                for i in range(0, len(self.X_train_seq), batch_size):
+                    X_mini_batch = self.X_train_seq[i:i + batch_size]
+                    y_mini_batch = self.y_train_seq[i:i + batch_size]
+                    y_mini_batch = y_mini_batch.reshape(-1,self.output_size)
+                    
+                    # Forward pass
+                    y_pred = self._forward(X_mini_batch)
+                    
+                    # Reduce predictions if sequence-to-single-output task
+                    # y_pred = y_pred[:, -1, :]  # Take the last timestep's prediction
+                    y_pred = np.mean(y_pred, axis=1)  # Average over the time (window_size) dimension
+
+                    # Backward pass
+                    self._backward(X_mini_batch, y_mini_batch, y_pred, epoch, i)
+
+                y_pred = self._forward(self.X_val_seq)
+                # y_pred = y_pred[:, -1, :]
+                y_pred = np.mean(y_pred, axis=1)
+
+                test_losses[batch_index] = self._loss_function(self.y_val_seq, y_pred, epoch) 
+                msg = f"Epoch {epoch + 1}/{epochs} completed, loss:"
+                for q in range(len(X_batches)):
+                    msg += f" X_{q}: {test_losses[q]:.3f}, "
+                
+                msg += f"time elapsed: {time.time()-start_time:.1f}s"
+                print(msg, end="\r")
+
+            # Log epoch loss
+            # print(f"Epoch {epoch + 1}/{epochs}, Loss: {epoch_loss / len(X_batches)}")
+
+
     def calculate_loss(self, y_true, y_pred, epoch_index):
         """
         Calculate the loss value using the provided loss function.
         """
         return self._loss_function(y_true, y_pred, epoch_index)
     
-    def predict(self, X:np.ndarray):
-        return np.array(self._forward(X)).transpose(1, 0, 2)
+    def predict(self, X_test, y_test, window_size, verbose=1):
+        """
+        Predicts labels for the test set using the trained RNN model.
+        
+        Parameters:
+        - X_test: Input data for prediction.
+        - y_test: True labels for the test data.
+        - window_size: Length of the input sequences.
+        - verbose: Verbosity level (default is 1, progress bar style).
+        
+        Returns:
+        - y_pred: Predicted labels for the test data.
+        """
+        X_test_seq, _ = self.prepare_sequences_RNN(X_test, y_test, window_size)
+        y_pred = self._forward(X_test_seq)
+        return y_pred
 
     def cross_validate(self, X:np.ndarray, y:np.ndarray, k_folds:int=5, epochs:int=100, batch_size:int=32, window_size:int=10, 
                        truncation_steps:int=None, clip_value:float=1e12) -> None:
@@ -411,10 +484,13 @@ class RNN(NeuralNetwork):
         
         for t in range(window_size):
             x_t = X_batch[:, t, :]
-            prev_state = np.zeros_like(self.hidden_states[0][0])
+            # prev_state = np.zeros_like(self.hidden_states[0][0])
             
             for l in range(self.L - 1):
-                self.z[l][t] = self.W_hx[l] @ x_t.T + self.W_hh[l] @ prev_state + self.b_h[l]
+                if l == 0:  # First layer takes input
+                    self.z[l][t] = self.W_hx[l] @ x_t.T 
+                else:  # Subsequent layers take the previous hidden state as input
+                    self.z[l][t] = self.W_hx[l] @ self.hidden_states[l-1][t] + self.W_hh[l] @ self.hidden_states[l][t-1] + self.b_h[l]
                 self.hidden_states[l][t] = self.activation_func(self.z[l][t])
                 
                 # Next iteration:
@@ -425,7 +501,7 @@ class RNN(NeuralNetwork):
             
             self.hidden_states[-1][t] = self.activation_func_out(self.z[-1][t]).T
 
-        return self.hidden_states[-1]
+        return np.array(self.hidden_states[-1]).transpose(1, 0, 2)
 
     def _compute_next_dL_dh_n(self, dL_dh_n:list, l:int, k_start:int, k_stop:int, 
                               y_batch:np.ndarray, y_pred:np.ndarray, epoch:int):
@@ -434,7 +510,7 @@ class RNN(NeuralNetwork):
         """
         for k in range(k_start, k_stop):
             # Gradient from output layer
-            dL_dy = self._loss_function.gradient(y_batch[:, k, :], y_pred[:, k, :], epoch)  # (B, d_out)
+            dL_dy = self._loss_function.gradient(y_batch[k, :], y_pred[k, :], epoch)  # (B, d_out)
             dL_dhL = dL_dy * self.activation_func_out_derivative(self.z[-1][k]).T  # (d_out, B) * (d_out, B)
             
             # Starting from layer l+1:
@@ -465,7 +541,7 @@ class RNN(NeuralNetwork):
         for k in range(k_start, k_stop):
             ### dL_dh_n:
             # Gradient from output layer
-            dL_dy = self._loss_function.gradient(y_batch[:, k, :], y_pred[:, k, :], epoch)  # (B, d_out)
+            dL_dy = self._loss_function.gradient(y_batch[k, :], y_pred[k, :], epoch)  # (B, d_out)
             dL_dhL = dL_dy * self.activation_func_out_derivative(self.z[-1][k]).T  # (d_out, B) * (d_out, B)
             
             # Starting from layer l+1:
@@ -515,11 +591,11 @@ class RNN(NeuralNetwork):
         Backward pass for the RNN.
 
         Parameters:
-            X_batch: Input data for the batch, shape (batch_size, window_size, input_size)
-            y_batch: True output data for the batch, shape (batch_size, window_size, output_size)
-            y_pred: Predicted output data, shape (batch_size, window_size, output_size)
-            epoch: Current epoch number
-            batch_index: Index of the batch in the current epoch
+         * X_batch:     Input data for the batch, shape (batch_size, window_size, input_size)
+         * y_batch:     True output data for the batch, shape (batch_size, window_size, output_size)
+         * y_pred:      Predicted output data, shape (batch_size, window_size, output_size)
+         * epoch:       Current epoch number
+         * batch_index: Index of the batch in the current epoch
         """
         batch_size, window_size, _ = X_batch.shape
 
@@ -533,9 +609,7 @@ class RNN(NeuralNetwork):
         dL_db_h = [np.zeros_like(b) for b in self.b_h]
 
         # Compute the derivative of the loss with respect to the output (dL/dy_pred)
-        y_pred = np.array(y_pred).transpose(1, 0, 2)
         dL_dy_pred = self._loss_function.gradient(y_batch, y_pred, epoch)  # Shape: (batch_size, window_size, output_size)
-
         # Compute gradients for hidden layers using BPTT
         # Initialize delta terms for each hidden layer
         delta_hh = []
@@ -587,7 +661,7 @@ class RNN(NeuralNetwork):
             for k in range(1, window_size):
                 ############## dL_dh_n: ##############
                 # Gradient from output layer
-                dL_dy = self._loss_function.gradient(y_batch[:, k, :], y_pred[:, k, :], epoch)  # (B, d_out)
+                dL_dy = self._loss_function.gradient(y_batch[k, :], y_pred[k, :], epoch)  # (B, d_out)
                 dL_dhL = dL_dy * self.activation_func_out_derivative(self.z[-1][k]).T  # (d_out, B) * (d_out, B)
                 
                 # Starting from layer l+1:
@@ -654,7 +728,7 @@ class RNN(NeuralNetwork):
             h_prev = self.hidden_states[-2][n].T  # shape: (batch_size, hidden_size)
 
             d_activation_out = self.activation_func_out_derivative(self.z[-1][n].T)  # shape: (batch_size, output_size)
-            dL_dz_y = dL_dy_pred[:, n, :] * d_activation_out  # shape: (batch_size, output_size)
+            dL_dz_y = dL_dy_pred[n, :] * d_activation_out  # shape: (batch_size, output_size)
 
             # Accumulate gradients for W_yh and b_y
             dL_dW_yh += dL_dz_y.T @ h_prev  # (output_size, batch_size) @ (batch_size, hidden_size) -> (output_size, hidden_size)
@@ -689,16 +763,6 @@ class RNN(NeuralNetwork):
         ### Clipping:
         dL_dW_yh = self._clip_gradient(dL_dW_yh, self.clip_value)
         dL_db_y = self._clip_gradient(dL_db_y, self.clip_value)
-
-        # ### Updating weights and biases 
-        # for l in range(self.L-1):
-        #     dL_dW_hx[l] = self._clip_gradient(dL_dW_hx[l], self.clip_value)
-        #     dL_dW_hh[l] = self._clip_gradient(dL_dW_hh[l], self.clip_value)
-        #     dL_db_h[l] = self._clip_gradient(dL_db_h[l], self.clip_value)
-
-        #     self.W_hx[l] = self.optimizer_W_hx[l](self.W_hx[l], dL_dW_hx[l], epoch, batch_index)
-        #     self.W_hh[l] = self.optimizer_W_hh[l](self.W_hh[l], dL_dW_hh[l], epoch, batch_index)
-        #     self.b_h[l] = self.optimizer_b_hh[l](self.b_h[l], dL_db_h[l], epoch, batch_index)
 
         self.W_yh = self.optimizer_W_yh(self.W_yh, dL_dW_yh, epoch, batch_index)
         self.b_y = self.optimizer_b_y(self.b_y, dL_db_y, epoch, batch_index)
@@ -818,7 +882,7 @@ class KerasRNN(NeuralNetwork):
         Returns:
         * model: A compiled Keras RNN model with the defined layers, loss function, and optimizer.
         """
-        model = ker.models.Sequential()
+        model = Sequential()
 
         # Add the input layer (input shape)
         model.add(Input(shape=(self.input_size, 1)))  # Specify input shape here
@@ -846,28 +910,31 @@ class KerasRNN(NeuralNetwork):
         * model: The Keras model to compile.
         """
         optimizers = ["adam", "rmsprop", "adagrad"]
+        learning_rate = float(self.optimizer) # self.optimizer.learning_rate would return a callable
+
+        optimizers_ker = [Ker_Adam(learning_rate=learning_rate), Ker_RMSprop(learning_rate=learning_rate), Ker_AdaGrad(learning_rate=learning_rate)]
 
         if self.optimizer.name.lower() not in optimizers:
             raise ValueError(f"Unsupported optimizer: {self.optimizer.name}. Choose from {optimizers}.")
         model.compile(
             loss=self._loss_function.type, 
-            optimizer=optimizers[optimizers.index(self.optimizer.name.lower())], 
+            optimizer=optimizers_ker[optimizers.index(self.optimizer.name.lower())],
             metrics=['accuracy']
         )
 
-    def train(self, X:np.ndarray, y:np.ndarray, epochs:int, batch_size:int, window_size:int, verbose=0, verbose1=1, clip_value=1e12, best_val_loss=float('inf'), best_weights=None):
+    def train(self, X:np.ndarray, y:np.ndarray, epochs:int, batch_size:int, window_size:int, verbose=0, verbose1=1, clip_value=1e12):
         """
         Trains the RNN model using (possibly dynamically) calculated weights, stopping early if no improvement occurs for 30% of the epochs.
         Continues training if the loss is sufficiently low, even if no improvement is observed.
         
         Parameters:
-        * X (np.ndarray):               Training input data.
-        * y (np.ndarray):               Training target data.
-        * epochs (int):                 Number of training epochs.
-        * batch_size (int):             Size of each training batch.
-        * window_size (int):            Length of the input sequences.
-        * verbose (int):                Verbosity level (0 = silent, 1 = progress bar, 2 = one line per epoch).
-        * verbose1 (int):               Additional verbosity control for printing epoch updates (default is 1).
+        * X:                        Training input data.
+        * y:                        Training target data.
+        * epochs:                   Number of training epochs.
+        * batch_size:               Size of each training batch.
+        * window_size:              Length of the input sequences.
+        * verbose:                  Verbosity level (0 = silent, 1 = progress bar, 2 = one line per epoch).
+        * verbose1:                 Additional verbosity control for printing epoch updates (default is 1).
         """
         # Initializing loss function
         self._loss_function.epochs = epochs
@@ -875,16 +942,14 @@ class KerasRNN(NeuralNetwork):
 
         # Split training data into a validation set, and scalign:
         self.split_scale_data(X, y, window_size) # Stored as self.X_train_seq, self.X_val_seq, self.y_train_seq, self.y_val_seq 
-        
-
 
 
         # Reinitialize model (this ensures no previous weights are carried over between parameter runs)
         # self.model = self.create_model()
 
         # Initialize variables to track the best model and validation loss
-        # best_val_loss = float('inf')
-        # best_weights = None  # Keep track of the best model's weights, not the entire model
+        best_val_loss = float('inf')
+        best_weights = None  # Keep track of the best model's weights, not the entire model
 
         # Define thresholds
         patience_threshold = int(np.ceil(0.5 * epochs))  # Early stopping threshold
@@ -910,20 +975,21 @@ class KerasRNN(NeuralNetwork):
             # Extract val_loss for the current epoch
             current_val_loss = history.history['val_loss'][0]
 
+            # y_pred = self.predict(self.X_test_scaled, self.y_test, window_size)
+
             y_pred = self.model.predict(self.X_val_seq, verbose=verbose)
-            y_pred = 1 * (y_pred >= 0.5)
 
             _accuracy_score = weighted_Accuracy(self.y_val_seq, y_pred)
             # Check if this is the best val_loss so far
             if current_val_loss < best_val_loss:
                 best_weights = self.model.get_weights()  # Save the best weights
                 if verbose1 == 1:
-                    print(f"Epoch {epoch + 1} - val_loss improved from {best_val_loss:.3f} to {current_val_loss:.3f}. Best model updated, Weighted accuracy: {_accuracy_score:.3f}.")
+                    print(f"Epoch {epoch + 1} - val_loss improved from {best_val_loss:.3f} to {current_val_loss:.3f}. Best model updated, current accuracy: {_accuracy_score}.")
                 best_val_loss = current_val_loss
                 epochs_without_improvement = 0  # Reset counter
             else:
                 if verbose1 == 1:
-                    print(f"Epoch {epoch + 1} - val_loss did not improve ({current_val_loss:.3f} >= {best_val_loss:.3f}), Weighted accuracy: {_accuracy_score:.3f}.")
+                    print(f"Epoch {epoch + 1} - val_loss did not improve ({current_val_loss:.3f} >= {best_val_loss:.3f}), current accuracy: {_accuracy_score}.")
                 epochs_without_improvement += 1
 
             # Check early stopping conditions
@@ -940,41 +1006,172 @@ class KerasRNN(NeuralNetwork):
         if best_weights is not None:
             self.model.set_weights(best_weights)  # Set the model's weights to the best found during training
 
-        return best_val_loss, best_weights
-
-
     def predict(self, X_test, y_test, window_size, verbose=1):
         """
-        Predicts labels for the test set using the trained RNN model and evaluates loss and weighted accuracy.
+        Predicts labels for the test set using the trained RNN model.
         
         Parameters:
-        - X_test: Input data for prediction.
-        - y_test: True labels for the test data.
-        - window_size: Length of the input sequences.
-        - verbose: Verbosity level (default is 1, progress bar style).
+        * X_test:               Input data for prediction.
+        * y_test:               True labels for the test data.
+        * window_size:          Length of the input sequences.
+        * verbose:              Verbosity level (default is 1, progress bar style).
         
         Returns:
-        - y_pred: Predicted labels for the test data.
-        - loss: Computed loss on the test set.
-        - weighted_accuracy: Weighted accuracy of the predictions.
+        * y_pred:               Predicted labels for the test data.
         """
-        # Prepare test sequences
-        X_test_seq, y_test_seq = self.prepare_sequences_RNN(X_test, y_test, window_size)
-        
-        # Generate predictions
+        X_test_seq, _ = self.prepare_sequences_RNN(X_test, y_test, window_size)
         y_pred = self.model.predict(X_test_seq, verbose=verbose)
+        return y_pred
+
+class KerasCNN(NeuralNetwork):
+    def __init__(self, input_shape:tuple, n_filters:list, optimizer:Optimizer, 
+                 filter_sizes=(3,3), pool_size=(2,2), loss_function:str='binary_crossentropy', 
+                 lambda_reg:float=0.0, activation:str='tanh', activation_out='sigmoid',
+                 scaler="standard", test_percentage=0.2, random_state=None):
+        """
+        Implements a Convolutional Neural Network (CNN) consisting of a convolution, max-pooling, convolution, 
+        flatten and a dense layer (in that order). This is done as the class is (per now) specialized for the scenario
+        where the input is a wavelet transform and the output some binary classification on the time-axis. 
+
+        Positional Arguments:
+        * input_shape:              tuple defining the input shape (height, width, channels).
+        * n_filters:                list of number of filters in the convolution layers.
+        * optimizer:                type of optimizer (`adam`, `adagrad`, `RMSprop` or `PlaneGradient`)
+
+        Keyword Arguments:
+        * loss_function:            type of loss function
+        * lambda_reg:               L2 regularization parameter (default: 0.0).
+        * activation:               Activation function for intermediate layers (default: 'relu').
+        * activation_out:           Activation function for output layer (default: 'sigmoid').
+        * scaler:                   Type of scaler to use (default: 'standard').
+        * test_percentage:          Fraction of data to use as test set (default: 0.2).
+        * random_state:             Random seed for reproducibility (default: None).
+
+        This class inherits from NeuralNetwork, which handles activation functions, and train-test splitting.
+        """
+        super().__init__(activation, activation_out, scaler, test_percentage, random_state)
+
+        self.input_shape = input_shape
+        if isinstance(n_filters, int):
+            n_filters = [n_filters, n_filters]
+
+        self.n_filters = n_filters
+        self.lambda_reg = lambda_reg
+        self.loss_function = loss_function
+        self.optimizer = optimizer
+        print(type(optimizer))
+        self.filter_sizes = filter_sizes
+        self.pool_size = pool_size
+
+        # Create and compile the CNN model
+        self.model = self.create_convolutional_network(self.input_shape, self.n_filters, self.lambda_reg, 
+                                                       self.loss_function, self.optimizer)
+
+    def create_convolutional_network(self, input_shape, n_filters, lmbd, loss_function, optimizer):
+        """
+        Creates and compiles a convolutional neural network. Is currently on the form: convolution layer, max-pooling layer, convolution layer, flatten layer and dense layer.
+
+        Parameters:
+        * input_shape:              tuple, shape of the input data (e.g., (height, width, channels)).
+        * n_filters:                int, number of filters in the convolutional layers.
+        * lmbd:                     float, L2 regularization parameter.
+        * loss_function:            str, loss function for the model (e.g., 'binary_crossentropy').
+        * optimizer:                str, optimizer for the model (e.g., 'adam').
+
+        Returns:
+        * model: compiled Keras model.
+        """
+        model = Sequential()
+        model.add(Conv2D(n_filters[0], self.filter_sizes, activation=self.activation_func_name,
+                         kernel_regularizer=l2(lmbd),
+                         input_shape=input_shape, padding='same'))
+        model.add(MaxPooling2D(pool_size=self.pool_size))
+        model.add(Conv2D(n_filters[1], self.filter_sizes, activation=self.activation_func_name,
+                         kernel_regularizer=l2(lmbd), padding='same'))
         
-        # Compute the loss
-        loss = self.model.evaluate(X_test_seq, y_test_seq, verbose=verbose, return_dict=True)['loss']
+        model.add(Flatten())
+        model.add(Dense(1, activation=self.activation_func_out_name, kernel_regularizer=l2(lmbd)))
+
+        optimizers = ["adam", "rmsprop", "adagrad"]
+        learning_rate = float(self.optimizer) # self.optimizer.learning_rate would return a callable
         
-        # Threshold predictions at 0.5
-        y_pred_binary = (y_pred >= 0.5).astype(int)
+        optimizers_ker = [Ker_Adam(learning_rate=learning_rate), Ker_RMSprop(learning_rate=learning_rate), Ker_AdaGrad(learning_rate=learning_rate)]
+
+        model.compile(loss=loss_function, optimizer=optimizers_ker[optimizers.index(self.optimizer.name.lower())], metrics=['accuracy'])
+        return model
+
+    def train(self, X:np.ndarray, y:np.ndarray, epochs:int, batch_size:int, verbose=1):
+        """
+        Trains the CNN model.
+
+        Parameters:
+        * X:                Training input data.
+        * y:                Training target data.
+        * epochs:           Number of training epochs.
+        * batch_size:       Size of each training batch.
+        * verbose:          Verbosity level.
+
+        Returns:
+        * history:          Keras training history object.
+        """
+        X_train, X_test, y_train, y_test = train_test_split(X, y, 
+                                                            train_size=(1-self.test_percentage))
+
+        history = self.model.fit(X_train, y_train, epochs=epochs, batch_size=batch_size,
+                                 verbose=verbose, validation_split=self.test_percentage)
         
-        # Compute the weighted accuracy
-        weighted_accuracy = weighted_Accuracy(y_test_seq, y_pred_binary)
+        return history
+
+    def train_multiple_datas(self, X:list, y:list, epochs:int, batch_size:int, verbose=1):
+        """
+        Trains the CNN model on multiple datasets sequentially for each epoch.
         
-        if verbose:
-            print(f"Test Loss: {loss:.4f}")
-            print(f"Weighted Accuracy: {weighted_accuracy:.4f}")
+        Parameters:
+        * X:                    list of np.ndarrays, where each element is a dataset for training.
+        * y:                    list of np.ndarrays, corresponding labels for each dataset in X.
+        * epochs:               number of epochs.
+        * batch_size:           size of each training batch.
+        * verbose:              verbosity level.
         
-        return y_pred, loss, weighted_accuracy
+        Returns:
+        * history:              The history object from the last training call on the last dataset of the last epoch.
+        """
+        if len(X) != len(y):
+            raise ValueError("X and y must have the same length.")
+
+        history = None
+
+        for epoch in range(epochs):
+            if verbose:
+                print(f"Epoch {epoch+1}/{epochs}")
+            for i, (X_i, y_i) in enumerate(zip(X, y)):
+                # Split into training and validation for this particular dataset
+                X_train_i, X_val_i, y_train_i, y_val_i = train_test_split(
+                    X_i, y_i, train_size=(1-self.test_percentage), random_state=self.random_state
+                )
+                
+                # Train for one epoch on this dataset
+                history = self.model.fit(
+                    X_train_i, y_train_i,
+                    epochs=1,
+                    batch_size=batch_size,
+                    verbose=verbose,
+                    validation_data=(X_val_i, y_val_i)
+                )
+        
+        # history here is just the last training call's history
+        return history
+
+
+    def predict(self, X, verbose=0):
+        """
+        Generates predictions for the input samples.
+
+        Parameters:
+        * X:                Input data.
+        * verbose:          Verbosity mode.
+
+        Returns:
+        * Predictions as a numpy array.
+        """
+        return self.model.predict(X, verbose=verbose)

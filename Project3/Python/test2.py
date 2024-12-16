@@ -485,13 +485,10 @@ class RNN(NeuralNetwork):
             # prev_state = np.zeros_like(self.hidden_states[0][0])
             
             for l in range(self.L - 1):
-                # self.z[l][t] = self.W_hx[l] @ x_t.T + self.W_hh[l] @ prev_state + self.b_h[l]
                 if l == 0:  # First layer takes input
-                    self.z[l][t] = self.W_hx[l] @ x_t.T #+ self.W_hh[l] @ prev_state + self.b_h[l]
-                    # z_t = np.dot(x_t, self.W_hx[l].T) + np.dot(self.hidden_states[l], self.W_hh[l].T) + self.b_h[l].T
+                    self.z[l][t] = self.W_hx[l] @ x_t.T 
                 else:  # Subsequent layers take the previous hidden state as input
                     self.z[l][t] = self.W_hx[l] @ self.hidden_states[l-1][t] + self.W_hh[l] @ self.hidden_states[l][t-1] + self.b_h[l]
-                    # z_t = np.dot(self.hidden_states[l - 1], self.W_hx[l].T) + np.dot(self.hidden_states[l], self.W_hh[l].T) + self.b_h[l].T
                 self.hidden_states[l][t] = self.activation_func(self.z[l][t])
                 
                 # Next iteration:
