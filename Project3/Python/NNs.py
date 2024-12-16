@@ -855,7 +855,7 @@ class KerasRNN(NeuralNetwork):
             metrics=['accuracy']
         )
 
-    def train(self, X:np.ndarray, y:np.ndarray, epochs:int, batch_size:int, window_size:int, verbose=0, verbose1=1, clip_value=1e12):
+    def train(self, X:np.ndarray, y:np.ndarray, epochs:int, batch_size:int, window_size:int, verbose=0, verbose1=1, clip_value=1e12, best_val_loss=float('inf'), best_weights=None):
         """
         Trains the RNN model using (possibly dynamically) calculated weights, stopping early if no improvement occurs for 30% of the epochs.
         Continues training if the loss is sufficiently low, even if no improvement is observed.
@@ -883,8 +883,8 @@ class KerasRNN(NeuralNetwork):
         # self.model = self.create_model()
 
         # Initialize variables to track the best model and validation loss
-        best_val_loss = float('inf')
-        best_weights = None  # Keep track of the best model's weights, not the entire model
+        # best_val_loss = float('inf')
+        # best_weights = None  # Keep track of the best model's weights, not the entire model
 
         # Define thresholds
         patience_threshold = int(np.ceil(0.5 * epochs))  # Early stopping threshold
@@ -910,26 +910,20 @@ class KerasRNN(NeuralNetwork):
             # Extract val_loss for the current epoch
             current_val_loss = history.history['val_loss'][0]
 
-            # y_pred = self.predict(self.X_test_scaled, self.y_test, window_size)
-
             y_pred = self.model.predict(self.X_val_seq, verbose=verbose)
             y_pred = 1 * (y_pred >= 0.5)
-            # plt.plot(y_pred, label="y_pred")
-            # plt.plot(y_val_seq, label="y_val_seq")
-            # plt.legend()
-            # plt.show()
 
             _accuracy_score = weighted_Accuracy(self.y_val_seq, y_pred)
             # Check if this is the best val_loss so far
             if current_val_loss < best_val_loss:
                 best_weights = self.model.get_weights()  # Save the best weights
                 if verbose1 == 1:
-                    print(f"Epoch {epoch + 1} - val_loss improved from {best_val_loss:.3f} to {current_val_loss:.3f}. Best model updated, current accuracy: {_accuracy_score}.")
+                    print(f"Epoch {epoch + 1} - val_loss improved from {best_val_loss:.3f} to {current_val_loss:.3f}. Best model updated, Weighted accuracy: {_accuracy_score:.3f}.")
                 best_val_loss = current_val_loss
                 epochs_without_improvement = 0  # Reset counter
             else:
                 if verbose1 == 1:
-                    print(f"Epoch {epoch + 1} - val_loss did not improve ({current_val_loss:.3f} >= {best_val_loss:.3f}), current accuracy: {_accuracy_score}.")
+                    print(f"Epoch {epoch + 1} - val_loss did not improve ({current_val_loss:.3f} >= {best_val_loss:.3f}), Weighted accuracy: {_accuracy_score:.3f}.")
                 epochs_without_improvement += 1
 
             # Check early stopping conditions
@@ -946,9 +940,12 @@ class KerasRNN(NeuralNetwork):
         if best_weights is not None:
             self.model.set_weights(best_weights)  # Set the model's weights to the best found during training
 
+        return best_val_loss, best_weights
+
+
     def predict(self, X_test, y_test, window_size, verbose=1):
         """
-        Predicts labels for the test set using the trained RNN model.
+        Predicts labels for the test set using the trained RNN model and evaluates loss and weighted accuracy.
         
         Parameters:
         - X_test: Input data for prediction.
@@ -958,7 +955,26 @@ class KerasRNN(NeuralNetwork):
         
         Returns:
         - y_pred: Predicted labels for the test data.
+        - loss: Computed loss on the test set.
+        - weighted_accuracy: Weighted accuracy of the predictions.
         """
-        X_test_seq, _ = self.prepare_sequences_RNN(X_test, y_test, window_size)
+        # Prepare test sequences
+        X_test_seq, y_test_seq = self.prepare_sequences_RNN(X_test, y_test, window_size)
+        
+        # Generate predictions
         y_pred = self.model.predict(X_test_seq, verbose=verbose)
-        return y_pred
+        
+        # Compute the loss
+        loss = self.model.evaluate(X_test_seq, y_test_seq, verbose=verbose, return_dict=True)['loss']
+        
+        # Threshold predictions at 0.5
+        y_pred_binary = (y_pred >= 0.5).astype(int)
+        
+        # Compute the weighted accuracy
+        weighted_accuracy = weighted_Accuracy(y_test_seq, y_pred_binary)
+        
+        if verbose:
+            print(f"Test Loss: {loss:.4f}")
+            print(f"Weighted Accuracy: {weighted_accuracy:.4f}")
+        
+        return y_pred, loss, weighted_accuracy

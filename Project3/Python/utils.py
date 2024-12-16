@@ -22,7 +22,7 @@ from typing import Tuple, List
                         
 ############ Utility functions ############
 # Function to save results incrementally
-def save_results_incrementally(results, base_filename, save_path="GW_Parameter_Tuning_Results"):
+def save_results_incrementally(results, base_filename, save_path="GW_Parameter_Search"):
     filename = f"{base_filename}.pkl"
     with open(os.path.join(save_path, filename), "wb") as f:
         pickle.dump(results, f)
@@ -41,7 +41,7 @@ def blockPrint():
 def enablePrint():
     sys.stdout = sys.__stdout__
 
-# Latex fonts
+# Latex fonts for figures
 def latex_fonts():
     plt.rcParams['text.usetex'] = True
     plt.rcParams['axes.titlepad'] = 25 
@@ -58,6 +58,8 @@ def latex_fonts():
         'figure.titlesize': 25 # Figure title font size
     })
 
+
+# Can remove?
 class Franke:
 
     def __init__(self, N:int, eps:float):
@@ -113,7 +115,45 @@ def plot_2D_parameter_lambda_eta(
         log_cbar=False
         ):
     """
-    Plots a 2D heatmap with lambda and eta as inputs, and adds interactivity for clicks.
+    Plots a 2D heatmap of parameter values with lambda (x-axis) and eta (y-axis) as inputs.
+
+    This function creates a heatmap to visualize a 2D grid of values based on given lambda and eta 
+    arrays.
+
+    Parameters:
+    ----------
+    lambdas: list or array-like.        Array of lambda values for the x-axis.
+    etas: list or array-like.           Array of eta values for the y-axis.
+    value: 2D array-like.               Matrix of values corresponding to the combinations of lambda and eta.
+    title: str, optional.               Title of the plot. Default is None.
+    x_log: bool, optional.              If True, formats the x-axis (lambda) in log scale. Default is False.
+    y_log: bool, optional.              If True, formats the y-axis (eta) in log scale. Default is False.
+    savefig: bool, optional.            If True, saves the plot to a PDF file. Default is False.
+    filename: str, optional.            Name of the file to save the plot if `savefig` is True. Default is an empty string.
+    Reverse_cmap: bool, optional.       If True, reverses the color map used for the heatmap. Default is False.
+    annot: bool, optional.              If True, adds annotations (values) to each cell in the heatmap. Default is True.
+    only_less_than: float, optional.    If provided, annotates only the cells with values less than this threshold. Default is None.
+    only_greater_than: float, optional. If provided, annotates only the cells with values greater than this threshold. Default is None.
+    xaxis_fontsize: int, optional.      Font size for the x-axis labels. Default is None (uses 12).
+    yaxis_fontsize: int, optional.      Font size for the y-axis labels. Default is None (uses 12).
+    xlim: tuple, optional.              Tuple specifying the limits for the x-axis (lambda). Format: (xmin, xmax). Default is None.
+    ylim: tuple, optional.              Tuple specifying the limits for the y-axis (eta). Format: (ymin, ymax). Default is None.
+    ylabel: str, optional.              Label for the y-axis.
+    on_click: callable, optional.       Function to call when a point on the plot is clicked. The function should take a single 
+                                        `matplotlib.backend_bases.MouseEvent` object as an argument. Default is None.
+    log_cbar: bool, optional.           If True, applies a logarithmic transformation to the color bar values. Default is False.
+
+    Returns:
+    -------
+    fig : matplotlib.figure.Figure
+        The figure object containing the plot.
+    ax : matplotlib.axes._subplots.AxesSubplot
+        The axes object for the plot.
+
+    Notes:
+    -----
+    - The `value` matrix should have dimensions consistent with the lengths of `lambdas` and `etas`.
+    - When using the `on_click` parameter, ensure the callable is designed to handle `matplotlib` click events.
     """
     cmap = 'plasma'
     if Reverse_cmap == True:
@@ -197,7 +237,12 @@ def plot_2D_parameter_lambda_eta(
 
 def on_click(event, lambdas, etas, epochs, boosts, unique_lambdas, unique_etas, plot_info, time_steps, SNR, pkl_dir, save_option):
     """
-    This function identifies when a certain grid has been clicked and loads the data from the data file for plotting.
+    Handles click events on a heatmap plot, allowing interactive exploration of the corresponding data.
+
+    This function identifies the grid cell clicked by the user, maps it to the corresponding lambda 
+    and eta values, and loads associated data for visualization.
+
+    This function should not be called on its own, but in relation to a clicked event.
     """
     # Check if the click is within the axes
     if event.inaxes:
@@ -241,9 +286,10 @@ def on_click(event, lambdas, etas, epochs, boosts, unique_lambdas, unique_etas, 
             plt.suptitle(fr"$\eta={clicked_eta}$, $\lambda={clicked_lambda}$, Epochs$\,={epoch}$, $\phi={boost:.1f}$")
 
             # Loop through results and plot each fold
+            threshold = int(input('Threshhold: '))
             for fold_idx, fold in enumerate(folds_data):
                 plt.subplot(2, 3, fold_idx + 1)
-                plt.title(f"Round {fold_idx + 1}")
+                plt.title(f"Fold {fold_idx + 1}")
 
                 # Data preparation
                 predictions = np.array(fold['predictions'])
@@ -258,20 +304,25 @@ def on_click(event, lambdas, etas, epochs, boosts, unique_lambdas, unique_etas, 
                 # Highlight predicted events
                 predicted_gw_indices = np.where(predicted_labels == 1)[0]
                 if len(predicted_gw_indices) != 0:
-                    threshold = 2
                     grouped_gw_indices = []
                     current_group = [predicted_gw_indices[0]]
 
                     for i in range(1, len(predicted_gw_indices)):
-                        if predicted_gw_indices[i] - predicted_gw_indices[i - 1] <= threshold:
+                        if predicted_gw_indices[i] - predicted_gw_indices[i - 1] <= 1:  # Points are consecutive
                             current_group.append(predicted_gw_indices[i])
                         else:
-                            grouped_gw_indices.append(current_group)
+                            if len(current_group) >= threshold:  # Only keep groups meeting the threshold
+                                grouped_gw_indices.append(current_group)
                             current_group = [predicted_gw_indices[i]]
 
-                    grouped_gw_indices.append(current_group)
+                    # Check the last group
+                    if len(current_group) >= threshold:
+                        grouped_gw_indices.append(current_group)
+
+                    # Highlight the regions for valid groups
                     for i, group in zip(range(len(grouped_gw_indices)), grouped_gw_indices):
                         plt.axvspan(x_test[group[0]], x_test[group[-1]], color="red", alpha=0.3, label="Predicted event" if i == 0 else "")
+
 
                 plt.legend()
 
