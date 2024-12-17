@@ -116,7 +116,7 @@ Neural Networks (NNs) has become a powerful tool in this context. By training a 
 
 In this work we attempt to detect GWs on untreated data from \cite{gwosc} by building our own Recurrent Neural Network (RNN), along with using \texttt{tensorflow.keras}' RNN to test against our own. To do this we created a program which automatically labels GW files granted that the user knows the duration of the GW signal. The performance on the untreated data from \cite{gwosc} is quite poor due to the untreated data having a signal to noise ratio (SNR) which is far too low for our programs. The process of removing noise from GW is quite advanced, and requires state of the art techniques. Due to time constraints and lack of expertise in this field, we instead created a simple program which generates synthetic GW data. This allowed us to control the SNR and focus on training neural networks on processed data, which simplifies the task vastly and allows us to evaluate our RNN's performance. This however still led to poor performance for both the RNN's, only yielding acceptable results is near trivial tasks where the SNR $\sim100$. After attempting many different parameter combinations, we eventually ended up using keras' Convolutional Neural Network (CNN) instead.
 
-This document begins by introducing some of the necessary theory and techniques required to understand the results in section \ref{sec:theory}. We then go on to discuss our implementation of the various NN's along with some of the other tools we have used in section \ref{sec:implementation} along with a short discussion of the challenges of GW detection in section \ref{sec:challenges}. Finally, ending on the results obtained.
+This project is organized as follows: In Section \ref{sec:theory}, we introduce the essential theoretical background and the key techniques needed to understand our subsequent analyses. Section \ref{sec:implementation} then details the implementation of the various neural network models, along with the supporting tools and data-processing strategies employed. We address the intrinsic challenges of gravitational wave detection and their implications for machine learning approaches in Section \ref{sec:challenges}. Finally, in Section \ref{sec:results}, we present and discuss our findings, evaluating the performance of the implemented models under a range of conditions.
 
 \section{Theory}
 \label{sec:theory}
@@ -197,7 +197,7 @@ The error between \(y\) and the predicted output \(\tilde{y}\), is given by some
 \end{align}
 where \(l\) is some error-metric. 
 For some learning rate \(\eta\), the standard update rule for the weights and biases is given by:
-\begin{align}
+\begin{align}	\label{eq:learning_rate}
 	W\leftarrow W-\eta \frac{\partial L}{\partial W},\quad b\leftarrow b-\eta \frac{\partial L}{\partial b}.
 \end{align}
 This transformation may be extended using optimization methods aimed at handling exploding gradient, faster convergence, avoiding local minimas, etc. We covered three of these optimization methods in \cite{project2}; the root mean squared propagation (RMSprop), the adaptive gradient (AdaGrad) and the adaptive moment estimation (Adam). 
@@ -246,15 +246,15 @@ These errors can be computed recursively through time. For \(\delta^{k,l}_{hh}\)
 	\delta^{1,l}_{hh} &= 0, \notag\\
 	\delta^{2,l}_{hh} &= \sigma'_{h}(z_2^{l}) h_1^{l},  \notag\\
 	\delta^{3,l}_{hh} &= \sigma'_{h}(z_3^{l}) \left( h_2^{l} + W_{hh}\sigma'_{h}(z_2^{l})h_1^{l} \right), \\
-	&\dots, \notag \\
+	&\ \ \vdots \notag \\
 	\delta^{k,l}_{hh} &= \sigma'_{h}(z_{k}^{l}) \left( h_{k-1}^{l} + W_{hh}\delta^{k-1,l}_{hh}\right).
 \end{align}
-and for \(\delta^{k,l}_{hx}\),:
+and for \(\delta^{k,l}_{hx}\),
 \begin{align}
 	\delta^{k,1}_{hx} &= \sigma'(z_{k}^{1})X_{k}, \notag\\
 	\delta^{k,2}_{hx} &= \sigma'_{h}(z_{k}^{2}) \left( h_{k}^{1} + W^{2}_{hh}\sigma'(z_{k-1}^{2})X_{k} \right),  \notag\\
 	% \delta^{k,3}_{hx} &= \sigma'_{h}(z_{k}^{3}) \left( h_{k}^{2} + W_{hh}^{3}\delta^{k,2}_{hx} \right), \\
-	&\dots, \notag \\
+	&\ \ \vdots \notag \\
 	\delta^{k,l}_{hx} &= \sigma'_{h}(z_{k}^{l}) \left( h_{k}^{l-1} + W_{hh}^{l}\delta^{k-1,l}_{hx}\right).
 \end{align}
 
@@ -296,9 +296,9 @@ The high-level features extracted by convolutional and pooling layers are proces
 \subsection{Additional Techniques}
 \subsubsection{Regularization \& Loss Function}
 We used $L^2$ regularization for all our results. We refer to \cite{project1} for an introduction. The loss function considered for all our results was the weighted binary-cross entropy with this additional $L^2$ regularization:
-\begin{align}
+\begin{align}	
 	L&=-\frac1N\sum_{i=1}^N\left[S_\text{CW}\,y_i\ln(\hat{y}_i)+(1-y_i)\ln(1-\hat{y}_i)\right]\nonumber\\
-	&+\lambda\sum_{i=1}^Nw_i^2
+	&+\lambda\sum_{i=1}^Nw_i^2 \label{eq:L2_paramater}
 \end{align}
 where $S_{\text{CM}}$ is the signal class weight and the noise class weight has been normalized to unity.
 
@@ -313,7 +313,7 @@ We opted into using early stopping for the majority of our parameter scans. Give
 
 \subsubsection{Dynamic Class Weights}
 To handle the large class imbalance between the noise and gravitational events, we introduced a dynamic class weight adjustment based on a hyperparameter $\phi$. Given the label array $\textbf{l}$, if we define $l_i=1$ when there is a signal, and $l_i=0$ when there is only noise and normalize the noise class weight to $1$, then a simple way to compute a linear dynamical weights for the signal class is:
-\begin{align}
+\begin{align}	\label{eq:dynamical_signal_weights}
 	S_{\rm CW}&=\left[\phi-(\phi-1)\frac{\varE}{E}\right]\times\left[\frac{{\rm len}(\textbf{l})}{\sum_i l_i}-1\right]
 \end{align}
 where $S_{\rm CW}$ refers to the signal class weight (GWs in our case), $\varE$ is the current epoch and $E$ is the total number of epochs. The right bracket is just the factor which would give you balanced class weights, i.e. the program is equally punished for only predicting either of the classes. The factor in the left bracket is then just a linearly decreasing factor going from $\phi$ to $1$ as $\varE\to E$. This essentially gives an early boost to the signal class, and gradually converges to a balanced class weight system where the NN would perform equally poorly from predicting all in either of the classes. A simple example is shown in Fig. \ref{fig:DynamicCW}. Note that the noise-signal label ratio is \textit{not} SNR, one refers to the time axis in the case of GW (i.e.~the percentage of time there is a signal), whilst the latter refers to the strain-to-noise ratio (i.e.~roughly how visible the signal is at any given time). Dynamical class labels are important in our case since GW events are so rare. Due to this the program may simply decide that it is best not to predict the signal class at all, as it is much more likely to be punished for ever attempting to `guess' GWs. Thus dynamical weights are a way to reduce the effects of this particular problem.
@@ -341,27 +341,50 @@ Unlike traditional Fourier transforms, which decompose a signal into sine and co
 We implemented a program which downloads the data from \cite{gwosc}, and when given the duration of the GW signal of interest, automatically labels the data accordingly. Our definition for `duration' of an event is rather arbitrary. What we did is simply look at a relevant research paper (found for each event at \cite{gwosc_all_events}) which contains plots of the treated data and made an educated guess for where it would be reasonable to detect it. Further we made a class \texttt{GWSignalGenerator}, which adds a synthetic GW signal to any arbitrary sequence, and adds corresponding labels to the dataset. This class has a lot of options, such as spin factors and amplitude factors for how much the signal should spike up, generating random events, etc. and was meant to simulate what GW event strain data looks like. Originally this program was meant to be our test runs before working with the real deal. However due to the complicated nature of detecting GWs, this ended up being what the NNs worked with instead. We explain the reasoning for this in the next section.
 
 \subsection{The Neural Networks}
-We have implemented two classes, \texttt{RNN} and \texttt{KerasRNN}, both of which inherits from a parent class called \texttt{NeuralNetwork} which contains methods handling saving data (\texttt{save\_data}), 
-scaling and splitting data (\texttt{store\_train\_test\_from\_data}), and dividing the data into sequences (\texttt{prepare\_sequences\_RNN}). The class \texttt{RNN} is our own implementation of the stacked RNN architecture described in section \ref{sec:RNNs}, using the equations in \eqref{eq:gradients_hidden} and \eqref{eq:gradients_out} when training. On the other hand, the class \texttt{KerasRNN}, uses \texttt{keras}'s RNN \cite{keras_recurrent_layers}. Common to both classes are their public methods—\texttt{train}, \texttt{predict}, \texttt{cross\_validate} and \texttt{calculate\_loss}—which function as their names suggest. Both classes are initialized with key parameters, including a hidden-layer activation function, an output-layer activation function, a scaler type, and an optimizer, which can be set to plain gradient descent, Adagrad, RMSprop, or Adam. During training, the models require the input data, the number of epochs, batch size, window size, and optionally a clip value for gradient clipping, as implemented in \eqref{eq:clipping}. For details on the specific file structure, we refer to the README file at \href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project3}{project 3}.
+We have implemented three classes, \texttt{RNN}, \texttt{KerasRNN} and \texttt{KerasCNN}, all of which inherits from a parent class called \texttt{NeuralNetwork}, containing methods handling saving data (\texttt{save\_data}), 
+scaling and splitting data (\texttt{store\_train\_test\_from\_data}), and dividing the data into sequences (\texttt{prepare\_sequences\_RNN}). The class \texttt{RNN} is our own implementation of the stacked RNN architecture described in section \ref{sec:RNNs}, using the equations in \eqref{eq:gradients_hidden} and \eqref{eq:gradients_out} when training. On the other hand, the class \texttt{KerasRNN}, uses \texttt{keras}'s RNN \cite{keras_recurrent_layers}. Common to both RNN classes are their public methods—\texttt{train}, \texttt{predict}, \texttt{cross\_validate} and \texttt{calculate\_loss}—which function as their names suggest. Both classes are initialized with key parameters, including a hidden-layer activation function, an output-layer activation function, a scaler type, and an optimizer, which can be set to plain gradient descent, Adagrad, RMSprop, or Adam. During training, the models require the input data, the number of epochs, batch size, window size, and optionally a clip value for gradient clipping, as implemented in \eqref{eq:clipping}. 
 
-A program which uses \texttt{tensorflow.keras}' SimpleRNN was then implemented and parameter scans with the following parameters were performed:
+The \texttt{KerasCNN} class is less generalized than the two RNN classes, as it defaults to five layers in the order: convolution, max-pooling, convolution, flatten and  a dense layer. When training on multiple data sets, we have used the \texttt{train\_multiple\_datas} method of \texttt{KerasCNN}, and we calculate the loss and accuracy metrics using Keras's build in methods. For details on the specific file structure, we refer to the README file at \href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project3}{project 3}.
+
+\subsection{Default Parameters and Parameter Scans}
+There are many parameters contribute to the training of a neural network. There are some parameters which we defaulted consistently to certain values throughout, while for others we performed a parameter scan. 
+
+For our RNNs, we set the window size as (`\(//\)' denoting floor division) \(N_{W} = N//100\), batch size as \(B=128\), where \(N\) is the total time steps. We consistently chose the hidden layers to be of shape \(5, \ 10, \ 2\), in that order. 
+
+For the CNN, we used \(16\) filters for the convolutional layers and a pool size of \((2,2)\) for the max-pooling layer. Across all networks, we selected the \(\tanh\) function as the activation for the hidden layers due to its advantageous properties, such as centering data around zero to mitigate vanishing gradient issues. For the output layer, we applied the sigmoid activation function, which is particularly suitable for binary classification problems as it maps inputs to the range \([0,1]\), effectively representing class probabilities.
+
+Although we have implemented the possibility of using different optimizers, our results further down is created using exclusively Adam as our optimizer. This is partly because we did not have time to properly investigate the other optimizers in this project, but also because Adam showed more promise early on. 
+
+While these settings were fixed, certain key hyperparameters were systematically varied. Specifically, we chose to vary the following parameters:
 \begin{itemize}
-	\item $N\in\{10,25,50,100\}$
+	\item $E\in\{10,25,50,100\}$
 	\item $\phi\in\{1.0,1.1,...,1.5\}$
 	\item $\lambda\in\{10^{-10},10^{-9},...,10^{-1}\}$
 	\item $\eta\in\{10^{-4},5\times10^{-4},...,10^{-1},5\times10^{-1}\}$
 \end{itemize}
-where $N$ is the number of epochs. Due to the program being incredibly slow, we only ended up using the Adam optimizer, and only managed to finish half the parameter scan with $N=100$. Similarly, due to spending much time implementing our custom RNN, we only had time to perform a few parameter combinations. The performance of these were however so poor -- even with an extremely high SNR on the synthetic signal -- that they are not worth mentioning. This is likely due to mistakes in the implementation which we did not manage to fix.
+where $E$ is the number of epochs, \(\phi\) the initial boost \eqref{eq:dynamical_signal_weights}, \(\lambda\) the \(L^2\)-regularization parameter \eqref{eq:L2_paramater} and \(\eta\) the learning rate \eqref{eq:learning_rate}.
 
-The implementation keras RNN consist of starting with 5 separate signals which we generate, and perform $5$-fold cross validation on them. Within each training loop we again split the training data into a validation set. Since keras does not support dynamical class weights, we needed to perform the fitting with a single epoch, but still loop over each of these fittings $N$ number of times. We then perform the training and validate after each epoch. Every time we reach a new best validation loss, we save the weights and continue with them the next epoch. The model is then tested with the remaining test set with the best weights and the data corresponding to the run is saved to a \texttt{.pkl} file to be used later. Due to the program running very slowly, we saved a separate file for each parameter combination, and later used another program to merge all this data into larger data files.
 
-Due to a massive lack of performance to the RNN's, we decided to include an implementation of keras' CNN's as well. This was done by... We then ran a small parameter scan due to time constraints where we included the following parameters: ... As before, we did not do this with the actual GW data, and instead opted into using our own signal generator class.
 
 \section{Challenges}
 \label{sec:challenges}
-As we have mentioned prior, we did not end up using either of the RNN's nor the CNN on actual GW data, or at least not long enough to gather any meaningful results. The reason for this is simple; gravitational wave detection is very difficult! All the NN's simply ended up just randomly guessing due to the near impossibility of the task, so we just want to showcase how difficult this actually is.
 
-Consider for example Fig.~\ref{fig:GW170104} which shows the raw strain data measured by the H1 LIGO detector surrounding the event GW170104 acquired from \cite{gwosc}. The small partition in red is where the GW signal was detected by both LIGO detectors and Virgo, whilst the rest is simply noise. This event has a roughly average peak SNR $\sim13$ (after treatment) and a rather common duration of roughly $0.04\,$s, so this would be around what would be expected of a NN to be able to detect. Whilst the strain here is of the order $10^{-18}$, after cleaning the data, \cite{LIGOScientific:2017bnn} shows that the actual strain stemming from the GW event peaks around $10^{-21}$. Thus the unfiltered SNR of the raw data is $\lesssim10^{-3}$. Clearly it is unreasonable to give this to a NN and expect it to learn anything, and this is even with data which is over a relatively short timespan of under 20 seconds. Note that even if we picked the GW with highest (treated) SNR, this is only $\sim3$ times higher than this particular example. Thus even in this most ideal case, we still have a raw data SNR which is at best $\sim10^{-2}$.
+\subsection{Time Constraints}
+One of the primary challenges we faced during this project was the significant time required to run the models. The parameter scans for the Keras-based RNN models with $N=100$ were particularly time-consuming, and, as a result, we were only able to complete approximately half of the planned configurations. This limitation constrained our ability to fully explore the hyperparameter space and systematically assess model performance.
+
+The situation was even more pronounced for our custom implementation of the (stacked) RNN, which naturally demanded far greater computational resources and runtime. Given the inherently more complex structure and optimization challenges associated with our custom RNN, the execution time increased substantially. Consequently, we were only able to test a limited number of parameter combinations for the custom model. 
+
+% It is important to highlight that these time constraints were compounded by the computational limitations of our available hardware. While some optimizations (such as reducing the training epochs or batch sizes) could have mitigated runtime, they would have come at the cost of reducing model performance or exploration depth. 
+
+
+\subsection{Difficulties with Gravitational Data}
+As we have mentioned prior, we did not end up using either of the RNN's nor the CNN on actual GW data, or at least not long enough to gather any meaningful results. The reason for this is simple; gravitational wave detection is very difficult! 
+
+Our initial motivation for working with GW data stemmed from the belief that modified GW datasets with higher signal-to-noise ratios (SNR) would be available. Additionally, we assumed that, at the very least, we could compare how different models performed relative to one another, even if the results were poor. That being said, we do not exclude the possibility that we were simply a bit too optimistic. 
+
+As a result, we spent a considerable amount of time evaluating the performance of our NNs on datasets that were far too complex for effective training, as we saw close to no convergent behavior. In the following, we aim to highlight the inherent challenges of training NNs on GW data to provide context for our efforts and results. 
+
+One of the fundamental difficulties lies in the nature of the GW signal itself. GW events are incredibly short in duration, often lasting only a fraction of a second, and are buried deep within overwhelming noise. This makes it extremely difficult to isolate the actual signal, let alone train a NN to identify it. Consider for example Fig.~\ref{fig:GW170104} which shows the raw strain data measured by the H1 LIGO detector surrounding the event GW170104 acquired from \cite{gwosc}. The small partition in red is where the GW signal was detected by both LIGO detectors and Virgo, whilst the rest is simply noise. This event has a roughly average peak SNR $\sim13$ (after treatment) and a rather common duration of roughly $0.04\,$s, so this would be around what would be expected of a NN to be able to detect. Whilst the strain here is of the order $10^{-18}$, after cleaning the data, \cite{LIGOScientific:2017bnn} shows that the actual strain stemming from the GW event peaks around $10^{-21}$. Thus the unfiltered SNR of the raw data is $\lesssim10^{-3}$. Clearly it is unreasonable to give this to a NN and expect it to learn anything, and this is even with data which is over a relatively short timespan of under 20 seconds. Note that even if we picked the GW with highest (treated) SNR, this is only $\sim3$ times higher than this particular example. Thus even in this most ideal case, we still have a raw data SNR which is at best $\sim10^{-2}$.
 
 \begin{figure}[ht!]
 	\includegraphics[width=0.5\textwidth]{Figures/GW170104GWEvent.pdf}

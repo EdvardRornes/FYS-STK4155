@@ -30,7 +30,7 @@ if __name__ == "__main__":
     etas = [5e-3, 1e-3, 5e-2, 1e-2]
     regularization_values = np.logspace(-10, -6, 5)
     gw_earlyboosts = np.linspace(1, 1.5, 6)
-    epoch_list = [50]
+    epoch_list = [10, 25]
     clip_value = 5
     n_filters = 16
     SNR = 5
