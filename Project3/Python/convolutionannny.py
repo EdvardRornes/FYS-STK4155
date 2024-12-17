@@ -78,7 +78,7 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # Prepare to save data
-    save_path = "CNN_Parameter_Search"
+    save_path = "CNN_Parameter_Search_V2"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 

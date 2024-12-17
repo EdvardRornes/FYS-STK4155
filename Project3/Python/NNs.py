@@ -1188,15 +1188,6 @@ class KerasCNN(NeuralNetwork):
         Computes the weighted binary cross-entropy loss.
         """
         return self.model.evaluate(data, y, verbose=verbose)
-    
-        y_pred_binary = 1*(y_pred > 0.5)
-        weighted_Acc = weighted_Accuracy(y_true, y_pred_binary)
-        weight_1 = len(y_true)/np.sum(y_true)-1
-        loss = -np.mean(
-            weight_1 * y_true * np.log(y_pred) +
-            weight_0 * (1 - y_true) * np.log(1 - y_pred)
-        )
-        return loss, weighted_Acc
 
 
 
