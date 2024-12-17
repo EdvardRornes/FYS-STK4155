@@ -12,7 +12,7 @@ save_option = input("Would you like to be prompted to save files? y/n\nNB! If yo
 # Define the input and output paths
 pkl_dir = "GW_Merged_Results_SNR5"  # Merged results path
 time_steps = 5000
-SNR = 30
+SNR = 5
 
 # Containers for the parameters and results
 lambdas = []

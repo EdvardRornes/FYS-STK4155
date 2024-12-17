@@ -5,10 +5,10 @@ from collections import defaultdict
 ##### This program merges the files created by the NN's #####
 
 # Define the input and output paths
-input_path = "GW_Parameter_Search_V2"
-output_path = "GW_Parameter_Search_V2"#"GW_Merged_Results"
+input_path = "CNN_Parameter_Search"
+output_path = "GW_Merged_Results"#"GW_Merged_Results"
 time_steps = 5000
-SNR = 30
+SNR = 5
 
 if not os.path.exists(output_path):
     os.makedirs(output_path)
@@ -22,8 +22,8 @@ for file in files:
     parts = file.split('_')
     try:
         # Extract epoch and boost
-        epochs = int(parts[7].replace('epoch', ''))
-        boost = float(parts[10].replace('boost', '').replace('.pkl', ''))
+        epochs = int(parts[8].replace('epoch', ''))
+        boost = float(parts[11].replace('boost', '').replace('.pkl', ''))
         
         # Add the file to organized_data
         organized_data[(epochs, boost)].append(file)
@@ -42,8 +42,8 @@ def merge_files(file_list, epochs, boost):
         # Extract lambda and eta values from the filename
         parts = file.split('_')
         try:
-            reg_value = float(parts[8].replace('lamd', ''))
-            lr = float(parts[9].replace('eta', ''))
+            reg_value = float(parts[9].replace('lamd', ''))
+            lr = float(parts[10].replace('eta', ''))
         except (IndexError, ValueError) as e:
             print(f"Skipping file {file} due to error: {e}")
             continue
@@ -62,7 +62,7 @@ def merge_files(file_list, epochs, boost):
     }
     
     # Save the merged file
-    base_filename = f"Synthetic_GW_Merged_Results_timesteps{time_steps}_SNR{SNR}_epoch{epochs}_boost{boost:.1f}"
+    base_filename = f"CNN_Synthetic_GW_Merged_Results_timesteps{time_steps}_SNR{SNR}_epoch{epochs}_boost{boost:.1f}"
     output_file = os.path.join(output_path, f"{base_filename}.pkl")
     with open(output_file, "wb") as f:
         pickle.dump(formatted_super_dict, f)

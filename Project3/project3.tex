@@ -114,9 +114,12 @@ To date, the most advanced experiment to detect these waves is the Laser Interfe
 
 Neural Networks (NNs) has become a powerful tool in this context. By training a NN on large datasets of both gravitational wave signals and background noise, these models can learn to distinguish between genuine gravitational wave signals and random noise. This, in theory, may allow for more accurate detection and classification of GW events, even in the presence of significant interference, and may be the future of GW detection \cite{Marx:2024wjt, skliris2024}. NNs can be trained to recognize patterns in the data that correspond to the characteristic signatures of GWs, improving both the efficiency and reliability of detection algorithms. With the growing amount of data from observatories like LIGO, NNs are playing an increasingly important role in identifying new events and advancing our understanding of the universe.
 
-In this work we attempt to detect GWs on untreated data from \cite{gwosc} by building our own Recurrent Neural Network (RNN), along with using \texttt{tensorflow.keras}' RNN to test against our own. The performance on this untreated data is quite poor due to the untreated data having a signal to noise ratio (SNR) which is very low. The process of removing noise from GW is quite advanced, and requires state of the art techniques. Due to time constraints and lack of expertise in this field, we instead created a simple program which generates synthetic GW data. This allows us to control the SNR and focus on training neural networks on processed data, which simplifies the task vastly and allows us to evaluate our RNN's performance. The code in \href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project3}{project 3} however does contain a program which automatically labels GW files granted that the user knows the duration of the GW signal, which may be of use for future work.
+In this work we attempt to detect GWs on untreated data from \cite{gwosc} by building our own Recurrent Neural Network (RNN), along with using \texttt{tensorflow.keras}' RNN to test against our own. To do this we created a program which automatically labels GW files granted that the user knows the duration of the GW signal. The performance on the untreated data from \cite{gwosc} is quite poor due to the untreated data having a signal to noise ratio (SNR) which is far too low for our programs. The process of removing noise from GW is quite advanced, and requires state of the art techniques. Due to time constraints and lack of expertise in this field, we instead created a simple program which generates synthetic GW data. This allowed us to control the SNR and focus on training neural networks on processed data, which simplifies the task vastly and allows us to evaluate our RNN's performance. This however still led to poor performance for both the RNN's, only yielding acceptable results is near trivial tasks where the SNR $\sim100$. After attempting many different parameter combinations, we eventually ended up using keras' Convolutional Neural Network (CNN) instead.
+
+This document begins by introducing some of the necessary theory and techniques required to understand the results in section \ref{sec:theory}. We then go on to discuss our implementation of the various NN's along with some of the other tools we have used in section \ref{sec:implementation} along with a short discussion of the challenges of GW detection in section \ref{sec:challenges}. Finally, ending on the results obtained.
 
 \section{Theory}
+\label{sec:theory}
 \subsection{Gravitational Waves}
 We will simply give a quick introduction to GWs. For a more detailed analysis, please see any graduate level textbook on general relativity, e.g.~\cite{Carroll} or \cite{Wald}.
 
@@ -194,11 +197,9 @@ The error between \(y\) and the predicted output \(\tilde{y}\), is given by some
 \end{align}
 where \(l\) is some error-metric. 
 For some learning rate \(\eta\), the standard update rule for the weights and biases is given by:
-\begin{subequations}
 \begin{align}
-	W\leftarrow W - \eta \frac{\partial L}{\partial W},  \ b\leftarrow b - \eta \frac{\partial L}{\partial b}.
+	W\leftarrow W-\eta \frac{\partial L}{\partial W},\quad b\leftarrow b-\eta \frac{\partial L}{\partial b}.
 \end{align}
-\end{subequations}
 This transformation may be extended using optimization methods aimed at handling exploding gradient, faster convergence, avoiding local minimas, etc. We covered three of these optimization methods in \cite{project2}; the root mean squared propagation (RMSprop), the adaptive gradient (AdaGrad) and the adaptive moment estimation (Adam). 
 
 Compared to FFNN, computing the gradient of \(L\) with respect to the weights leads to a somewhat more complicated expression due to the temporal dependencies between the hiden states. This can be seen by writing out the partial derivative of the loss function with respect to the weight \(W\),  being either \(W_{hx}\) or \(W_{hh}\) (cf. \cite{superGood}):
@@ -336,6 +337,7 @@ making it computationally efficient for practical applications like feature extr
 Unlike traditional Fourier transforms, which decompose a signal into sine and cosine waves of different frequencies, wavelets allow for both time and frequency localization. This makes them particularly useful for analyzing non-stationary signals, such as gravitational waves or audio signals, where the frequency content changes over time. In the context of neural networks, wavelet transforms are often used as a pre-processing step to reduce noise, extract meaningful features, or compress data, thereby potentially improving the performance.
 
 \section{Implementation}
+\label{sec:implementation}
 We implemented a program which downloads the data from \cite{gwosc}, and when given the duration of the GW signal of interest, automatically labels the data accordingly. Our definition for `duration' of an event is rather arbitrary. What we did is simply look at a relevant research paper (found for each event at \cite{gwosc_all_events}) which contains plots of the treated data and made an educated guess for where it would be reasonable to detect it. Further we made a class \texttt{GWSignalGenerator}, which adds a synthetic GW signal to any arbitrary sequence, and adds corresponding labels to the dataset. This class has a lot of options, such as spin factors and amplitude factors for how much the signal should spike up, generating random events, etc. and was meant to simulate what GW event strain data looks like. Originally this program was meant to be our test runs before working with the real deal. However due to the complicated nature of detecting GWs, this ended up being what the NNs worked with instead. We explain the reasoning for this in the next section.
 
 \subsection{The Neural Networks}
@@ -356,6 +358,7 @@ The implementation keras RNN consist of starting with 5 separate signals which w
 Due to a massive lack of performance to the RNN's, we decided to include an implementation of keras' CNN's as well. This was done by... We then ran a small parameter scan due to time constraints where we included the following parameters: ... As before, we did not do this with the actual GW data, and instead opted into using our own signal generator class.
 
 \section{Challenges}
+\label{sec:challenges}
 As we have mentioned prior, we did not end up using either of the RNN's nor the CNN on actual GW data, or at least not long enough to gather any meaningful results. The reason for this is simple; gravitational wave detection is very difficult! All the NN's simply ended up just randomly guessing due to the near impossibility of the task, so we just want to showcase how difficult this actually is.
 
 Consider for example Fig.~\ref{fig:GW170104} which shows the raw strain data measured by the H1 LIGO detector surrounding the event GW170104 acquired from \cite{gwosc}. The small partition in red is where the GW signal was detected by both LIGO detectors and Virgo, whilst the rest is simply noise. This event has a roughly average peak SNR $\sim13$ (after treatment) and a rather common duration of roughly $0.04\,$s, so this would be around what would be expected of a NN to be able to detect. Whilst the strain here is of the order $10^{-18}$, after cleaning the data, \cite{LIGOScientific:2017bnn} shows that the actual strain stemming from the GW event peaks around $10^{-21}$. Thus the unfiltered SNR of the raw data is $\lesssim10^{-3}$. Clearly it is unreasonable to give this to a NN and expect it to learn anything, and this is even with data which is over a relatively short timespan of under 20 seconds. Note that even if we picked the GW with highest (treated) SNR, this is only $\sim3$ times higher than this particular example. Thus even in this most ideal case, we still have a raw data SNR which is at best $\sim10^{-2}$.
@@ -375,6 +378,7 @@ What academics do is they remove all the noise from known sources which occur at
 \end{figure}
 
 \section{Results \& Discussion}
+\label{sec:results}
 We begin by considering \texttt{tensorflow.keras}'s \texttt{SimpleRNN} on a set of synthetic GW signals for various combinations of the learning rate $\eta$ and $L^2$ regularization parameter $\lambda$ as shown in Fig. \ref{fig:PhiShowcase}. Here we have used 50 epochs for both the figures, where the upper plot uses a dynamical class weights with $\phi=1.4$ and the lower plot uses static class weights, i.e. $\phi=1$. The difference for high $\lambda$ and suboptimal $\eta$ can be seen to be relatively small between the two. In both the cases, large $\lambda$ corresponds to underfitting the model with the high suppression for the weights, and too high (low) value for the initial learning rate causes the model to overshoot (undershoot) the desired minima. For the combinations of $\eta$ and $\lambda$ where the model performs well, we see that there is a clear distinction between the two figures. The model performs much better when it initially starts with higher class weights for the signal class.
 \begin{figure}[ht!]
 	\begin{subfigure}{0.499\textwidth}
@@ -397,7 +401,7 @@ The particular example with $\eta=0.01$, $\lambda=10^{-8}$, $\phi=1.4$ with 50 e
 
 We then tried to up the difficulty, lowering the SNR to $\sim15$, which is roughly the range of a treated GW event. This however lead to results so poor that guessing randomly would give a better loss. 
 
-For the CNN however we could lower the SNR to as low values as $X$ whilst still having 
+For the CNN however we could lower the SNR to as low values as $X$ whilst still having $\alpha$
 
 
 \section{Conclusion}
