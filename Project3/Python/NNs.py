@@ -1024,6 +1024,17 @@ class KerasRNN(NeuralNetwork):
         y_pred = self.model.predict(X_test_seq, verbose=verbose)
         return y_pred
 
+    def evaluate(self, y_true, y_pred, epoch=0):
+        # Use the Keras model's evaluate function
+        """
+        Computes the weighted binary cross-entropy loss.
+        """
+        weighted_Acc = weighted_Accuracy(y_true, y_pred_binary)
+
+        self._loss_function.labels = y_true.flatten()
+        loss = self._loss_function(y_true, y_pred, epoch=0)
+        return loss, weighted_Acc
+    
 class KerasCNN(NeuralNetwork):
     def __init__(self, input_shape:tuple, n_filters:list, optimizer:Optimizer, 
                  filter_sizes=(3,3), pool_size=(2,2), loss_function:str='binary_crossentropy', 
@@ -1168,29 +1179,15 @@ class KerasCNN(NeuralNetwork):
                     validation_data=(X_val_i, y_val_i),
                     class_weight={0: class_weights[0], 1: class_weights[1]}  # Ensure proper format
                 )
-
+        
         return history
     
-    def evaluate(self, y_true, y_pred):
+    def evaluate(self, data, y, verbose=0):
         # Use the Keras model's evaluate function
         """
         Computes the weighted binary cross-entropy loss.
         """
-        y_pred_binary = 1*(y_pred > 0.5)
-        weighted_Acc = weighted_Accuracy(y_true, y_pred_binary)
-        weight_1 = len(y_true)/np.sum(y_true)-1
-
-        y_pred = np.clip(y_pred, 1e-7, 1-1e-7)  # To prevent log(0)
-        loss = -np.mean(weight_1*y_true*np.log(y_pred) + (1-y_true)*np.log(1-y_pred))
-        bce = losses.BinaryCrossentropy(
-            from_logits=False,
-            name="binary_crossentropy",
-            apply_class_balancing=True,
-            dtype=None,
-        )
-        loss = bce(y_true, y_pred)
-        print(loss)
-        return loss, weighted_Acc
+        return self.model.evaluate(data, y, verbose=verbose)
 
 
 
