@@ -30,7 +30,7 @@ if __name__ == "__main__":
     etas = [5e-3, 1e-3, 5e-2, 1e-2, 5e-2]
     regularization_values = np.logspace(-12, -6, 7)
     gw_earlyboosts = np.linspace(1, 1.5, 6)
-    epoch_list = [1, 25, 50, 100]
+    epoch_list = [10, 25, 50, 100]
     clip_value = 5
     n_filters = 16
     SNR = 5
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # Prepare to save data
-    save_path = "CNN_Parameter_Search"
+    save_path = "CNN_Parameter_Search_V2"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
@@ -113,7 +113,9 @@ if __name__ == "__main__":
                         predictions = model.predict(data_test)
                         predictions = predictions.reshape(-1)
                         
-                        loss, weighted_Acc = model.evaluate(y_test, predictions)
+
+                        loss, weighted_Acc = model.evaluate(data_test, y_test)
+                        print(loss, weighted_Acc, "her")
 
                         results.append({
                             "epochs": epochs,
@@ -128,10 +130,11 @@ if __name__ == "__main__":
                             "accuracy": weighted_Acc
                         })
 
-                        plt.figure(figsize=(10,6))
-                        plt.plot(t, X_test)
-                        plt.plot(t, predictions)
-                        plt.plot(t, y_test)
+                        # plt.figure(figsize=(10,6))
+                        # plt.plot(t, X_test)
+                        # plt.plot(t, predictions)
+                        # plt.plot(t, y_test)
+                        # plt.show()
 
                         progress += 1
                         percentage_progress = (progress / total_iterations) * 100
@@ -140,5 +143,5 @@ if __name__ == "__main__":
                         ETA = elapsed_time*(100/percentage_progress-1)
 
                         print(f"Progress: {progress}/{total_iterations} ({percentage_progress:.2f}%), Time elapsed = {elapsed_time:.1f}s, ETA = {ETA:.1f}s, Test loss = {loss:.3f}, Test accuracy = {100*weighted_Acc:.1f}%\n")
-                        plt.show()
+                        
                     save_results_incrementally(results, base_filename, save_path)
