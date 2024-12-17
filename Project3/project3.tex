@@ -276,20 +276,42 @@ since \(\partial h^{l}_{n}/\partial b_{h}^{l} = \sigma'_{h}(z_k^l)\). For the ou
 
 The dependency for each error term \(\delta^{k,l}\) on `past' error terms leads to a much greater computation time, compared to that of FFNN. Every gradient computation needs an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm, commonly referred to as `truncated backpropagation through time' (see e.g.~\cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on.
 
-\subsection{Convolutional Neural Networks}
-Convolutional neural networks (CNNs) are specialized deep learning architectures that process data with a spatial structure, such as images or signals. The core operation of CNNs is the convolution, defined for a 1D input signal $f[i]$ and a filter kernel $g[n]$ as:
-\[(f*g)[i]=\sum_{n}f[n]g[i-n].\]
-For a 2D input, the convolution is given by:
-\[(f*g)[i,j]=\sum_{m}\sum_{n}f[i-m,j-n]g[m,n],\]
-where $f[i,j]$ is the input pixel value, and $g[m,n]$ is the filter kernel.
+\subsection{Convolutional Neural Networks}  
+Convolutional Neural Networks (CNNs) are specialized deep learning architectures used to process data with a spatial or temporal structure, such as images, time series, or signals. The mathematical operation of convolution is the main feature of CNNs, which is inspired by signal processing and serves as a powerful tool for feature extraction.
 
-The convolution operation captures local patterns, such as edges or textures, which are passed through an activation function. The next layers of the CNN extract increasingly abstract features.
+In its most basic form, convolution for a 1D input signal $f[i]$ and a filter kernel $g[n]$ is defined as:
+\begin{align}
+	(f*g)[i]\equiv\sum_{n}f[n]g[i-n].
+\end{align}
+In the case of 2D data, the convolution is:
+\begin{align}
+	(f*g)[i,j]\equiv\sum_{m}\sum_{n}f[i-m,j-n]g[m,n],
+\end{align}
+where in the case of e.g. images, $f[i,j]$ represents the input pixel intensity at position $(i,j)$, and $g[m,n]$ is the filter kernel. In the context of NNs, convolution can be thought of as a sliding window operation where the filter $g$ is moved across the input $f$. At each position, the filter and the corresponding portion of the input are element-wise multiplied and summed, producing a new value in the output matrix. This process effectively detects patterns encoded in the filter, such as edges, textures, or other localized features.
 
-To reduce dimensionality and improve computational efficiency, CNNs often include pooling layers, such as max-pooling:
-\[\text{MaxPooling}(x)=\max(x_{\text{window}}),\]
-where $x_{\text{window}}$ refers to a subset of the input.
+Convolutions are closely related to concepts in functional analysis and signal processing, where they are used to study how one function modifies another function. In the frequency domain, convolution corresponds to multiplication, which allows the filter to emphasize or suppress specific frequency components of the input. Take an image as an example: high-frequency components correspond to sharp changes like edges, while low-frequency components correspond to smoother regions. By designing filters that target specific frequencies, CNNs can effectively isolate desired features while reducing noise.
 
-The high-level features extracted by convolutional and pooling layers are processed by fully connected layers to make predictions, such as classifying an image or detecting a signal. In the case of GWs, these convolutional layers essentially work to filter out most the background noise, leaving the signal mostly intact. 
+Noise often manifests as high-frequency components or irregular patterns in data. The convolution operation is inherently local, meaning it focuses on nearby relationships between data points. Filters can be trained or designed to ignore small-scale irregularities while preserving dominant features, such as edges or repeating structures. In a CNN, the ability to learn filters automatically during training allows the network to focus on the most relevant features of the data, adapting to the specifics of the given task.
+
+The layers in a CNN consists of the following types:
+\begin{enumerate}
+	\item Convolutional Layers: These apply learned filters to detect patterns in the input. Early layers capture simple structures (edges, textures), while deeper layers capture complex and abstract features. The outputs are then passed through non-linear activation functions.
+	\item Pooling Layers: Pooling, such as max-pooling, reduces dimensionality by summarizing local regions:
+	\[\text{MaxPooling}(x)=\max(x_{\text{window}}),\]
+	where \( x_{\text{window}} \) is a small subset of the input.
+	\item Flatten Layer: Converts the multidimensional output of convolutional and pooling layers into a one-dimensional vector. This is necessary to connect the extracted features to the fully connected layers for final decision-making.
+	\item Dense Layers: These process the high-level features extracted by the convolutional and pooling layers to make predictions, such as classifying an image or detecting a signal.
+\end{enumerate}
+
+In the context of gravitational wave (GW) detection, CNNs are particularly effective for signal de-noising and feature extraction:
+\begin{itemize}
+	\item Convolutional layers can isolate localized patterns in the time-frequency representation of GW data, such as the characteristic "chirp" signal of a binary merger.
+	\item By stacking multiple layers, the network can progressively refine its ability to distinguish noise from signal, leveraging learned patterns specific to GWs.
+	\item Pooling layers enhance robustness by ignoring small-scale noise variations while retaining the overall structure of the signal.
+\end{itemize}
+
+Through this hierarchical process, CNNs filter out most of the background noise, leaving the gravitational wave signal predominantly intact. This capability, coupled with the network's adaptability, makes CNNs a cornerstone for tasks involving noisy, high-dimensional data.
+
 
 
 
