@@ -94,7 +94,7 @@ aps,
 \author{Edvard B. Rørnes}
 \email{e.b.rornes@fys.uio.no}
 \author{Isak O. Rukan}
-\email{Insert Email}
+\email{icrukan@uio.no}
 \affiliation{Institute of Physics, University of Oslo,\\0371 Oslo,  Norway}
 \date{\today}
 
@@ -237,7 +237,7 @@ with \(L\) being the total amount of hidden layers.
 Here, the dimensions are \(W^{l}_{hx}\in\mathbb{R}^{d_{l}\times d_{l-1}}\), \(W^{l}_{hh}\in\mathbb{R}^{d_{l}\times d_{l}}\), with \(d_l\) being the dimension of the \(l\)-th hidden state, \(l_0\) the dimension of the input and \(l^{L}\) the dimension of the output. The BTT algorithm for a stacked RNN takes on the same form, except that we now have \(L\) hidden states. 
 
 
-Define now the errors:
+To update the weights, we define the errors:
 \begin{align}
 	\delta^{k,l}_{hh}\equiv \frac{\partial h_{k}^{l}}{\partial W_{hh}^{l}}, \ \delta^{k,l}_{hx}\equiv \frac{\partial h_{k}^{l}}{\partial W_{hx}^{l}}.
 \end{align}
