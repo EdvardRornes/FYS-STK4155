@@ -37,7 +37,7 @@ if __name__ == "__main__":
     etas = [5e-3, 1e-3, 5e-2, 1e-2, 5e-2]
     regularization_values = np.logspace(-12, -6, 7)
     gw_earlyboosts = np.linspace(1, 1.5, 6)
-    epoch_list = [10, 25, 50, 100]
+    epoch_list = [1, 25, 50, 100]
     clip_value = 5
     n_filters = 16
     SNR = 5
@@ -154,7 +154,9 @@ if __name__ == "__main__":
                         predictions = predictions.reshape(-1)
 
                         
-                        loss, weighted_Acc = model.evaluate(y_test, predictions)
+                        # loss, weighted_Acc = model.evaluate(y_test, predictions)
+                        test_loss, test_accuracy = model.model.evaluate(data, y_test, verbose=1)
+                        print(test_loss, test_accuracy, "her")
 
                         # Plot the results
                         plt.figure(figsize=(10,4))

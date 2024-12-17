@@ -970,6 +970,16 @@ class DynamicallyWeightedLoss(Loss):
         """
         Computes the weighted binary cross-entropy loss.
         """
+        if epoch == 0: # Then WeightedBinaryCrossEntropyLoss
+            weight_1 = (len(self.labels) - np.sum(self.labels)) / np.sum(self.labels)
+            weight_0 = 1
+            y_pred = np.clip(y_pred, self._epsilon, 1 - self._epsilon)  # To prevent log(0)
+            loss = -np.mean(
+                weight_1 * y_true * np.log(y_pred) +
+                weight_0 * (1 - y_true) * np.log(1 - y_pred)
+            )
+            return loss
+    
         if epoch != self._current_epoch:
             self.calculate_weights(epoch)
 
@@ -986,7 +996,7 @@ class DynamicallyWeightedLoss(Loss):
         """
         if epoch != self._current_epoch:
             self.calculate_weights(epoch)
-
+        
         y_pred = np.clip(y_pred, 1e-8, 1 - 1e-8)  # To prevent division by zero
         grad = - (self.weight_1 * y_true / y_pred) + (self.weight_0 * (1 - y_true) / (1 - y_pred))
         return grad

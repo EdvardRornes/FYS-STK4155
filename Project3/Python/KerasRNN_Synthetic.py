@@ -103,17 +103,10 @@ for epochs in epoch_list:
                 
 
                 for fold in range(num_samples):
-                    best_val_loss=float('inf')
-                    best_weights=None
                     # Split the data into train and test sets for this fold
                     y_test = y[fold]  # Use the fold as the test set
                     test_labels = labels[fold] # Corresponding labels for the test set
-                    print(np.sum(labels[fold])/len(labels[fold]))
-                    # Create the training set using all other samples
-                    # x_train = np.linspace(0, (num_samples - 1) * time_for_1_sample, time_steps * (num_samples - 1))  # Just for plotting
-                    # y_train = np.concatenate([y[i] for i in range(num_samples) if i != fold], axis=0)
-                    # train_labels = np.concatenate([labels[i] for i in range(num_samples) if i != fold], axis=0)
-                    
+
                     # Initialize the KerasRNN model with the current learning rate and regularization
                     hidden_layers = [5, 10, 2]
                     model = KerasRNN(1, hidden_layers, 1, Adam(), "tanh",
@@ -131,13 +124,15 @@ for epochs in epoch_list:
                     
                     for i in range(num_samples):
                         if i != fold:
-                            best_val_loss, best_weights = model.train(y[i], labels[i].reshape(-1,1), int(epochs), batch_size, window_size, best_weights=best_weights, best_val_loss=best_val_loss)
+                            model.train(y[i], labels[i].reshape(-1,1), int(epochs), batch_size, window_size)
                     # Train the model for this fold
                     
 
                     # Predict with the trained model
-                    predictions, loss, accuracy = model.predict(y_test, test_labels, window_size, verbose=0)
+                    predictions = model.predict(y_test, test_labels, window_size, verbose=0)
                     predictions = predictions.reshape(-1)
+                    loss = model._loss_function(y_test, predictions, epochs)
+                    loss, accuracy = model.evaluate(y_test, predictions)
                     x_pred = x[window_size - 1:]
 
                     results.append({
