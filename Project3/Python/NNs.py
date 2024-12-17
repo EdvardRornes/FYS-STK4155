@@ -1182,11 +1182,13 @@ class KerasCNN(NeuralNetwork):
         
         return history
     
-    def evaluate(self, y_true, y_pred):
+    def evaluate(self, data, y, verbose=0):
         # Use the Keras model's evaluate function
         """
         Computes the weighted binary cross-entropy loss.
         """
+        return self.model.evaluate(data, y, verbose=verbose)
+    
         y_pred_binary = 1*(y_pred > 0.5)
         weighted_Acc = weighted_Accuracy(y_true, y_pred_binary)
         weight_1 = len(y_true)/np.sum(y_true)-1
