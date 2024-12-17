@@ -26,11 +26,11 @@ if __name__ == "__main__":
     N = 5_000
     T = 50
     num_samples = 5
-    batch_size = N//50
-    etas = [5e-3, 1e-3, 5e-2, 1e-2, 5e-2]
-    regularization_values = np.logspace(-12, -6, 7)
+    batch_size = 128
+    etas = [5e-3, 1e-3, 5e-2, 1e-2]
+    regularization_values = np.logspace(-10, -6, 5)
     gw_earlyboosts = np.linspace(1, 1.5, 6)
-    epoch_list = [50, 25, 10]
+    epoch_list = [50]
     clip_value = 5
     n_filters = 16
     SNR = 5
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # Prepare to save data
-    save_path = "CNN_Parameter_Search_V2"
+    save_path = "CNN_Data/Parameter_Search_V1"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
