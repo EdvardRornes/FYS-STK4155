@@ -104,18 +104,18 @@ if __name__ == "__main__":
                         X_test = X[fold]
                         y_test = y[fold]
                         data_test = datas[fold]
+                        
                         X_train = [X[i] for i in range(num_samples) if i != fold]
                         y_train = [y[i] for i in range(num_samples) if i != fold]
                         data_train = [datas[i] for i in range(num_samples) if i != fold]
+
                         model.train_multiple_datas(data_train, y_train, epochs, batch_size, verbose=1)
 
                         # Predict with the correctly shaped data
                         predictions = model.predict(data_test)
                         predictions = predictions.reshape(-1)
                         
-
                         loss, weighted_Acc = model.evaluate(data_test, y_test)
-                        print(loss, weighted_Acc, "her")
 
                         results.append({
                             "epochs": epochs,
