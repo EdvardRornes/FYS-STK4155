@@ -13,6 +13,7 @@ from keras.models import Sequential, load_model # type: ignore
 from keras.layers import SimpleRNN, Dense, Input, Conv2D, MaxPooling2D, Flatten # type: ignore
 from keras.callbacks import ModelCheckpoint # type: ignore
 from keras.regularizers import l2 # type: ignore
+from keras import losses
 
 import time 
 import pickle
@@ -1177,14 +1178,18 @@ class KerasCNN(NeuralNetwork):
         """
         y_pred_binary = 1*(y_pred > 0.5)
         weighted_Acc = weighted_Accuracy(y_true, y_pred_binary)
-
-        y_pred = np.clip(y_pred, 1e-4, 1 - 1e-4)  # To prevent log(0)
-        weight_0 = 1
         weight_1 = len(y_true)/np.sum(y_true)-1
-        loss = -np.mean(
-            weight_1 * y_true * np.log(y_pred) +
-            weight_0 * (1 - y_true) * np.log(1 - y_pred)
+
+        y_pred = np.clip(y_pred, 1e-7, 1-1e-7)  # To prevent log(0)
+        loss = -np.mean(weight_1*y_true*np.log(y_pred) + (1-y_true)*np.log(1-y_pred))
+        bce = losses.BinaryCrossentropy(
+            from_logits=False,
+            name="binary_crossentropy",
+            apply_class_balancing=True,
+            dtype=None,
         )
+        loss = bce(y_true, y_pred)
+        print(loss)
         return loss, weighted_Acc
 
 
