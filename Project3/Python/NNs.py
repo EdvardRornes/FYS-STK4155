@@ -1027,7 +1027,7 @@ class KerasCNN(NeuralNetwork):
     def __init__(self, input_shape:tuple, n_filters:list, optimizer:Optimizer, 
                  filter_sizes=(3,3), pool_size=(2,2), loss_function:str='binary_crossentropy', 
                  lambda_reg:float=0.0, activation:str='tanh', activation_out='sigmoid',
-                 scaler="standard", test_percentage=0.2, random_state=None):
+                 scaler="standard", test_percentage=0.2, random_state=None, initial_boost:float=1.0):
         """
         Implements a Convolutional Neural Network (CNN) consisting of a convolution, max-pooling, convolution, 
         flatten and a dense layer (in that order). This is done as the class is (per now) specialized for the scenario
@@ -1059,9 +1059,9 @@ class KerasCNN(NeuralNetwork):
         self.lambda_reg = lambda_reg
         self.loss_function = loss_function
         self.optimizer = optimizer
-        print(type(optimizer))
         self.filter_sizes = filter_sizes
         self.pool_size = pool_size
+        self.initial_boost = initial_boost
 
         # Create and compile the CNN model
         self.model = self.create_convolutional_network(self.input_shape, self.n_filters, self.lambda_reg, 
@@ -1141,14 +1141,22 @@ class KerasCNN(NeuralNetwork):
 
         history = None
 
+        # Create a list of DynamicallyWeightedLoss objects for each dataset
+        dwl_list = [DynamicallyWeightedLoss(initial_boost=self.initial_boost, epochs=epochs, labels=y_i)
+                    for y_i in y]
+
         for epoch in range(epochs):
             if verbose:
                 print(f"Epoch {epoch+1}/{epochs}")
+            
             for i, (X_i, y_i) in enumerate(zip(X, y)):
                 # Split into training and validation for this particular dataset
                 X_train_i, X_val_i, y_train_i, y_val_i = train_test_split(
-                    X_i, y_i, train_size=(1-self.test_percentage), random_state=self.random_state
+                    X_i, y_i, test_size=self.test_percentage, random_state=self.random_state
                 )
+                
+                # Calculate weights for the current epoch
+                class_weights = dwl_list[i].calculate_weights(epoch)
                 
                 # Train for one epoch on this dataset
                 history = self.model.fit(
@@ -1156,11 +1164,29 @@ class KerasCNN(NeuralNetwork):
                     epochs=1,
                     batch_size=batch_size,
                     verbose=verbose,
-                    validation_data=(X_val_i, y_val_i)
+                    validation_data=(X_val_i, y_val_i),
+                    class_weight={0: class_weights[0], 1: class_weights[1]}  # Ensure proper format
                 )
-        
-        # history here is just the last training call's history
+
         return history
+    
+    def evaluate(self, y_true, y_pred):
+        # Use the Keras model's evaluate function
+        """
+        Computes the weighted binary cross-entropy loss.
+        """
+        y_pred_binary = 1*(y_pred > 0.5)
+        weighted_Acc = weighted_Accuracy(y_true, y_pred_binary)
+
+        y_pred = np.clip(y_pred, 1e-4, 1 - 1e-4)  # To prevent log(0)
+        weight_0 = 1
+        weight_1 = len(y_true)/np.sum(y_true)-1
+        loss = -np.mean(
+            weight_1 * y_true * np.log(y_pred) +
+            weight_0 * (1 - y_true) * np.log(1 - y_pred)
+        )
+        return loss, weighted_Acc
+
 
 
     def predict(self, X, verbose=0):

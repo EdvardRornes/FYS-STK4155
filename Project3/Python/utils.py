@@ -953,7 +953,7 @@ class Loss:
 
 class DynamicallyWeightedLoss(Loss):
 
-    def __init__(self, initial_boost=1, epochs=None, labels=None, weight_0=1, epsilon=1e-8):
+    def __init__(self, initial_boost=1.0, epochs=None, labels=None, weight_0=1, epsilon=1e-8):
         self.initial_boost = initial_boost; self.epochs = epochs
         self.labels = labels; self.weight_0 = weight_0
         self._epsilon = epsilon 
@@ -1015,7 +1015,7 @@ class WeightedBinaryCrossEntropyLoss(Loss):
         self.type = "binary_crossentropy"
 
 
-    def __call__(self, y_true, y_pred, epoch=None):
+    def __call__(self, y_true, y_pred):
         """
         Computes the weighted binary cross-entropy loss.
         """
@@ -1026,7 +1026,7 @@ class WeightedBinaryCrossEntropyLoss(Loss):
         )
         return loss
 
-    def gradient(self, y_true, y_pred, epoch=None):
+    def gradient(self, y_true, y_pred):
         """
         Computes the gradient of the loss with respect to y_pred.
         """
@@ -1036,6 +1036,7 @@ class WeightedBinaryCrossEntropyLoss(Loss):
     
     def calculate_weights(self, epoch:int) -> None:
         return {0: self.weight_0, 1: self.weight_1}
+
     
 class FocalLoss(Loss):
     def __init__(self, alpha=0.25, gamma=2.0):

@@ -21,7 +21,7 @@ learning_rates = [1e-2]
 regularization_values = [1e-8]#np.logspace(-12, -6, 7)
 gw_earlyboosts = np.linspace(1, 1.5, 6)
 gw_earlyboosts = [1.4]
-epoch_list = [50]#[10, 25, 50, 100]
+epoch_list = [30]#[10, 25, 50, 100]
 SNR = 30
 
 x = np.linspace(0, time_for_1_sample, time_steps)
