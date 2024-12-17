@@ -23,17 +23,10 @@ if __name__ == "__main__":
      #### Creating example of synthethic GW data:
 
     # Parameters
-    N = 10_000
-    T = 50; event_length = (N//10, N//8)
-    event_length_test = (N//10, N//8)
-
-    batch_size = N
-
-    # Parameters
     N = 5_000
     T = 50
     num_samples = 5
-    batch_size = N
+    batch_size = N//50
     etas = [5e-3, 1e-3, 5e-2, 1e-2, 5e-2]
     regularization_values = np.logspace(-12, -6, 7)
     gw_earlyboosts = np.linspace(1, 1.5, 6)
@@ -49,8 +42,8 @@ if __name__ == "__main__":
     X = [
         0.5*np.sin(90*t) - 0.5*np.cos(60*t)*np.sin(-5.*t) + 0.3*np.cos(30*t) + 0.05*np.sin(N/40*t),
         0.5*np.sin(50*t) - 0.5*np.cos(80*t)*np.sin(-10*t) + 0.3*np.cos(40*t) + 0.05*np.sin(N/20*t),
-        0.5*np.sin(40*t) - 0.5*np.cos(25*t)*np.sin(-10*t) + 0.3*np.cos(60*t) + 0.10*np.sin(N/18*t),
-        0.7*np.sin(70*t) - 0.4*np.cos(10*t)*np.sin(-15*t) + 0.4*np.cos(80*t) + 0.05*np.sin(N/12*t),
+        0.5*np.sin(40*t) - 0.5*np.cos(25*t)*np.sin(-10*t) + 0.3*np.cos(60*t) + 0.03*np.sin(N/18*t),
+        0.3*np.sin(70*t) - 0.4*np.cos(10*t)*np.sin(-15*t) + 0.4*np.cos(80*t) + 0.05*np.sin(N/12*t),
         0.1*np.sin(80*t) - 0.4*np.cos(50*t)*np.sin(-3.*t) + 0.3*np.cos(20*t) + 0.02*np.sin(N/30*t)
     ]
 
@@ -74,25 +67,9 @@ if __name__ == "__main__":
         events.append(events_i)
         y.append(generator.labels)
 
-    coefficients = []
-
-    scales = np.arange(1, 256)
-    _coefficients, _frequencies = pywt.cwt(X[0], scales, 'morl', sampling_period=1/fs)
-
-    # Prepare data: split real and imaginary parts of coefficients
-    real_coefficients = np.real(_coefficients)
-    imag_coefficients = np.imag(_coefficients)
-
-    # Stack along the channel dimension
-    data = np.stack([real_coefficients, imag_coefficients], axis=-1)  # Shape: (scales, time, 2)
-    
-    # Reshape data for input into CNN
-    data = np.moveaxis(data, 1, 0)  # Shape: (time, scales, 2)
-    data = data[..., np.newaxis]  # Add channel dimension, final shape: (time, scales, 2, 1)
-
-    input_shape = (data.shape[1], data.shape[2], data.shape[3]) 
-
     datas = preprocess_wavelet_data(X, fs, scales=np.arange(1, 256))
+
+    input_shape = (datas[0].shape[1], datas[0].shape[2], datas[0].shape[3]) 
 
     y = [q.reshape(-1,1) for q in y]
 
@@ -126,51 +103,19 @@ if __name__ == "__main__":
                     for fold in range(num_samples):
                         X_test = X[fold]
                         y_test = y[fold]
+                        data_test = datas[fold]
                         X_train = [X[i] for i in range(num_samples) if i != fold]
                         y_train = [y[i] for i in range(num_samples) if i != fold]
-                        model.train_multiple_datas(datas, y, epochs, batch_size, verbose=1)
-
-                        # Exclude the current test set to create the training set
-                        scales = np.arange(1, 256)
-                        _coefficients, _frequencies = pywt.cwt(X_test, scales, 'morl', sampling_period=1/fs)
-
-                        # Prepare data: split real and imaginary parts of coefficients
-                        real_coefficients = np.real(_coefficients)
-                        imag_coefficients = np.imag(_coefficients)
-
-                        # Stack along the channel dimension
-                        data = np.stack([real_coefficients, imag_coefficients], axis=-1)  # Shape: (scales, time, 2)
-
-                        # Move axes to (time_steps, scales, 2)
-                        data = np.moveaxis(data, 1, 0)
-
-                        # Add a new channel dimension: (time_steps, scales, 2) -> (time_steps, scales, 2, 1)
-                        data = data[..., np.newaxis]
+                        data_train = [datas[i] for i in range(num_samples) if i != fold]
+                        model.train_multiple_datas(data_train, y_train, epochs, batch_size, verbose=1)
 
                         # Predict with the correctly shaped data
-                        predictions = model.predict(data)
-
-
+                        predictions = model.predict(data_test)
                         predictions = predictions.reshape(-1)
-
                         
                         # loss, weighted_Acc = model.evaluate(y_test, predictions)
                         test_loss, test_accuracy = model.model.evaluate(data, y_test, verbose=1)
                         print(test_loss, test_accuracy, "her")
-
-                        # Plot the results
-                        plt.figure(figsize=(10,4))
-                        plt.plot(t, y_test.flatten(), label='True Labels', color='green', lw=2, alpha=0.7)
-                        plt.plot(t, X_test, label='Signal', color='purple', lw=1)
-
-                        # Predictions are probabilities, plot them for the test portion
-                        plt.plot(t, predictions, label='Predicted Probability', color='red', lw=2, alpha=0.7)
-
-                        plt.xlabel('Time [s]')
-                        plt.ylabel('Amplitude / Probability')
-                        plt.title('True Labels vs Predicted vs Original Signal')
-                        plt.grid(True)
-                        plt.legend()
 
                         results.append({
                             "epochs": epochs,
@@ -185,6 +130,11 @@ if __name__ == "__main__":
                             "accuracy": weighted_Acc
                         })
 
+                        plt.figure(figsize=(10,6))
+                        plt.plot(t, X_test)
+                        plt.plot(t, predictions)
+                        plt.plot(t, y_test)
+
                         progress += 1
                         percentage_progress = (progress / total_iterations) * 100
                         # Elapsed time
@@ -192,5 +142,5 @@ if __name__ == "__main__":
                         ETA = elapsed_time*(100/percentage_progress-1)
 
                         print(f"Progress: {progress}/{total_iterations} ({percentage_progress:.2f}%), Time elapsed = {elapsed_time:.1f}s, ETA = {ETA:.1f}s, Test loss = {loss:.3f}, Test accuracy = {100*weighted_Acc:.1f}%\n")
-                        
+                        plt.show()
                     save_results_incrementally(results, base_filename, save_path)

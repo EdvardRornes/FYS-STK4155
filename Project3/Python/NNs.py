@@ -13,6 +13,7 @@ from keras.models import Sequential, load_model # type: ignore
 from keras.layers import SimpleRNN, Dense, Input, Conv2D, MaxPooling2D, Flatten # type: ignore
 from keras.callbacks import ModelCheckpoint # type: ignore
 from keras.regularizers import l2 # type: ignore
+from keras import losses
 
 import time 
 import pickle
@@ -1188,30 +1189,11 @@ class KerasCNN(NeuralNetwork):
         """
         y_pred_binary = 1*(y_pred > 0.5)
         weighted_Acc = weighted_Accuracy(y_true, y_pred_binary)
-
-        y_pred = np.clip(y_pred, 1e-4, 1 - 1e-4)  # To prevent log(0)
-        weight_0 = 1
         weight_1 = len(y_true)/np.sum(y_true)-1
         loss = -np.mean(
             weight_1 * y_true * np.log(y_pred) +
             weight_0 * (1 - y_true) * np.log(1 - y_pred)
         )
-
-        weighted_Acc = weighted_Accuracy(y_true, y_pred_binary)
-
-        y_pred = np.clip(y_pred, 1e-4, 1 - 1e-4)  # To prevent log(0)
-        weight_0 = 1
-        weight_1 = len(y_true)/np.sum(y_true)-1
-        loss = -np.mean(
-            weight_1 * y_true * np.log(y_pred) +
-            weight_0 * (1 - y_true) * np.log(1 - y_pred)
-        )
-        y_pred = np.clip(y_pred, 1e-8, 1 - 1e-8)  # To prevent log(0)
-
-        self._loss_function.labels = y_true.flatten()
-        loss = self._loss_function(y_true, y_pred, epoch=0)
-        return loss, weighted_Acc
-    
         return loss, weighted_Acc
 
 
