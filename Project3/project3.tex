@@ -99,9 +99,7 @@ aps,
 \date{\today}
 
 \begin{abstract}
-	Gravitational waves, which are ripples in spacetime produced by cataclysmic astrophysical events such as black hole and neutron star mergers, present challenges for detection due to their faint signals often being buried by noise. The Laser Interferometer Gravitational-Wave Observatory (LIGO) has pioneered the detection of these waves, leveraging laser interferometry to measure tiny spacetime distortions. However, traditional detection methods face limitations in distinguishing weak GW signals from background noise.
-	
-	In this work, we explore the potential of neural networks (NNs) for GW detection, focusing on Recurrent Neural Networks (RNNs) to analyze untreated GW data obtained from publicly available datasets from \cite{gwosc}. Due to the low signal-to-noise ratio (SNR) of this data and the complexity of noise removal techniques, we instead generate synthetic GW data with controllable SNR for training and testing purposes. This approach allows us to evaluate the performance of our custom RNN implementation against the RNN framework provided by \texttt{tensorflow.keras}. While detection on untreated data remains challenging, the synthetic dataset allows for systematic evaluation and refinement of NN-based detection methods. Additionally, we provide a utility program\footnote{\href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project3}{GitHub}} which automatically downloads and labels GW data when the signal duration is known, which may be useful for future work aimed at improving detection on real-world datasets.
+	Gravitational waves, which are ripples in spacetime produced by cataclysmic astrophysical events such as black hole and neutron star mergers, present challenges for detection due to their faint signals often being buried by noise. The Laser Interferometer Gravitational-Wave Observatory (LIGO) has pioneered the detection of these waves, using laser interferometry to measure tiny spacetime distortions. However, traditional detection methods face limitations in distinguishing weak GW signals from background noise. We explore the potential of neural networks (NNs) for GW detection, focusing on Recurrent Neural Networks (RNNs) and Convolutional Neural Networks (CNNs) to analyze untreated GW data obtained from publicly available datasets from \cite{gwosc}. Due to the low signal-to-noise ratio (SNR) of this data and the complexity of noise removal techniques, we instead generate synthetic GW data with controllable SNR for training and testing purposes. For this purpose, we attempted to build our own RNN with poor results. To remedy this we included \texttt{tensorflow.keras}'s \cite{tensorflow2015-whitepaper} RNN and CNN on the synthetic data. A wavelet transform is done on the data for the CNN, and it vastly outperforms the RNN for low SNR. We also include dynamic linearly decreasing class weights for the signal class, and find that in general it does increase the performance when the program initially starts with the signal class being weighed $\sim1.3-1.4$ times higher than a balanced class weight for both the CNN and RNN. The CNN is seen to begin overfitting as we increase the number of epochs from $25$ to $50$ given our chosen parameter combinations and techniques. The best performing learning rates and $L^2$ regularization parameters for the RNN can be seen to consistently hover around $\eta\sim10^{-2}$ and $\lambda\sim10^{-7}$ respectively, whilst for the CNN they are $\eta>10^{-3}$ and $\lambda\sim10^{-9}$. Additionally, we provide a utility program\footnote{\href{https://github.com/EdvardRornes/FYS-STK4155/tree/main/Project3}{GitHub}} which automatically downloads and labels GW data when the signal duration is known, which may be useful for future work aimed at improving detection on real-world datasets.
 \end{abstract}
 
 \maketitle
@@ -304,7 +302,9 @@ Unlike traditional Fourier transforms, which decompose a signal into sine and co
 
 \section{Implementation}
 \label{sec:implementation}
-We implemented a program which downloads the data from \cite{gwosc}, and when given the duration of the GW signal of interest, automatically labels the data accordingly. Our definition for `duration' of an event is rather arbitrary. What we did is simply look at a relevant research paper (found for each event at \cite{gwosc_all_events}) which contains plots of the treated data and made an educated guess for where it would be reasonable to detect it. Further we made a class \texttt{GWSignalGenerator}, which adds a synthetic GW signal to any arbitrary sequence, and adds corresponding labels to the dataset. This class has a lot of options, such as spin factors and amplitude factors for how much the signal should spike up, generating random events, etc. and was meant to simulate what GW event strain data looks like. Originally this program was meant to be our test runs before working with the real deal. However due to the complicated nature of detecting GWs, this ended up being what the NNs worked with instead. We explain the reasoning for this in the next section.
+We implemented a program which downloads the data from \cite{gwosc}, and when given the duration of the GW signal of interest, automatically labels the data accordingly. Our definition for `duration' of an event is rather arbitrary. What we did is simply look at a relevant research paper (found for each event at \cite{gwosc_all_events}) which contains plots of the treated data and made an educated guess for where it would be reasonable to detect it. 
+
+Further we made a class \texttt{GWSignalGenerator}, which adds a synthetic GW signal to any arbitrary sequence, and adds corresponding labels to the dataset. This class has a lot of options, such as spin factors and amplitude factors for how much the signal should spike up, generating random events, etc. and was meant to simulate what GW event strain data looks like. The background noise was also chosen to look similar to the way GW background noise looks like. Due to the incredible sensitivity of GW detectors, the actual background noise is almost entirely harmonic, containing almost no irreducible noise. As such we prepared a background noise which mimics this, being a sum of sines and cosines with varying frequency as opposed to having a normal distributed noise. Originally the data generated from this program was meant to be our test runs before working with the real deal. However due to the complicated nature of detecting GWs, this ended up being what the NNs worked with instead. We explain the reasoning for this in the next section.
 
 \subsection{The Neural Networks}
 We have implemented three classes, \texttt{RNN}, \texttt{KerasRNN} and \texttt{KerasCNN}, all of which inherits from a parent class called \texttt{NeuralNetwork}, containing methods handling saving data (\texttt{save\_data}), 
@@ -406,6 +406,12 @@ The particular example with $\eta=0.01$, $\lambda=10^{-8}$, $\phi=1.4$ with 50 e
 	\label{fig:bestPred}
 \end{figure}
 
+We then tried to up the difficulty, lowering the SNR to $\sim15$, which is roughly the range of most treated GW event. This however lead to results so poor that guessing randomly would give a better loss in most instances.
+
+For the CNN however we could lower the SNR to as low values as $5$ whilst still having reasonable performance. We however saw that increasing the epochs sufficiently high tended to yield worse results for the test data as displayed in Fig. \ref{fig:CNN_2D_Epochs}, likely due to overfitting. Note here that we cannot directly compare the loss of the CNN to the RNN due to the large difference in the SNR. The RNN's task is close to trivial in comparison to this one. Our parameter choices were inspired by the best performing parameter values for the RNN. We see however that we in general have too high learning rates, and that there may be more performance to be gained by lowering the learning rate further as we are overshooting any minima for a large portion of the parameter space. To check this we chose a particular parameter combination with a few learning rates. The results seemed to imply that lowering $\eta$ increased the loss over the best results obtained here, but given that this was only for one combination of the number of epochs and $\phi$, this may not be the case in general.
+
+In Fig. \ref{fig:CNN_2D_Phi} we attempt to showcase the effects of varying $\phi$ for the CNN. Similarly as for the case with the RNN, with the exception of very high learning rates, we also find that there is a rather significant decrease in the loss when one uses dynamic weights over static weights. 
+
 \begin{figure}[H]
 	\begin{subfigure}{0.499\textwidth}
 		\includegraphics[width=\textwidth]{Figures/CNN_2D_Plot_Loss_Epoch10_Boost1.1.pdf}
@@ -426,12 +432,6 @@ The particular example with $\eta=0.01$, $\lambda=10^{-8}$, $\phi=1.4$ with 50 e
 	\caption{Average test loss for the $5$-fold cross validation using \texttt{tensorflow.keras}' \texttt{CNN} with 25 epochs and $\phi=1.0$ and $\phi=1.3$ respectively.}
 	\label{fig:CNN_2D_Phi}
 \end{figure}
-
-We then tried to up the difficulty, lowering the SNR to $\sim15$, which is roughly the range of a treated GW event. This however lead to results so poor that guessing randomly would give a better loss in most instances.
-
-For the CNN however we could lower the SNR to as low values as $5$ whilst still having reasonable performance. However, increasing the epochs lead to worse results for the test data as displayed in Fig. \ref{fig:CNN_2D_Epochs}. Note here that we cannot compare the loss values achieved with the CNN directly to the RNN's loss values in Fig. \ref{fig:PhiShowcase}, due to the significantly different SNRs. This substantial difference in SNR means that the RNN's task is close to trivial in comparison to that of the CNN. Our parameter choices were inspired by the best performing parameter values for the RNN. We see, however, that we in general have too high learning rates, and that there may be more performance to be gained by lowering the learning rate further as we are overshooting any minima for a large portion of the parameter space. To check this we chose a particular parameter combination with a few learning rates. The results seemed to imply that lowering $\eta$ increased the loss over the results we obtained here, but given that this was only for one combination of the number of epochs and $\phi$, this may not be the case in general.
-
-In Fig. \ref{fig:CNN_2D_Phi} we attempt to showcase the effects of varying $\phi$ for the CNN. Similarly as for the case with the RNN, with the exception of very high learning rates, we also find that there is a rather significant decrease in the loss when one uses dynamic weights over static weights. 
 
 \begin{figure}[H]
 \includegraphics[width=0.49\textwidth]{Figures/CNN_Best_results.pdf}
@@ -455,7 +455,6 @@ A non-extensive list of potential improvements are: parallelization of the code,
 \bibliographystyle{JHEP}
 \bibliography{project3}
  
-\newpage
 \appendix
 \subfile{appendix.tex}
 \end{document}
