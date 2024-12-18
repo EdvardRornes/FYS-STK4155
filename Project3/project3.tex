@@ -162,10 +162,10 @@ The stretching and compression from these polarizations are what is measured by 
 
 \subsection{Recurrent Neural Networks}
 \label{sec:RNNs}
-The Recurrent Neural Networks (RNNs) are a class of neural networks specifically designed to handle sequential data or data with temporal dependencies. Unlike traditional Feed Forward Neural Networks, RNNs are capable of ``remembering'' information from previous time steps. This is done through the so called `hidden state', which acts as a form of memory by retaining information about prior computations. The hidden state is essentially an array of data that is updated at each time step based on the input data and the previous hidden state. Although this enables RNN to access the temporal dependencies of the data at hand, it greatly increases the computation time compared to that of the FFNN. The standard RNN consists of only one hidden layer, but it is certainly possible to have more than one hidden layer. In fact, this is commonly referred to as the stacked RNN (SRNN), and we will arrive at this neural network further down. However, firstly, we present the structure and general algorithm for the RNN.
+The Recurrent Neural Networks (RNNs) are a class of neural networks specifically designed to handle sequential data or data with temporal dependencies. Unlike traditional Feed Forward Neural Networks, RNNs are capable of ``remembering'' information from previous time steps. This is done through the so called `hidden state', which acts as a form of memory by retaining information about prior computations. The hidden state is essentially an array of data that is updated at each time step based on the input data and the previous hidden state. Although this enables RNN to access the temporal dependencies of the data at hand, it greatly increases the computation time compared to that of the Feed Forward Neural Network (FFNN). The standard RNN consists of only one hidden layer, but it is certainly possible to have more than one hidden layer. In fact, this is commonly referred to as the stacked RNN (SRNN), and we will arrive at this neural network further down. However, firstly, we present the structure and general algorithm for the RNN.
 
 \subsubsection{Structure}
-The RNN processes input sequentially, with information flowing step-by-step from the input to the output. This is done with the introduction of a hidden state \(h_{t}\), where the subscript denotes at time \(t\). The network can be summarized by the following two equations \cite{tallec2017unbiasingtruncatedbackpropagationtime}:
+The RNN processes input sequentially, with information flowing step-by-step from the input to the output through a hidden state \(h_t\), where the subscript \(t\) represents time. Let the output data \(y\) be of shape \((N, p_{\text{out}})\) and input data \(X\) of shape \((N, p_{\text{in}})\), where \(N\) corresponds to the total amount of time points, and \(p_{\text{out}}, \ p_{\text{in}}\) the dimension of the output and input, respectively. The network's operations can be expressed by the following two equations \cite{tallec2017unbiasingtruncatedbackpropagationtime}:
 \begin{subequations}
 \begin{align}
 	h_{t} &= \sigma^{(h)}\left(W_{hx}X_{t} + W_{hh}h_{t-1}  + b_{h}\right), \label{eq:hidden_state_RNN} \\
@@ -178,10 +178,9 @@ Here, \(\sigma_h\) and \(\sigma_{\text{out}}\) is the activation function for th
 	&+ W_{hh}\sigma_h \left(\dots + b_h\right) + b_h\biggr) 
 	+b_h\biggr)
 \end{align}
-This shows that the hidden state at time \(t_n\) is dependent on the input \(X_{t}\) for \(t\in[0, t_n]\), i.e.~all previous times. 
+This shows that the hidden state at time \(t_n\) is dependent on the input \(X_{t}\) for \(t\in[0, t_n]\), i.e. the current and all previous time steps. 
 
-\subsubsection{General Algorithm}
-Consider some general data output \(y\), of shape \((N, p_{\text{out}})\) and some data input \(X\), of shape \((N, p_{\text{in}})\), where \(N\) corresponds to the total amount of time points, and \(p_{\text{out}}, \ p_{\text{in}}\) the dimension of the output and input, respectively. Generally, \(X\) could correspond to a large sampling frequency in time, making the computation of the hidden state \(h_t\) in \eqref{eq:hidden_state_computation_RNN} computationally demanding. One typical way of dealing with this is to split the data into `windows' of size \(N_{W}\) in time. These windows should generally overlap, such that no temporal dependencies across windows are left out. 
+Generally, \(X\) could correspond to a large sampling frequency in time, making the computation of the hidden state \(h_t\) in \eqref{eq:hidden_state_computation_RNN} computationally demanding. One typical way of dealing with this is to split the data into `windows' of size \(N_{W}\) in time. These windows should generally overlap, such that no temporal dependencies across windows are left out. 
 
 Splitting the data into windows, we define the hidden state for window \(n\) as:
 \begin{align}
@@ -190,7 +189,7 @@ Splitting the data into windows, we define the hidden state for window \(n\) as:
 \end{align}
 where \(X_{n}\) is the \(n\)-th window.
 
-\subsubsection{Backpropagation Through Time}
+\subsubsection{General Algorithm}
 The error between \(y\) and the predicted output \(\tilde{y}\), is given by some chosen loss function \(L(y, \tilde{y})\),
 \begin{align}	
 	L(y,\tilde{y}) = \frac{1}{N}\sum\limits_{n=1}^{N} l(y_{n}, \tilde{y}_n),
@@ -202,7 +201,7 @@ For some learning rate \(\eta\), the standard update rule for the weights and bi
 \end{align}
 This transformation may be extended using optimization methods aimed at handling exploding gradient, faster convergence, avoiding local minimas, etc. We covered three of these optimization methods in \cite{project2}; the root mean squared propagation (RMSprop), the adaptive gradient (AdaGrad) and the adaptive moment estimation (Adam). 
 
-Compared to FFNN, computing the gradient of \(L\) with respect to the weights leads to a somewhat more complicated expression due to the temporal dependencies between the hiden states. This can be seen by writing out the partial derivative of the loss function with respect to the weight \(W\),  being either \(W_{hx}\) or \(W_{hh}\) (cf. \cite{superGood}):
+Compared to the FFNN, computing the gradient of \(L\) with respect to the weights leads to a somewhat more complicated expression due to the temporal dependencies between the hiden states. This can be seen by writing out the partial derivative of the loss function with respect to the weight \(W\),  being either \(W_{hx}\) or \(W_{hh}\) (cf. \cite{superGood}):
 \begin{align}
 	\frac{\partial L}{\partial W} &= \sum_{n=1}^{N}\frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial \tilde{y}_{n}}{\partial W}\\
 	&= \sum_{n=1}^{N}\frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial \tilde{y}_{n}}{\partial h_{n}}\frac{\partial h_{n}}{\partial W},
@@ -222,7 +221,7 @@ meaning that
 	\frac{\partial L}{\partial W} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial \tilde{y}_{n}}{\partial h_{n}} \prod_{j=k+1}^{n}\left[ W_{hh}^{T}\cdot\sigma'_{h}(z_{j})\right] \frac{\partial h_{k}}{\partial W}.
 \end{align}
 
-Up until now we have considered only one hidden layer. Implementing the stacked RNN is done by essentially creating a hidden state for each `stack' of RNN. The output of the stacked RNN is computed by feeding the hidden states to each other in succession, starting from the first hidden layer. The \(l\)-th hidden states in some time window \(n\) are given by
+Up until now we have considered only one hidden layer. Implementing the stacked RNN is done by essentially creating a hidden state for each `stack' of RNN. The output of the stacked RNN is computed by feeding the hidden states to each other in succession, starting from the first hidden layer. The \(l\)-th hidden states in some time window \(n\) are given by (cf. \cite{pascanu2014constructdeeprecurrentneural})
 \begin{align}
 	h^{l}_{n} = \begin{cases}
 		\sigma^{(h)}\left( W_{hx}^{1}X_{n} + W_{hh}^{1}h_{n-1}^{1} + b_{h}^{1}\right), &l=1, \\
@@ -241,22 +240,6 @@ To update the weights, we define the errors:
 \begin{align}
 	\delta^{k,l}_{hh}\equiv \frac{\partial h_{k}^{l}}{\partial W_{hh}^{l}}, \ \delta^{k,l}_{hx}\equiv \frac{\partial h_{k}^{l}}{\partial W_{hx}^{l}}.
 \end{align}
-These errors can be computed recursively through time. For \(\delta^{k,l}_{hh}\), 
-\begin{align}
-	\delta^{1,l}_{hh} &= 0, \notag\\
-	\delta^{2,l}_{hh} &= \sigma'_{h}(z_2^{l}) h_1^{l},  \notag\\
-	\delta^{3,l}_{hh} &= \sigma'_{h}(z_3^{l}) \left( h_2^{l} + W_{hh}\sigma'_{h}(z_2^{l})h_1^{l} \right), \\
-	&\ \ \vdots \notag \\
-	\delta^{k,l}_{hh} &= \sigma'_{h}(z_{k}^{l}) \left( h_{k-1}^{l} + W_{hh}\delta^{k-1,l}_{hh}\right).
-\end{align}
-and for \(\delta^{k,l}_{hx}\),
-\begin{align}
-	\delta^{k,1}_{hx} &= \sigma'(z_{k}^{1})X_{k}, \notag\\
-	\delta^{k,2}_{hx} &= \sigma'_{h}(z_{k}^{2}) \left( h_{k}^{1} + W^{2}_{hh}\sigma'(z_{k-1}^{2})X_{k} \right),  \notag\\
-	% \delta^{k,3}_{hx} &= \sigma'_{h}(z_{k}^{3}) \left( h_{k}^{2} + W_{hh}^{3}\delta^{k,2}_{hx} \right), \\
-	&\ \ \vdots \notag \\
-	\delta^{k,l}_{hx} &= \sigma'_{h}(z_{k}^{l}) \left( h_{k}^{l-1} + W_{hh}^{l}\delta^{k-1,l}_{hx}\right).
-\end{align}
 
 We can then summarize how the hidden-layer weights and biases are updated (cf. \cite{superGood}):
 \begin{subequations}	\label{eq:gradients_hidden}
@@ -274,7 +257,24 @@ since \(\partial h^{l}_{n}/\partial b_{h}^{l} = \sigma'_{h}(z_k^l)\). For the ou
 	\end{align}
 \end{subequations}
 
-The dependency for each error term \(\delta^{k,l}\) on `past' error terms leads to a much greater computation time, compared to that of FFNN. Every gradient computation needs an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm, commonly referred to as `truncated backpropagation through time' (see e.g.~\cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on.
+The \(\delta\)-errors can be computed recursively through time. This can be seen by writing them out explicitly. For \(\delta^{k,l}_{hh}\) we have: 
+\begin{align}
+	\delta^{1,l}_{hh} &= 0, \notag\\
+	\delta^{2,l}_{hh} &= \sigma'_{h}(z_2^{l}) h_1^{l},  \notag\\
+	\delta^{3,l}_{hh} &= \sigma'_{h}(z_3^{l}) \left( h_2^{l} + W_{hh}\sigma'_{h}(z_2^{l})h_1^{l} \right), \\
+	&\ \ \vdots \notag \\
+	\delta^{k,l}_{hh} &= \sigma'_{h}(z_{k}^{l}) \left( h_{k-1}^{l} + W_{hh}\delta^{k-1,l}_{hh}\right).
+\end{align}
+and for \(\delta^{k,l}_{hx}\),
+\begin{align}
+	\delta^{k,1}_{hx} &= \sigma'(z_{k}^{1})X_{k}, \notag\\
+	\delta^{k,2}_{hx} &= \sigma'_{h}(z_{k}^{2}) \left( h_{k}^{1} + W^{2}_{hh}\sigma'(z_{k-1}^{2})X_{k} \right),  \notag\\
+	% \delta^{k,3}_{hx} &= \sigma'_{h}(z_{k}^{3}) \left( h_{k}^{2} + W_{hh}^{3}\delta^{k,2}_{hx} \right), \\
+	&\ \ \vdots \notag \\
+	\delta^{k,l}_{hx} &= \sigma'_{h}(z_{k}^{l}) \left( h_{k}^{l-1} + W_{hh}^{l}\delta^{k-1,l}_{hx}\right).
+\end{align}
+
+The dependency for each error term \(\delta^{k,l}\) on `past' error terms, together with the general temporal dependency seen already in \eqref{eq:dL_dW_bare}, leads to a much greater computation time, compared to that of FFNN. Every gradient computation needs an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm, commonly referred to as `truncated backpropagation through time' (see e.g.~\cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on.
 
 \subsection{Convolutional Neural Networks}  
 Convolutional Neural Networks (CNNs) are specialized deep learning architectures used to process data with a spatial or temporal structure, such as images, time series, or signals. The mathematical operation of convolution is the main feature of CNNs, which is inspired by signal processing and serves as a powerful tool for feature extraction.
@@ -357,7 +357,7 @@ In the discrete wavelet transform (DWT), the scale and translation are discretiz
 \[W[j,k]=\sum_{n}f[n]\psi_{j,k}[n],\]
 making it computationally efficient for practical applications like feature extraction or de-noising. 
 
-Unlike traditional Fourier transforms, which decompose a signal into sine and cosine waves of different frequencies, wavelets allow for both time and frequency localization. This makes them particularly useful for analyzing non-stationary signals, such as gravitational waves or audio signals, where the frequency content changes over time. In the context of neural networks, wavelet transforms are often used as a pre-processing step to reduce noise, extract meaningful features, or compress data, thereby potentially improving the performance. This is what we will be using on our CNN.
+Unlike traditional Fourier transforms, which decompose a signal into sine and cosine waves of different frequencies, wavelets allow for both time and frequency localization. This makes them particularly useful for analyzing non-stationary signals, such as gravitational waves or audio signals, where the frequency content changes over time. In the context of neural networks, wavelet transforms are often used as a pre-processing step to reduce noise, extract meaningful features, or compress data, thereby potentially improving the performance. This is what we will be using for our CNN.
 
 \section{Implementation}
 \label{sec:implementation}
