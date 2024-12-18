@@ -28,11 +28,11 @@ if __name__ == "__main__":
     num_samples = 5
     batch_size = 128
     etas = [5e-3, 1e-3, 5e-2, 1e-2]
-    etas = [1e-4, 1e-5, 1e-6, 1e-7]
+    # etas = [1e-4, 1e-5, 1e-6, 1e-7]
     regularization_values = np.logspace(-10, -6, 5)
     gw_earlyboosts = np.linspace(1, 1.5, 6)
-    gw_earlyboosts = [1.4]
-    epoch_list = [25]
+    # gw_earlyboosts = [1.4]
+    epoch_list = [50]
     clip_value = 5
     n_filters = 16
     SNR = 5
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # Prepare to save data
-    save_path = "CNN_Data/Parameter_Search_V2"
+    save_path = "CNN_Data/Parameter_Search_V1"
     if not os.path.exists(save_path):
         os.makedirs(save_path)
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
                         X_test = X[fold]
                         y_test = y[fold]
                         data_test = datas[fold]
-                        
+
                         X_train = [X[i] for i in range(num_samples) if i != fold]
                         y_train = [y[i] for i in range(num_samples) if i != fold]
                         data_train = [datas[i] for i in range(num_samples) if i != fold]

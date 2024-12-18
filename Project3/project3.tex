@@ -108,9 +108,9 @@ aps,
 %\tableofcontents
 
 \section{Introduction}
-Gravitational Waves (GWs) are the product of some of the most extreme events that occur in the universe. While in theory, just about any accelerating object produces GWs, they are so weak that they can only be detected from the most energetic and cataclysmic events \cite{ligo_gw_sources}. The only sources of detectable GWs with current technology are the mergers of black holes and neutron stars \cite{LIGOScientific:2007fwp}, where the immense masses and high velocities involved generate powerful ripples in spacetime. These ripples propagate outward and cause minute distortions in spacetime itself, which can be measured by highly sensitive instruments.
+Gravitational Waves (GWs) are the product of some of the most extreme events that occur in the universe. While in theory, just about any accelerating object produces GWs, they are so weak that they can only be detected from the most energetic events \cite{ligo_gw_sources}. The only sources of detectable GWs with current technology are the mergers of black holes and neutron stars \cite{LIGOScientific:2007fwp}, where the immense masses and high velocities involved generate powerful ripples in spacetime. These ripples propagate outward and cause minute distortions in spacetime itself, which can be measured by highly sensitive instruments.
 
-To date, the most advanced experiment to detect these waves is the Laser Interferometer Gravitational-Wave Observatory (LIGO). LIGO uses laser interferometry to measure the incredibly small displacements caused by passing gravitational waves. However, the signals from gravitational waves are often faint and easily overwhelmed by noise, making detection a difficult task.
+To date, the most advanced experiment to detect these waves is the Laser Interferometer Gravitational-Wave Observatory (LIGO). LIGO consists of two detectors: H1 and L1, and uses laser interferometry to measure the incredibly small displacements caused by passing gravitational waves. However, the signals from gravitational waves are often faint and easily overwhelmed by background noise, making detection a difficult task.
 
 Neural Networks (NNs) has become a powerful tool in this context. By training a NN on large datasets of both gravitational wave signals and background noise, these models can learn to distinguish between genuine gravitational wave signals and random noise. This, in theory, may allow for more accurate detection and classification of GW events, even in the presence of significant interference, and may be the future of GW detection \cite{Marx:2024wjt, skliris2024}. NNs can be trained to recognize patterns in the data that correspond to the characteristic signatures of GWs, improving both the efficiency and reliability of detection algorithms. With the growing amount of data from observatories like LIGO, NNs are playing an increasingly important role in identifying new events and advancing our understanding of the universe.
 
@@ -126,7 +126,7 @@ Section \ref{sec:implementation} then outlines the implementation of the neural 
 \subsection{Gravitational Waves}
 We will simply give a quick introduction to GWs. For a more detailed analysis, please see any graduate level textbook on general relativity, e.g.~\cite{Carroll} or \cite{Wald}.
 
-As mentioned, GWs are ripples in spacetime caused by the acceleration of massive objects, such as merging black holes or neutron stars. For sufficiently small ripples, or for an observer sufficiently far away from e.g.~a black hole merger, the GWs are accurately described by first order perturbations of a flat spacetime described by the Minkowski metric, $\eta_{\mu\nu}$, with a small perturbation:
+As mentioned, GWs are ripples in spacetime caused by the acceleration of massive objects, such as merging black holes or neutron stars. For sufficiently small ripples, or for an observer sufficiently far away from such an event, the GWs are accurately described by first order perturbations of a flat spacetime described by the flat space-time Minkowski metric, $\eta_{\mu\nu}$, with a small perturbation:
 \begin{align}
 	g_{\mu\nu}=\eta_{\mu\nu}+h_{\mu\nu},\quad|h_{\mu\nu}|\ll1,
 \end{align}
@@ -141,7 +141,7 @@ where $G_{\mu\nu}$ is the Einstein tensor which depends solely on the metric $g_
 	&+\eta_{\mu\nu}\p^\rho\p^\sigma h_{\rho\sigma}+\p_\mu \p_\nu h-\eta_{\mu\nu}\Box h,
 	\label{eq:LEFE}
 \end{align}
-where $h\equiv \tensor{h}{^\mu_\mu}=\eta^{\mu\nu}h_{\mu\nu}$ is the first order trace of $h$ and $\Box$ is the flat space d'Alembertian. Note that we do not perturb $T_{\mu\nu}$ since it is in fact a perturbation itself. Now this equation here is quite complicated, however due to a symmetry in the original Lagrangian one has a so-called \textit{gauge freedom}, i.e.~a set of transformations which leave the Lagrangian invariant. This can be used to vastly simplify the equations heavily. A common choice is the Lorenz gauge: $\p^\mu h_{\mu\nu}=0$. Using this we can reduce \eqref{eq:LEFE} to the much simpler differential equation
+where $h\equiv \tensor{h}{^\mu_\mu}=\eta^{\mu\nu}h_{\mu\nu}$ is the first order trace of $h$ and $\Box$ is the flat space d'Alembertian. Note that we do not perturb $T_{\mu\nu}$ since it is in fact a perturbation itself since a completely flat background corresponds to a vacuum. Now this equation is quite complicated to solve. Luckily, if one treats \eqref{eq:LEFE} as an equation of motion, we can reverse engineers it to find its corresponding Lagrangian. We will then find that this Lagrangian has a so-called \textit{gauge symmetry}, i.e.~a set of transformations which leave the Lagrangian invariant. This can be used to vastly simplify the equations heavily. A common choice is the Lorenz gauge: $\p^\mu h_{\mu\nu}=0$. Using this we can reduce \eqref{eq:LEFE} to the much simpler differential equation \cite{Carroll}:
 \begin{align}
 	\Box h_{\mu\nu}=-16\pi T_{\mu\nu}.
 \end{align}
@@ -160,7 +160,7 @@ where
 \end{align}
 for a GW traveling along the $z$-axis. The details for how this is derived and why it must take on this form is spelled out in \cite{Carroll}. $h_+$ and $h_\times$ correspond to the ``plus'' and ``cross'' polarization respectively, which determine how the gravitational waves stretch and compress the spacetime it passes through. 
 
-The stretching and compression from these polarizations are what is measured by observatories such as LIGO and Virgo. These displacements are often given as the dimensionless quantity \textbf{strain}, which is simply given by $\Delta L/L$ where $L$ is the effective length of the detector, and $\Delta L$ is the measured change in $L$ as the GW passes by. Note that in the case of detection, $L$ is not simply the length of the detectors themselves, as they use mirrors to cause the beams of light to bounce back and forth multiple times, effectively increasing the length of the detector.
+The stretching and compression from these polarizations are what is measured by observatories such as LIGO and Virgo. These displacements are often given as the dimensionless quantity \textbf{strain}, which is simply given by $\Delta L/L$ where $L$ is the effective length of the detector, and $\Delta L$ is the measured change in $L$ as the GW passes by. Note that in the case of detection, $L$ is not simply the length of the detectors themselves, as they reflect beams of light back and forth multiple times, effectively increasing the length of the detector.
 
 
 \subsection{Recurrent Neural Networks}
@@ -230,21 +230,21 @@ where we can use backpropagation through time (BPTT) to write \cite{superGood}:
 For the specific algorithm we implemented for our own RNN, we refer to appendix \ref{app:appendix_RNN}, in particular \eqref{eq:gradients_hidden}, which summarizes the update rules.
 
 \subsection{Convolutional Neural Networks}  
-Convolutional Neural Networks (CNNs) are specialized deep learning architectures used to process data with a spatial or temporal structure, such as images, time series, or signals. The mathematical operation of convolution is the main feature of CNNs, which is inspired by signal processing and serves as a powerful tool for feature extraction.
+Convolutional Neural Networks (CNNs) are specialized deep learning architectures used to process data with a spatial or temporal structure, such as images or time series. The mathematical operation of convolution is the main feature of CNNs, which is inspired by signal processing and is specialized in feature extraction.
 
-In its most basic form, convolution for a 1D input signal $f[i]$ and a filter kernel $g[n]$ is defined as:
+The convolution for a 1D input signal $f[i]$ and a filter kernel $g[n]$ is defined as:
 \begin{align}
 	(f*g)[i]\equiv\sum_{n}f[n]g[i-n].
 \end{align}
 In the case of 2D data, the convolution is:
 \begin{align}
-	(f*g)[i,j]\equiv\sum_{m}\sum_{n}f[i-m,j-n]g[m,n],
+	(f*g)[i,j]\equiv\sum_{m}\sum_{n}f[i-m,j-n]g[m,n].
 \end{align}
-where in the case of e.g. images, $f[i,j]$ represents the input pixel intensity at position $(i,j)$, and $g[m,n]$ is the filter kernel. In the context of NNs, convolution can be thought of as a sliding window operation where the filter $g$ is moved across the input $f$. At each position, the filter and the corresponding portion of the input are element-wise multiplied and summed, producing a new value in the output matrix. This process effectively detects patterns encoded in the filter, such as edges, textures, or other localized features.
+In the case of images, $f[i,j]$ represents the input pixel intensity at position $(i,j)$, and $g[m,n]$ is the filter kernel. In the context of NNs, convolution can be thought of as a sliding window operation where the filter $g$ is moved across the input $f$. At each position, the filter and the corresponding portion of the input are element-wise multiplied and summed, producing a new value in the output matrix. This process effectively detects patterns encoded in the filter, such as edges, textures, or other localized features.
 
 Convolutions are closely related to concepts in functional analysis and signal processing, where they are used to study how one function modifies another function. In the frequency domain, convolution corresponds to multiplication, which allows the filter to emphasize or suppress specific frequency components of the input. Take an image as an example: high-frequency components correspond to sharp changes like edges, while low-frequency components correspond to smoother regions. By designing filters that target specific frequencies, CNNs can effectively isolate desired features while reducing noise.
 
-Noise often manifests as high-frequency components or irregular patterns in data. The convolution operation is inherently local, meaning it focuses on nearby relationships between data points. Filters can be trained or designed to ignore small-scale irregularities while preserving dominant features, such as edges or repeating structures. In a CNN, the ability to learn filters automatically during training allows the network to focus on the most relevant features of the data, adapting to the specifics of the given task.
+Noise often presents as high-frequency components or irregularities in the data. Since the convolution operation is local, the filters can thus be trained to ignore these small-scale irregularities while preserving the dominant features. In a CNN, the ability to learn filters automatically during training allows the network to focus on the most relevant features of the data, adapting to the specifics of the given task.
 
 The layers in a CNN consists of the following types:
 \begin{enumerate}
@@ -257,26 +257,16 @@ The layers in a CNN consists of the following types:
 	\item Dense Layers: These process the high-level features extracted by the convolutional and pooling layers to make predictions, such as classifying an image or detecting a signal.
 \end{enumerate}
 
-In the context of gravitational wave (GW) detection, CNNs are particularly effective for signal de-noising and feature extraction:
-\begin{itemize}
-	\item Convolutional layers can isolate localized patterns in the time-frequency representation of GW data, such as the characteristic "chirp" signal of a binary merger.
-	\item By stacking multiple layers, the network can progressively refine its ability to distinguish noise from signal, leveraging learned patterns specific to GWs.
-	\item Pooling layers enhance robustness by ignoring small-scale noise variations while retaining the overall structure of the signal.
-\end{itemize}
-
-Through this hierarchical process, CNNs filter out most of the background noise, leaving the gravitational wave signal predominantly intact. This capability, coupled with the network's adaptability, makes CNNs a cornerstone for tasks involving noisy, high-dimensional data.
-
-
-
+In the context of gravitational wave (GW) detection, CNNs are particularly effective for signal de-noising and feature extraction. Convolutional layers can isolate localized patterns in the time-frequency representation of GW data, such as the characteristic "chirp" signal of a binary merger. By stacking multiple layers, the network can improve its ability to distinguish noise from signal, using the learned patterns specific to GWs. Pooling layers enhance robustness by ignoring small-scale noise variations while retaining the overall structure of the signal. Through this process, CNNs can filter out a large portion of the background noise, leaving the gravitational wave signal predominantly intact.
 
 \subsection{Additional Techniques}
 \subsubsection{Regularization \& Loss Function}
 We used $L^2$ regularization for all our results. We refer to \cite{project1} for an introduction. The loss function considered for all our results was the weighted binary-cross entropy with this additional $L^2$ regularization:
 \begin{align}	
-	L&=-\frac1N\sum_{i=1}^N\left[S_\text{CW}\,y_i\ln(\hat{y}_i)+(1-y_i)\ln(1-\hat{y}_i)\right]\nonumber\\
+	L&=-\frac1N\sum_{i=1}^N\left[S_{\text{CW}}\,y_i\ln(\hat{y}_i)+N_{\text{CW}}(1-y_i)\ln(1-\hat{y}_i)\right]\nonumber\\
 	&+\lambda\sum_{i=1}^Nw_i^2 \label{eq:L2_paramater}
 \end{align}
-where $S_{\text{CM}}$ is the signal class weight and the noise class weight has been normalized to unity.
+where $S_{\text{CW}}$ and $N_{\text{CW}}$ are the signal and noise class weights respectively and $w_i$ are the hidden layer weights.
 
 \subsubsection{Gradient Clipping}
 A common method for dealing with exploding gradients, is the method of gradient clipping (see e.g.~\cite{Goodfellow-et-al-2016}). This method prevents checks whether the magnitude of the gradient is moving past a certain threshold. If this is true it truncates the current gradient. This can be summarized as:
@@ -290,10 +280,10 @@ We opted into using early stopping for the majority of our parameter scans. Give
 \subsubsection{Dynamic Class Weights}
 To handle the large class imbalance between the noise and gravitational events, we introduced a dynamic class weight adjustment based on a hyperparameter $\phi$. Given the label array $\textbf{l}$, if we define $l_i=1$ when there is a signal, and $l_i=0$ when there is only noise and normalize the noise class weight to $1$, then a simple way to compute a linear dynamical weights for the signal class is:
 \begin{align}	\label{eq:dynamical_signal_weights}
-	S_{\rm CW}&=\left[\phi-(\phi-1)\frac{\varE}{E}\right]\times\left[\frac{{\rm len}(\textbf{l})}{\sum_i l_i}-1\right]
+	S_{\text{CW}}&=\left[\phi-(\phi-1)\frac{\varE}{E}\right]\times\left[\frac{{\rm len}(\textbf{l})}{\sum_i l_i}-1\right]
 \end{align}
-where $S_{\rm CW}$ refers to the signal class weight (GWs in our case), $\varE$ is the current epoch and $E$ is the total number of epochs. The right bracket is just the factor which would give you balanced class weights, i.e. the program is equally punished for only predicting either of the classes. The factor in the left bracket is then just a linearly decreasing factor going from $\phi$ to $1$ as $\varE\to E$. This essentially gives an early boost to the signal class, and gradually converges to a balanced class weight system where the NN would perform equally poorly from predicting all in either of the classes. A simple example is shown in Fig. \ref{fig:DynamicCW}. Note that the noise-signal label ratio is \textit{not} SNR, one refers to the time axis in the case of GW (i.e.~the percentage of time there is a signal), whilst the latter refers to the strain-to-noise ratio (i.e.~roughly how visible the signal is at any given time). Dynamical class labels are important in our case since GW events are so rare. Due to this the program may simply decide that it is best not to predict the signal class at all, as it is much more likely to be punished for ever attempting to `guess' GWs. Thus dynamical weights are a way to reduce the effects of this particular problem.
-\begin{figure}[ht!]
+where $\varE$ is the current epoch and $E$ is the total number of epochs. The right bracket is just the factor which would give you balanced class weights, i.e. the program is equally punished for only predicting either of the classes. The factor in the left bracket is then just a linearly decreasing factor going from $\phi$ to $1$ as $\varE$ goes from $0$ to $E$. This essentially gives an early boost to the signal class, and gradually converges to a balanced class weight system where the NN would perform equally poorly from predicting all in either of the classes. A simple example is shown in Fig. \ref{fig:DynamicCW}. Note that the noise-signal label ratio is \textit{not} SNR, one refers to the time axis in the case of GW (i.e.~the percentage of time there is a signal), whilst the latter refers to the strain-to-noise ratio (i.e.~roughly how visible the signal is at any given time). Dynamical class labels are important in our case since GW events are so rare. Due to this the program may simply decide that it is best not to predict the signal class at all, as it is much more likely to be punished for ever attempting to `guess' GWs. Thus dynamical weights are a way to reduce the effects of this particular problem.
+\begin{figure}[H]
 	\includegraphics[width=0.49\textwidth]{Figures/DynamicCW.pdf}
 	\caption{Dynamic class weight shown for a simple example with $\phi=2$ where we have a 4:1 noise-signal label ratio over 100 epochs.}
 	\label{fig:DynamicCW}
@@ -301,14 +291,14 @@ where $S_{\rm CW}$ refers to the signal class weight (GWs in our case), $\varE$ 
 
 \subsubsection{Wavelet Transforms}
 Wavelet transforms are mathematical tools used to analyze signals by decomposing them into time-frequency components. A wavelet transform applies scaled and shifted versions of a so-called \textit{mother wavelet} function, $\psi(t)$, to a signal. The continuous wavelet transform (CWT) of a signal $f(t)$ is defined as:
-\[W(a,b)=\int_{-\infty}^{\infty}f(t)\psi_{a,b}(t)\,dt,\]
-where $\psi_{a,b}(t)$ is the scaled and shifted wavelet:
-\[\psi_{i,j}(t)=\frac{1}{\sqrt{2^j}}\psi\left(\frac{t-k2^j}{2^j}\right),\]
-with $a>0$ representing the frequency and $b$ the time shift.  
+\[W(a,b)=\int_{-\infty}^{\infty}f(t)\psi_{i,j}(t)\,dt,\]
+where $\psi_{i,j}(t)$ is the scaled and shifted wavelet:
+\[\psi_{i,j}(t)=\frac{1}{\sqrt{2^i}}\psi\left(\frac{t}{2^i}-j\right),\]
+where $i,j\in\mathbb{N}$ and are related to the the frequency and time shift respectively.
 
 In the discrete wavelet transform (DWT), the scale and translation are discretized. The DWT is computed as:
 \[W[j,k]=\sum_{n}f[n]\psi_{j,k}[n],\]
-making it computationally efficient for practical applications like feature extraction or de-noising. 
+making it computationally efficient for practical applications like feature extraction or de-noising.
 
 Unlike traditional Fourier transforms, which decompose a signal into sine and cosine waves of different frequencies, wavelets allow for both time and frequency localization. This makes them particularly useful for analyzing non-stationary signals, such as gravitational waves or audio signals, where the frequency content changes over time. In the context of neural networks, wavelet transforms are often used as a pre-processing step to reduce noise, extract meaningful features, or compress data, thereby potentially improving the performance. This is what we will be using for our CNN.
 
@@ -379,7 +369,7 @@ As a result, we spent a considerable amount of time evaluating the performance o
 
 One of the fundamental difficulties lies in the nature of the GW signal itself. GW events are incredibly short in duration, often lasting only a fraction of a second, and are buried deep within overwhelming noise. This makes it extremely difficult to isolate the actual signal, let alone train a NN to identify it. Consider for example Fig.~\ref{fig:GW170104} which shows the raw strain data measured by the H1 LIGO detector surrounding the event GW170104 acquired from \cite{gwosc}. The small partition in red is where the GW signal was detected by both LIGO detectors and Virgo, whilst the rest is simply noise. This event has a roughly average peak SNR $\sim13$ (after treatment) and a rather common duration of roughly $0.04\,$s, so this would be around what would be expected of a NN to be able to detect. Whilst the strain here is of the order $10^{-18}$, after cleaning the data, \cite{LIGOScientific:2017bnn} shows that the actual strain stemming from the GW event peaks around $10^{-21}$. Thus the unfiltered SNR of the raw data is $\lesssim10^{-3}$. Clearly it is unreasonable to give this to a NN and expect it to learn anything, and this is even with data which is over a relatively short timespan of under 20 seconds. Note that even if we picked the GW with highest (treated) SNR, this is only $\sim3$ times higher than this particular example. Thus even in this most ideal case, we still have a raw data SNR which is at best $\sim10^{-2}$.
 
-\begin{figure}[ht!]
+\begin{figure}[H]
 	\includegraphics[width=0.5\textwidth]{Figures/GW170104GWEvent.pdf}
 	\caption{Raw strain data for GW170104 v2 from the H1 LIGO detector \cite{gwosc}. Blue corresponds to noise whilst red is where the GW event has been detected.}
 	\label{fig:GW170104}
@@ -387,7 +377,7 @@ One of the fundamental difficulties lies in the nature of the GW signal itself. 
 
 What academics do is they remove all the noise from known sources which occur at this time, e.g. seismic activity, local disturbances and afterwards perform a Bayesian analysis of the data to determine the properties of the source \cite{LIGOScientific:2017bnn}. Finally, they reconstruct the signal using the found properties and check against the original data. For this particular event, they arrived at the signal shown in Fig. \ref{fig:GW170104Reconstructed} which has a background noise $\sim10^{4}$ times smaller. This is clearly much easier to work with than the raw data, and a much more realistic task for a NN to be able to detect. However at this point all the work has already been done, and requires far more work than we can manage given our lack of expertise and time for this project.
 
-\begin{figure}[ht!]
+\begin{figure}[H]
 	\includegraphics[width=0.45\textwidth]{Figures/GW170104_waveform_reconstructions.svg.png}
 	\caption{Treated data and reconstructed signal for GW170104. This figure has been taken from \cite{LIGOScientific:2017bnn}.}
 	\label{fig:GW170104Reconstructed}
@@ -396,34 +386,51 @@ What academics do is they remove all the noise from known sources which occur at
 \section{Results \& Discussion}
 \label{sec:results}
 We begin by considering \texttt{tensorflow.keras}'s \texttt{SimpleRNN} on a set of synthetic GW signals for various combinations of the learning rate $\eta$ and $L^2$ regularization parameter $\lambda$ as shown in Fig. \ref{fig:PhiShowcase}. Here we have used 50 epochs for both the figures, where the upper plot uses a dynamical class weights with $\phi=1.4$ and the lower plot uses static class weights, i.e. $\phi=1$. The difference for high $\lambda$ and suboptimal $\eta$ can be seen to be relatively small between the two. In both the cases, large $\lambda$ corresponds to underfitting the model with the high suppression for the weights, and too high (low) value for the initial learning rate causes the model to overshoot (undershoot) the desired minima. For the combinations of $\eta$ and $\lambda$ where the model performs well, we see that there is a clear distinction between the two figures. The model performs much better when it initially starts with higher class weights for the signal class.
-\begin{figure}[ht!]
+\begin{figure}[H]
 	\begin{subfigure}{0.499\textwidth}
-		\includegraphics[width=\textwidth]{Figures/2D_Plot_Loss_Epoch50_Boost1.4.pdf}
+		\includegraphics[width=\textwidth]{Figures/RNN_2D_Plot_Loss_Epoch50_Boost1.4.pdf}
 	\end{subfigure}
 	\newline
 	\begin{subfigure}{0.499\textwidth}
-		\includegraphics[width=\textwidth]{Figures/2D_Plot_Loss_Epoch50_Boost1.0.pdf}
+		\includegraphics[width=\textwidth]{Figures/RNN_2D_Plot_Loss_Epoch50_Boost1.0.pdf}
 	\end{subfigure}
 	\caption{Average test loss for the $5$-fold cross validation using \texttt{tensorflow.keras}' \texttt{SimpleRNN} for various parameter combinations with 50 epochs. These plots have been chosen to show the effect of an ideal initial boost, $\phi=1.4$, compared to the simpler case $\phi=1$ which corresponds to static, but still balanced, class weights. Note that we have taken the logarithm of the colorbar to get more sensitivity at lower loss.}
 	\label{fig:PhiShowcase}	
 \end{figure}
 
-The particular example with $\eta=0.01$, $\lambda=10^{-8}$, $\phi=1.4$ with 50 epochs for SNR $\sim100$ is given in Fig.~\ref{fig:bestPred}. Here we have shaded the region in red where the RNN predicted a signal in two neighboring points. The blue line corresponds to the signal itself, whilst the green line is the labels. Here we have much more than just ideal conditions with a rather large SNR, so obviously the task is not nearly as difficult as actual GW events. 
-\begin{figure}
+The particular example with $\eta=0.01$, $\lambda=10^{-8}$, $\phi=1.4$ with 50 epochs for SNR $\sim100$ is given in Fig.~\ref{fig:bestPred}. Here we have shaded the region in red where the RNN predicted a signal in 5 neighboring points. The blue line corresponds to the signal itself, whilst the green line is the labels. Here we have much more than just ideal conditions with a rather large SNR, so obviously the task is not nearly as difficult as actual GW events. 
+\begin{figure}[H]
 	\includegraphics[width=0.49\textwidth]{Figures/BestPrediction_Epochs50_Phi1.4.pdf}
 	\caption{Keras RNN with $\eta=0.01$, $\lambda=10^{-8}$, $\phi=1.4$ with 50 epochs for SNR $\sim100$. The blue line corresponds to the generated data, the green line is the labels whilst the shaded red regions are where the RNN predicted a signal. The $x$- and $y$-axes correspond to the time and strain respectively.}
 	\label{fig:bestPred}
 \end{figure}
 
-We then tried to up the difficulty, lowering the SNR to $\sim15$, which is roughly the range of a treated GW event. This however lead to results so poor that guessing randomly would give a better loss. 
+We then tried to up the difficulty, lowering the SNR to $\sim15$, which is roughly the range of a treated GW event. This however lead to results so poor that guessing randomly would give a better loss in most instances.
 
-For the CNN however we could lower the SNR to as low values as $X$ whilst still having $\alpha$
+For the CNN however we could lower the SNR to as low values as $5$ whilst still having reasonable performance. Here we however saw that increasing the epochs lead to worse results for the test data as displayed in Fig. \ref{fig:CNN_2D}. Note here that we cannot compare the loss of this directly to the RNN due to the large difference in the SNR. The RNN's task is close to trivial in comparison to this one. Our parameter choices were inspired by the best performing parameter values for the RNN, however we see that there is still room for improvement by lowering the learning rate even further. For the CNN, it seems that tweaking the $\phi$ values has minimal impact on the loss, and thus this parameter may not be needed in its analysis. There was however minor differences overall, but we expect that this is likely the result of variance between runs.
+\begin{figure}[H]
+	\begin{subfigure}{0.499\textwidth}
+		\includegraphics[width=\textwidth]{Figures/CNN_2D_Plot_Loss_Epoch10_Boost1.1.pdf}
+	\end{subfigure}
+	\newline
+	\begin{subfigure}{0.499\textwidth}
+		\includegraphics[width=\textwidth]{Figures/CNN_2D_Plot_Loss_Epoch50_Boost1.1.pdf}
+	\end{subfigure}
+	\caption{Average test loss for the $5$-fold cross validation using \texttt{tensorflow.keras}' \texttt{CNN} for various parameter combinations with 10 and 50 epochs respectively, and $\phi=1.1$ for both. Note that we have taken the logarithm of the colorbar to get more sensitivity at lower loss.}
+	\label{fig:CNN_2D}
+\end{figure}
 
+Fig. \ref{fig:CNN_best} shows the best result that we obtained with the CNN. Due to the much larger difficulty here compared to
+\begin{figure}[H]
+	\includegraphics[width=0.49\textwidth]{Figures/CNN_best.pdf}
+	\caption{Keras RNN with $\eta=10^{-3}$, $\lambda=10^{-9}$, $\phi=1.1$ with 10 epochs for SNR $\sim5$. The blue line corresponds to the generated data, the green line is the labels whilst the shaded red regions are where the RNN predicted a signal. The $x$- and $y$-axes correspond to the time and strain respectively.}
+	\label{fig:CNN_best}
+\end{figure}
 
 \section{Conclusion}
 As mentioned prior, actual gravitational wave detection is very difficult, and requires advanced techniques such as matched filtering and adaptive noise subtraction. With our limited time and resources we were not able to properly clean the data to perform such an analysis. Thus we simply opted into creating our own signal in a very ideal situation. 
 
-The RNN's both performed appreciably worse than the CNN, even if we spent much more time making the prior work. Whilst our custom RNN is likely a fault of our own implementation, keras' CNN clearly outperformed its own RNN across all metrics, even achieving similar performance with an SNR which is an order of magnitude lower.
+The RNN's both performed appreciably worse than the CNN, even if we spent much more time making the prior work. Whilst our custom RNN is likely a fault of our own implementation, keras' CNN clearly outperformed its own RNN across all metrics, even achieving relatively similar performance with an SNR which is an order of magnitude lower.
 
 In retrospect, GW detection was not ideal for this project as it was simply too difficult given our limited time and expertise on this topic. Once we saw the lack of performance from the RNN's we should have immediately attempted different methods. Whilst we did this in the end, it was however too late to do a proper analysis to find optimal parameters for the CNN.
 
