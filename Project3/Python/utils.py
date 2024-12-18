@@ -58,40 +58,29 @@ def latex_fonts():
         'figure.titlesize': 25 # Figure title font size
     })
 
-
-# Can remove?
-class Franke:
-
-    def __init__(self, N:int, eps:float):
-        """
-        Parameters
-            * N:    number of data points 
-            * eps:  noise-coefficient         
-        """
-        self.N = N; self.eps = eps
-        self.x = np.random.rand(N)
-        self.y = np.random.rand(N)
-        # self.x = np.sort(np.random.uniform(0, 1, N)) 
-        # self.y = np.sort(np.random.uniform(0, 1, N)) 
-
-        self.z_without_noise = self.franke(self.x, self.y)
-        self.z = self.z_without_noise + self.eps * np.random.normal(0, 1, self.z_without_noise.shape)
-    @staticmethod
-    def franke(x:np.ndarray, y:np.ndarray) -> np.ndarray:
-        """
-        Parameters
-            * x:    x-values
-            * y:    y-values
-
-        Returns
-            - franke function evaluated at (x,y) 
-        """
+def weighted_Accuracy(y_true:np.ndarray, y_pred:np.ndarray, eps:float=1e-13) -> float:
+    """
+    Calculates a weighted accuracy, usage is in particular for binary unbiased features.  
+    """
+    # Making sure the correct dim
+    y_true = y_true.flatten()
+    y_pred = y_pred.flatten()
     
-        term1 = 0.75*np.exp(-(0.25*(9*x - 2)**2) - 0.25*((9*y - 2)**2))
-        term2 = 0.75*np.exp(-((9*x + 1)**2)/49.0 - 0.1*(9*y + 1))
-        term3 = 0.5*np.exp(-(9*x - 7)**2/4.0 - 0.25*((9*y - 3)**2))
-        term4 = -0.2*np.exp(-(9*x - 4)**2 - (9*y - 7)**2)
-        return term1 + term2 + term3 + term4
+    N = len(y_true)
+    TP = np.sum((np.abs(y_true-1)< eps) & (np.abs(y_pred-1)< eps))
+    TN = np.sum((np.abs(y_true)< eps) & (np.abs(y_pred)< eps))
+
+    tmp = np.sum(y_true)
+    if tmp == 0:
+        return TN / N 
+    
+    W_1 = N / tmp - 1
+
+    A_w = 1 / (2*N * (1 - np.sum(y_true)/N)) * (TN + W_1 * TP)
+
+    B = 1 / (2*(N - np.sum(y_true)))
+    A_w = B * (TN + W_1*TP)
+    return A_w 
     
 def plot_2D_parameter_lambda_eta(
         lambdas,
@@ -120,40 +109,40 @@ def plot_2D_parameter_lambda_eta(
     This function creates a heatmap to visualize a 2D grid of values based on given lambda and eta 
     arrays.
 
-    Parameters:
-    ----------
-    lambdas: list or array-like.        Array of lambda values for the x-axis.
-    etas: list or array-like.           Array of eta values for the y-axis.
-    value: 2D array-like.               Matrix of values corresponding to the combinations of lambda and eta.
-    title: str, optional.               Title of the plot. Default is None.
-    x_log: bool, optional.              If True, formats the x-axis (lambda) in log scale. Default is False.
-    y_log: bool, optional.              If True, formats the y-axis (eta) in log scale. Default is False.
-    savefig: bool, optional.            If True, saves the plot to a PDF file. Default is False.
-    filename: str, optional.            Name of the file to save the plot if `savefig` is True. Default is an empty string.
-    Reverse_cmap: bool, optional.       If True, reverses the color map used for the heatmap. Default is False.
-    annot: bool, optional.              If True, adds annotations (values) to each cell in the heatmap. Default is True.
-    only_less_than: float, optional.    If provided, annotates only the cells with values less than this threshold. Default is None.
-    only_greater_than: float, optional. If provided, annotates only the cells with values greater than this threshold. Default is None.
-    xaxis_fontsize: int, optional.      Font size for the x-axis labels. Default is None (uses 12).
-    yaxis_fontsize: int, optional.      Font size for the y-axis labels. Default is None (uses 12).
-    xlim: tuple, optional.              Tuple specifying the limits for the x-axis (lambda). Format: (xmin, xmax). Default is None.
-    ylim: tuple, optional.              Tuple specifying the limits for the y-axis (eta). Format: (ymin, ymax). Default is None.
-    ylabel: str, optional.              Label for the y-axis.
-    on_click: callable, optional.       Function to call when a point on the plot is clicked. The function should take a single 
-                                        `matplotlib.backend_bases.MouseEvent` object as an argument. Default is None.
-    log_cbar: bool, optional.           If True, applies a logarithmic transformation to the color bar values. Default is False.
-
-    Returns:
-    -------
-    fig : matplotlib.figure.Figure
-        The figure object containing the plot.
-    ax : matplotlib.axes._subplots.AxesSubplot
-        The axes object for the plot.
-
     Notes:
     -----
     - The `value` matrix should have dimensions consistent with the lengths of `lambdas` and `etas`.
     - When using the `on_click` parameter, ensure the callable is designed to handle `matplotlib` click events.
+
+    Parameters:
+    ----------
+    * lambdas: list or array-like.        Array of lambda values for the x-axis.
+    * etas: list or array-like.           Array of eta values for the y-axis.
+    * value: 2D array-like.               Matrix of values corresponding to the combinations of lambda and eta.
+    * title: str, optional.               Title of the plot. Default is None.
+    * x_log: bool, optional.              If True, formats the x-axis (lambda) in log scale. Default is False.
+    * y_log: bool, optional.              If True, formats the y-axis (eta) in log scale. Default is False.
+    * savefig: bool, optional.            If True, saves the plot to a PDF file. Default is False.
+    * filename: str, optional.            Name of the file to save the plot if `savefig` is True. Default is an empty string.
+    * Reverse_cmap: bool, optional.       If True, reverses the color map used for the heatmap. Default is False.
+    * annot: bool, optional.              If True, adds annotations (values) to each cell in the heatmap. Default is True.
+    * only_less_than: float, optional.    If provided, annotates only the cells with values less than this threshold. Default is None.
+    * only_greater_than: float, optional. If provided, annotates only the cells with values greater than this threshold. Default is * None.
+    * xaxis_fontsize: int, optional.      Font size for the x-axis labels. Default is None (uses 12).
+    * yaxis_fontsize: int, optional.      Font size for the y-axis labels. Default is None (uses 12).
+    * xlim: tuple, optional.              Tuple specifying the limits for the x-axis (lambda). Format: (xmin, xmax). Default is None.
+    * ylim: tuple, optional.              Tuple specifying the limits for the y-axis (eta). Format: (ymin, ymax). Default is None.
+    * ylabel: str, optional.              Label for the y-axis.
+    * on_click: callable, optional.       Function to call when a point on the plot is clicked. The function should take a single 
+                                        `matplotlib.backend_bases.MouseEvent` object as an argument. Default is None.
+    * log_cbar: bool, optional.           If True, applies a logarithmic transformation to the color bar values. Default is False.
+
+    Returns:
+    -------
+    * fig : matplotlib.figure.Figure
+        The figure object containing the plot.
+    * ax : matplotlib.axes._subplots.AxesSubplot
+        The axes object for the plot.
     """
     cmap = 'plasma'
     if Reverse_cmap == True:
@@ -339,9 +328,12 @@ def on_click(event, lambdas, etas, epochs, boosts, unique_lambdas, unique_etas, 
                     print(f"Figure saved to {save_path}")
 
 class GWSignalGenerator:
-    def __init__(self, signal_length: int):
+    def __init__(self, signal_length:int):
         """
-        Initialize the GWSignalGenerator with a signal length.
+        Class representing a synthetic gravitational event. 
+
+        Arguments:
+        * signal_length:        initialize the GWSignalGenerator with a signal length.
         """
         self.signal_length = signal_length
         self.labels = np.zeros(signal_length, dtype=int)  # Initialize labels to 0 (background noise)
@@ -353,14 +345,14 @@ class GWSignalGenerator:
         Includes a spin factor that increases during the inspiral phase.
 
         Parameters:
-        y:                Signal to append GW event to.
-        start:            Start index for GW event.
-        end:              End index for GW event.
-        amplitude_factor: Peak of the oscillating signal in the insipral phase.
-        spike_factor:     Peak of the signal in the merge phase.
-        spin_start:       Oscillation frequency of the start of the inspiral phase.
-        spin_end:         Oscillation frequency of the end of the inspiral phase.
-        scale:            Scale the amplitude of the entire event.
+        * y:                Signal to append GW event to.
+        * start:            Start index for GW event.
+        * end:              End index for GW event.
+        * amplitude_factor: Peak of the oscillating signal in the insipral phase.
+        * spike_factor:     Peak of the signal in the merge phase.
+        * spin_start:       Oscillation frequency of the start of the inspiral phase.
+        * spin_end:         Oscillation frequency of the end of the inspiral phase.
+        * scale:            Scale the amplitude of the entire event.
 
         returns:
         Various parameters to be used by apply_events function
@@ -442,14 +434,8 @@ class GWSignalGenerator:
         """
         for start, end, amplitude, spike, spin_start, spin_end in events:
             self.add_gw_event(y, start, end, amplitude_factor=amplitude, spike_factor=spike, spin_start=spin_start, spin_end=spin_end)
-    
-############ Metric functions ############
-def MSE(y,ytilde):
-    n = len(y)
-    return 1/n * np.sum(np.abs(y-ytilde)**2)
 
 ############ Activation functions ############
-
 class Activation:
     def __init__(self):
         pass 
@@ -524,78 +510,6 @@ class Activation:
     @staticmethod
     def tanh_derivative(z):
         return 1 / np.cosh(z)**2
-
-
-############ Cost/gradient functions ############
-def gradientOLS(X, y, beta):
-    n=len(y)
-
-    return 2.0/n*X.T @ (X @ (beta)-y)
-
-def CostOLS(X, y, theta):
-    n=len(y)
-    return 1/n * anp.sum((y-X @ theta)**2)
-
-def CostRidge(X, y, theta, lmbda):
-    n = len(y)
-    return (1.0 / n) * anp.sum((y-X @ theta) ** 2) + lmbda / n * anp.sum(theta**2)
-
-class LogisticCost:
-
-    def __init__(self, exp_clip=1e3, log_clip=1e-13, hypothesis=Activation.sigmoid):
-        """
-        Logistic cost function which removes too high values for exp/too low for log.
-        """
-        self.exp_clip = exp_clip; self.log_clip = log_clip
-        self.hypothesis_func = hypothesis
-
-    def __call__(self, x, y, w, lmbda):
-
-        # computing hypothesis
-        z = anp.dot(x,w)
-        z = anp.clip(z, -self.exp_clip, self.exp_clip)
-        h = self.hypothesis_func(z)
-
-        cost = (-1 / len(y)) * anp.sum(y * anp.log(h + self.log_clip) + (1 - y) * anp.log(1 - h + self.log_clip))
-        reg_term = lmbda * anp.sum(w[1:] ** 2)
-
-        # Compute total cost
-        return cost + reg_term
-    
-class AutoGradCostFunction:
-
-    def __init__(self, cost_function:callable, argument_index=2, elementwise=False):
-        """
-        Creates callable gradient of given cost function. The cost function is a property of the class, and so changing it will change the gradient.
-        Assumes that the cost_function has a function call on the form cost_function(X, y, theta).
-
-        Arguments 
-            * cost_function:        callable cost function 
-            * argument_index:       index of argument to take gradient over
-        """
-        self._gradient = grad(cost_function, argument_index)
-        if elementwise:
-            self._gradient = elementwise_grad(cost_function, argument_index)
-        self._cost_function = cost_function
-        self._argument_index = argument_index
-        self.elementwise = elementwise
-
-    @property
-    def cost_function(self):
-        return self._cost_function
-    
-    @cost_function.setter 
-    def cost_function(self, new_cost_function):
-        self._cost_function = new_cost_function 
-        self._gradient = grad(new_cost_function, self._argument_index)
-        if self.elementwise:
-            self._gradient = elementwise_grad(new_cost_function, self._argument_index)
-
-    def __call__(self, X, y, theta, lmbda):
-        """
-        Returns gradient of current cost function.
-        """
-        return self._gradient(X, y, theta, lmbda)
 
 ############ Optimization methods (and related) ############
 class LearningRate:
@@ -882,7 +796,7 @@ class Adam(Optimizer):
         
         return optimizer
 
-
+############ Scaling ############
 class Scalers:
 
     def __init__(self, scaler_name:str):
@@ -921,6 +835,7 @@ class Scalers:
         
         return X_train, X_test
 
+############ Loss functions ############
 class Loss:
     data = {}
 
@@ -949,7 +864,6 @@ class Loss:
         - Gradient of the loss with respect to y_pred.
         """
         raise NotImplementedError("Backward method not implemented.")
-
 
 class DynamicallyWeightedLoss(Loss):
 
@@ -1046,8 +960,7 @@ class WeightedBinaryCrossEntropyLoss(Loss):
     
     def calculate_weights(self, epoch:int) -> None:
         return {0: self.weight_0, 1: self.weight_1}
-
-    
+   
 class FocalLoss(Loss):
     def __init__(self, alpha=0.25, gamma=2.0):
         """
@@ -1086,27 +999,3 @@ class FocalLoss(Loss):
         ) / pt
         grad *= y_pred - y_true
         return grad
-
-def weighted_Accuracy(y_true:np.ndarray, y_pred:np.ndarray, eps:float=1e-13) -> float:
-    """
-    Calculates a weighted accuracy, usage is in particular for binary unbiased features.  
-    """
-    # Making sure the correct dim
-    y_true = y_true.flatten()
-    y_pred = y_pred.flatten()
-    
-    N = len(y_true)
-    TP = np.sum((np.abs(y_true-1)< eps) & (np.abs(y_pred-1)< eps))
-    TN = np.sum((np.abs(y_true)< eps) & (np.abs(y_pred)< eps))
-
-    tmp = np.sum(y_true)
-    if tmp == 0:
-        return TN / N 
-    
-    W_1 = N / tmp - 1
-
-    A_w = 1 / (2*N * (1 - np.sum(y_true)/N)) * (TN + W_1 * TP)
-
-    B = 1 / (2*(N - np.sum(y_true)))
-    A_w = B * (TN + W_1*TP)
-    return A_w 
