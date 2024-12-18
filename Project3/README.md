@@ -24,8 +24,11 @@ This folder contains all the Python scripts used in the project.
 #### Data
 This folder contains the data saved from `read_GW.py`.
 
-#### GW_Merged_Results
-Merged results from `GW_Parameter_Search`.
+### CNN_data
+Contains data from parameter search using CNN. The folders here starting with `Merged_Results` are the merged results from running `Merge_data.py`after having created parameter-search data.
+
+### CNN_data
+Contains data from parameter search using RNN. The folders here starting with `Merged_Results` are the merged results from running `Merge_data.py`after having created parameter-search data.
 
 #### GW_Parameter_Search_SNR{x}
 Stores results generated from the NN's to be later merged using `Merge_data.py`.
