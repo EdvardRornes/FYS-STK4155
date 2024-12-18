@@ -5,12 +5,13 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from utils import latex_fonts, plot_2D_parameter_lambda_eta, on_click
 
-latex_fonts() 
+# latex_fonts() 
 
 save_option = input("Would you like to be prompted to save files? y/n\nNB! If you choose yes, THE TERMINAL WILL CRASH if you do not give the later prompts an answer!! \n")
 
 # Define the input and output paths
 pkl_dir = "GW_Merged_Results_SNR5"  # Merged results path
+pkl_dir = "CNN_Data/Merged_Results_mac"  # Merged results path
 time_steps = 5000
 SNR = 5
 
@@ -27,6 +28,8 @@ pkl_files = [f for f in os.listdir(pkl_dir) if f.endswith(".pkl")]
 # Initialize the progress bar with the total number of files
 with tqdm(total=len(pkl_files), desc="Loading .pkl files", ncols=100) as pbar:
     for filename in pkl_files:
+
+        base_name = filename[:filename.index("timesteps")-1]
         file_path = os.path.join(pkl_dir, filename)
         
         # Load the merged results file
@@ -35,8 +38,17 @@ with tqdm(total=len(pkl_files), desc="Loading .pkl files", ncols=100) as pbar:
         
         # Extract parameters from the filename (Epoch and Boost)
         parts = filename.split('_')
-        epochs_value = int(parts[6].replace('epoch', ''))
-        boost_value = float(parts[7].replace('boost', '').replace('.pkl', ''))
+
+        epoch_index = None; boost_index = None
+        for i in range(len(parts)):
+            if "epoch" in parts[i]:
+                epoch_index = i
+            if "boost" in parts[i]:
+                boost_index = i
+    
+
+        epochs_value = int(parts[epoch_index].replace('epoch', ''))
+        boost_value = float(parts[boost_index].replace('boost', '').replace('.pkl', ''))
 
         # Iterate over the lambda-eta combinations in the merged data
         for lambda_eta_key, fold_data in merged_data["data"].items():
@@ -113,7 +125,7 @@ for epoch in unique_epochs:
             savefig=False,
             filename=f"2D_Plot_Loss_Epoch{epoch}_Boost{boost}",
             on_click=lambda event, plot_info=(epoch, boost): on_click(event, lambdas, etas, epochs, boosts, unique_lambdas, 
-                                                                      unique_etas, plot_info, time_steps, SNR, pkl_dir, save_option),
+                                                                      unique_etas, plot_info, time_steps, SNR, pkl_dir, save_option, filename_start=base_name),
             log_cbar=True
         )
 print("Click on one of the grids to plot the results for the given parameter combination :)")

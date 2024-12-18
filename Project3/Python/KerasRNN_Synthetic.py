@@ -17,6 +17,7 @@ time_for_1_sample = 50
 num_samples = 5
 window_size = time_steps//100
 batch_size = time_steps//50*(num_samples-1)
+batch_size = 128
 learning_rates = [1e-2]
 regularization_values = [1e-8]#np.logspace(-12, -6, 7)
 gw_earlyboosts = np.linspace(1, 1.5, 6)

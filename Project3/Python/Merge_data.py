@@ -5,8 +5,8 @@ from collections import defaultdict
 ##### This program merges the files created by the NN's #####
 
 # Define the input and output paths
-input_path = "CNN_Parameter_Search"
-output_path = "GW_Merged_Results"#"GW_Merged_Results"
+input_path = "CNN_Data/Parameter_Search_V1"
+output_path = "CNN_Data/Merged_Results_mac"#"GW_Merged_Results"
 time_steps = 5000
 SNR = 5
 
@@ -20,10 +20,18 @@ files = [f for f in os.listdir(input_path) if f.endswith('.pkl')]
 organized_data = defaultdict(list)
 for file in files:
     parts = file.split('_')
-    try:
+
+    epoch_index = None; boost_index = None
+    for i in range(len(parts)):
+        if "epoch" in parts[i]:
+            epoch_index = i
+        if "boost" in parts[i]:
+            boost_index = i
+    
+    try: # CNN_Synthetic_GW_Parameter_Tuning_Results_timesteps5000_SNR5_epoch10_lamd1e-06_eta0.01_boost1.0
         # Extract epoch and boost
-        epochs = int(parts[8].replace('epoch', ''))
-        boost = float(parts[11].replace('boost', '').replace('.pkl', ''))
+        epochs = int(parts[epoch_index].replace('epoch', ''))
+        boost = float(parts[boost_index].replace('boost', '').replace('.pkl', ''))
         
         # Add the file to organized_data
         organized_data[(epochs, boost)].append(file)

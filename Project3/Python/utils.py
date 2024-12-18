@@ -235,7 +235,7 @@ def plot_2D_parameter_lambda_eta(
 
     return fig, ax
 
-def on_click(event, lambdas, etas, epochs, boosts, unique_lambdas, unique_etas, plot_info, time_steps, SNR, pkl_dir, save_option):
+def on_click(event, lambdas, etas, epochs, boosts, unique_lambdas, unique_etas, plot_info, time_steps, SNR, pkl_dir, save_option, filename_start="Synthetic_GW_Merged_Results_timesteps"):
     """
     Handles click events on a heatmap plot, allowing interactive exploration of the corresponding data.
 
@@ -275,7 +275,7 @@ def on_click(event, lambdas, etas, epochs, boosts, unique_lambdas, unique_etas, 
             print(f"Clicked Lambda: {clicked_lambda}, Eta: {clicked_eta}, Epochs: {epoch}, Boost: {boost:.1f}")
 
             # Load results from the corresponding file
-            filepath = f'{pkl_dir}/Synthetic_GW_Merged_Results_timesteps{time_steps}_SNR{SNR}_epoch{epoch}_boost{boost:.1f}.pkl'
+            filepath = f'{pkl_dir}/{filename_start}_timesteps{time_steps}_SNR{SNR}_epoch{epoch}_boost{boost:.1f}.pkl'
             results = load_results(filepath)
             key = f"lambda_{clicked_lambda}_eta_{clicked_eta}"
 
@@ -334,7 +334,7 @@ def on_click(event, lambdas, etas, epochs, boosts, unique_lambdas, unique_etas, 
             if save_option.lower() == 'y':
                 save_fig = input("Would you like to save the previously generated figure? y/n\n")
                 if save_fig.lower() == 'y':
-                    save_path = f'../Figures/Synthetic_GW_Results_timesteps{time_steps}_SNR{SNR}_epoch{epoch}_lamd{clicked_lambda}_eta{clicked_eta}_boost{boost:.1f}.pdf'
+                    save_path = f'../Figures/{filename_start}_timesteps{time_steps}_SNR{SNR}_epoch{epoch}_lamd{clicked_lambda}_eta{clicked_eta}_boost{boost:.1f}.pdf'
                     plt.savefig(save_path)
                     print(f"Figure saved to {save_path}")
 

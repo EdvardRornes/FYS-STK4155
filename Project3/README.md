@@ -18,14 +18,17 @@ This folder contains all the Python scripts used in the project.
 - `parameters.py`: Runs a parameter scan, saving the data to a chosen folder (`GW_Merged_Resulst` by default).
 - `read_GW.py`: Downloads data surrounding a GW event from gwosc. Given the duration of the signal, this program automatically labels the data, saving it to the `Data` folder.
 - `PlotGWExample.py`: A simple plot of the GW data downloaded from gwosc with `read_GW.py`.
-- `NNs.py`: Contains the Neural Network classes, RNN and KerasRNN.
+- `NNs.py`: Contains the Neural Network classes; RNN, KerasRNN and KerasCNN.
 - `utils.py`: Contains utility functions used across all the scripts.
 
 #### Data
 This folder contains the data saved from `read_GW.py`.
 
-#### GW_Merged_Results
-Merged results from `GW_Parameter_Search`.
+### CNN_data
+Contains data from parameter search using CNN. The folders here starting with `Merged_Results` are the merged results from running `Merge_data.py`after having created parameter-search data.
+
+### CNN_data
+Contains data from parameter search using RNN. The folders here starting with `Merged_Results` are the merged results from running `Merge_data.py`after having created parameter-search data.
 
 #### GW_Parameter_Search_SNR{x}
 Stores results generated from the NN's to be later merged using `Merge_data.py`.
