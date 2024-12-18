@@ -24,7 +24,6 @@ from utils import *
 from tensorflow.keras.optimizers import Adam as Ker_Adam, SGD as Ker_SGD, RMSprop as Ker_RMSprop, Adagrad as Ker_AdaGrad #type:ignore
 
 
-
 class NeuralNetwork:
     
     data = {}
@@ -67,10 +66,10 @@ class NeuralNetwork:
     def save_data(self, filename:str, overwrite=False, stop=50) -> None:
         """Saves the analysis data to a file.
 
-        Args:
-            * filename:         name of the file to save the data to
-            * overwrite         whether to overwrite the file if it exists
-            * stop:             if 50 files for this 'type' of data exists, stop
+        Arguments:
+        * filename:         name of the file to save the data to
+        * overwrite         whether to overwrite the file if it exists
+        * stop:             if 50 files for this 'type' of data exists, stop
         """
         filename_full = f"{filename}_{0}.pkl"
 
@@ -169,6 +168,12 @@ class NeuralNetwork:
         return X_seq, y_seq
 
     def split_scale_data(self, X:np.ndarray, y:np.ndarray, window_size:int):
+        """
+        This method uses prepare_sequences_RNN to create sequences of the data, and applies scaling with the current
+        instance of the Scaler class. The parameters,
+        self.X_train_seq, self.X_val_seq, self.y_train_seq and self.y_val_seq gets stored as instance variables (they do not 
+        exist beforehand). 
+        """
         X_seq, y_seq = self.prepare_sequences_RNN(X, y, window_size)
 
         num_samples = len(X_seq[:,0,0])
@@ -186,8 +191,6 @@ class NeuralNetwork:
         # Scaling:
         for n in range(window_size):
             self.X_train_seq[:,n,:], self.X_val_seq[:,n,:] = self._scaler(self.X_train_seq[:,n,:], self.X_val_seq[:,n,:])
-
-
 
     @property
     def scaler(self):
@@ -207,7 +210,7 @@ class RNN(NeuralNetwork):
                  activation_out=None, lambda_reg=0.0, alpha=0.1, loss_function=None, scaler="standard",
                  test_percentage=0.2, random_state=None):
         """
-        Implements the Recurrent Neural Network (RNN).
+        Implements the Recurrent Neural Network (RNN). 
         
         Positional Arguments
         * input_size:           number of input features.
@@ -822,7 +825,7 @@ class KerasRNN(NeuralNetwork):
                  activation_out=None, lambda_reg=0.0, alpha=0.1, loss_function=None, scaler="standard",
                  test_percentage=0.2, random_state=None):
         """
-        Implements the Recurrent Neural Network (RNN).
+        Implements the Recurrent Neural Network (RNN) using keras.
         
         Positional Arguments
         * input_size:           number of input features.
@@ -876,6 +879,7 @@ class KerasRNN(NeuralNetwork):
         ### Private variables:
         self._trained = True
 
+    #################### Public Methods ####################
     def create_model(self):
         """
         Creates and returns a new RNN model with the specified configurations.
@@ -1079,9 +1083,11 @@ class KerasCNN(NeuralNetwork):
         self.model = self.create_convolutional_network(self.input_shape, self.n_filters, self.lambda_reg, 
                                                        self.loss_function, self.optimizer)
 
+    #################### Private Methods ####################
     def create_convolutional_network(self, input_shape, n_filters, lmbd, loss_function, optimizer):
         """
-        Creates and compiles a convolutional neural network. Is currently on the form: convolution layer, max-pooling layer, convolution layer, flatten layer and dense layer.
+        Creates and compiles a convolutional neural network. Is currently always on the form: 
+        convolution layer -> max-pooling layer -> convolution layer -> flatten layer and dense layer.
 
         Parameters:
         * input_shape:              tuple, shape of the input data (e.g., (height, width, channels)).
@@ -1091,7 +1097,7 @@ class KerasCNN(NeuralNetwork):
         * optimizer:                str, optimizer for the model (e.g., 'adam').
 
         Returns:
-        * model: compiled Keras model.
+        * model:                    compiled Keras model.
         """
         model = Sequential()
         model.add(Conv2D(n_filters[0], self.filter_sizes, activation=self.activation_func_name,
@@ -1188,8 +1194,6 @@ class KerasCNN(NeuralNetwork):
         Computes the weighted binary cross-entropy loss.
         """
         return self.model.evaluate(data, y, verbose=verbose)
-
-
 
     def predict(self, X, verbose=0):
         """

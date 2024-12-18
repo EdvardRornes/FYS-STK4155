@@ -83,10 +83,12 @@ def parameter_scan(X:np.ndarray, y:np.ndarray, t:np.ndarray, model:NeuralNetwork
 
                         predictions = predictions[:, -1, :]
 
+                        I_am_the_trainer._loss_function.labels = test_labels.flatten() # Scuffed way of doing this
                         loss = I_am_the_trainer.calculate_loss(test_labels, predictions, epochs)
 
 
                         predictions = np.array(predictions, dtype=int); test_labels = np.array(test_labels, dtype=int)
+                        _, test_labels = I_am_the_trainer.prepare_sequences_RNN(y_test.reshape(-1,1), test_labels.reshape(-1,1), window_size)
                         accuracy = accuracy_score(test_labels, predictions)
                         x_pred = x[window_size - 1:]
 
