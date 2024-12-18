@@ -5,13 +5,13 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from utils import latex_fonts, plot_2D_parameter_lambda_eta, on_click
 
-# latex_fonts() 
+latex_fonts()
 
 save_option = input("Would you like to be prompted to save files? y/n\nNB! If you choose yes, THE TERMINAL WILL CRASH if you do not give the later prompts an answer!! \n")
 
 # Define the input and output paths
 pkl_dir = "GW_Merged_Results_SNR5"  # Merged results path
-pkl_dir = "CNN_Data/Merged_Results_mac"  # Merged results path
+pkl_dir = "RNN_Data/GW_Merged_Results"  # Merged results path
 time_steps = 5000
 SNR = 5
 
@@ -122,8 +122,8 @@ for epoch in unique_epochs:
             y_log=True,
             Reverse_cmap=False,
             annot=True,
-            savefig=False,
-            filename=f"2D_Plot_Loss_Epoch{epoch}_Boost{boost}",
+            savefig=True,
+            filename=f"RNN_2D_Plot_Loss_Epoch{epoch}_Boost{boost}",
             on_click=lambda event, plot_info=(epoch, boost): on_click(event, lambdas, etas, epochs, boosts, unique_lambdas, 
                                                                       unique_etas, plot_info, time_steps, SNR, pkl_dir, save_option, filename_start=base_name),
             log_cbar=True
