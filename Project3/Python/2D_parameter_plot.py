@@ -11,7 +11,7 @@ save_option = input("Would you like to be prompted to save files? y/n\nNB! If yo
 
 # Define the input and output paths
 pkl_dir = "GW_Merged_Results_SNR5"  # Merged results path
-pkl_dir = "RNN_Data/GW_Merged_Results"  # Merged results path
+pkl_dir = "CNN_Data/Merged_Results_mac"  # Merged results path
 time_steps = 5000
 SNR = 5
 
@@ -123,7 +123,7 @@ for epoch in unique_epochs:
             Reverse_cmap=False,
             annot=True,
             savefig=True,
-            filename=f"RNN_2D_Plot_Loss_Epoch{epoch}_Boost{boost}",
+            filename=f"CNN_2D_Plot_Loss_Epoch{epoch}_Boost{boost}",
             on_click=lambda event, plot_info=(epoch, boost): on_click(event, lambdas, etas, epochs, boosts, unique_lambdas, 
                                                                       unique_etas, plot_info, time_steps, SNR, pkl_dir, save_option, filename_start=base_name),
             log_cbar=True
