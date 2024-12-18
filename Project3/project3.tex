@@ -90,10 +90,10 @@ aps,
 
 \begin{document}
 	
-\title{Recurrent Neural Networks and Synthetic Gravitational Waves}
+\title{Recurrent and Convolutional Neural Networks on Synthetic Gravitational Waves}
 \author{Edvard B. Rørnes}
 \email{e.b.rornes@fys.uio.no}
-\author{Isak O. Rukan}
+\author{Isak C. O. Rukan}
 \email{icrukan@uio.no}
 \affiliation{Institute of Physics, University of Oslo,\\0371 Oslo,  Norway}
 \date{\today}
@@ -114,10 +114,13 @@ To date, the most advanced experiment to detect these waves is the Laser Interfe
 
 Neural Networks (NNs) has become a powerful tool in this context. By training a NN on large datasets of both gravitational wave signals and background noise, these models can learn to distinguish between genuine gravitational wave signals and random noise. This, in theory, may allow for more accurate detection and classification of GW events, even in the presence of significant interference, and may be the future of GW detection \cite{Marx:2024wjt, skliris2024}. NNs can be trained to recognize patterns in the data that correspond to the characteristic signatures of GWs, improving both the efficiency and reliability of detection algorithms. With the growing amount of data from observatories like LIGO, NNs are playing an increasingly important role in identifying new events and advancing our understanding of the universe.
 
-In this work we attempt to detect GWs on untreated data from \cite{gwosc} by building our own Recurrent Neural Network (RNN), along with using \texttt{tensorflow.keras}' RNN to test against our own. To do this we created a program which automatically labels GW files granted that the user knows the duration of the GW signal. The performance on the untreated data from \cite{gwosc} is quite poor due to the untreated data having a signal to noise ratio (SNR) which is far too low for our programs. The process of removing noise from GW is quite advanced, and requires state of the art techniques. Due to time constraints and lack of expertise in this field, we instead created a simple program which generates synthetic GW data. This allowed us to control the SNR and focus on training neural networks on processed data, which simplifies the task vastly and allows us to evaluate our RNN's performance. This however still led to poor performance for both the RNN's, only yielding acceptable results is near trivial tasks where the SNR $\sim100$. After attempting many different parameter combinations, we eventually ended up using keras' Convolutional Neural Network (CNN) instead.
+In this work we attempt to detect GWs on untreated data from \cite{gwosc} by building our own Recurrent Neural Network (RNN), along with using \texttt{tensorflow.keras}' RNN to test against our own. To do this we created a program which automatically labels GW files granted that the user knows the duration of the GW signal. The performance on the untreated data from \cite{gwosc} is quite poor due to the untreated data having a signal to noise ratio (SNR) which is far too low for our programs. The process of removing noise from GW is quite advanced, and requires state of the art techniques. Due to time constraints and lack of expertise in this field, we instead created a simple program which generates synthetic GW data. This allowed us to control the SNR and focus on training neural networks on processed data, which simplifies the task vastly and allows us to evaluate our RNN's performance. This however still led to poor performance for both the RNN's, only yielding acceptable results in near trivial tasks where the SNR $\sim100$. 
 
-This project is organized as follows: In Section \ref{sec:theory}, we introduce the essential theoretical background and the key techniques needed to understand our subsequent analyses. Section \ref{sec:implementation} then details the implementation of the various neural network models, along with the supporting tools and data-processing strategies employed. We address the intrinsic challenges of gravitational wave detection and their implications for machine learning approaches in Section \ref{sec:challenges}. Finally, in Section \ref{sec:results}, we present and discuss our findings, evaluating the performance of the implemented models under a range of conditions.
+After attempting many different parameter combinations, we eventually ended up using keras' Convolutional Neural Network (CNN) instead. As input, we created wavelet transforms of the GW data, which gave us a time-frequency representation of the signals. This preprocessing step enhanced the relevant features of the GW data while mitigating noise, thereby improving the training effectiveness of the CNN. The CNN then outperformed the RNNs significantly, yielding much better results on tasks with moderate SNR values. 
 
+This project is organized as follows: Section \ref{sec:theory} provides the essential theoretical background and key techniques necessary to understand our analyses. This section includes a brief overview of gravitational waves, the theoretical foundations of RNNs and CNNs, and explanations of specific techniques we implemented, such as \(L^2\)-regularization, gradient clipping, and `dynamic weights.' Notably, the discussion on RNNs is particularly detailed. We delve into their architecture and algorithms, contrasting them with the Feed Forward Neural Networks examined in our previous project \cite{project2}. This in-depth treatment attempts to clarify the ideas and methodology behind our own implementation of the RNN.
+
+Section \ref{sec:implementation} then outlines the implementation of the neural network models, alongside the data-processing strategies and supporting tools employed. The intrinsic challenges of gravitational wave detection and their implications for machine learning approaches are discussed in Section \ref{sec:challenges}. Finally, Section \ref{sec:results} presents our findings, evaluating the performance of the models under various conditions.
 \section{Theory}
 \label{sec:theory}
 \subsection{Gravitational Waves}
@@ -189,6 +192,20 @@ Splitting the data into windows, we define the hidden state for window \(n\) as:
 \end{align}
 where \(X_{n}\) is the \(n\)-th window.
 
+Up until now we have considered only one hidden layer. Implementing the stacked RNN is done by essentially creating a hidden state for each `stack' of RNN. The output of the stacked RNN is computed by feeding the hidden states to each other in succession, starting from the first hidden layer. The \(l\)-th hidden states in some time window \(n\) are given by (cf. \cite{pascanu2014constructdeeprecurrentneural})
+\begin{align}
+	h^{l}_{n} = \begin{cases}
+		\sigma^{(h)}\left( W_{hx}^{1}X_{n} + W_{hh}^{1}h_{n-1}^{1} + b_{h}^{1}\right), &l=1, \\
+		\sigma^{(h)}\left( W_{hx}^{l}h_{n}^{l-1} + W_{hh}^{l}h_{n-1}^{l} + b_{h}^{l}\right), &l\geq 2,
+	\end{cases}\label{eq:hidden_states_L}
+\end{align}	
+and the output of the stacked RNN in time window \(n\) as
+\begin{align}
+	\tilde{y}_{n} &= \sigma^{(\text{out})}\left( W_{yh}h^{L}_{n} + b_{y} \right),
+\end{align}
+with \(L\) being the total amount of hidden layers. 
+Here, the dimensions are \(W^{l}_{hx}\in\mathbb{R}^{d_{l}\times d_{l-1}}\), \(W^{l}_{hh}\in\mathbb{R}^{d_{l}\times d_{l}}\), with \(d_l\) being the dimension of the \(l\)-th hidden state, \(l_0\) the dimension of the input and \(l^{L}\) the dimension of the output.
+
 \subsubsection{General Algorithm}
 The error between \(y\) and the predicted output \(\tilde{y}\), is given by some chosen loss function \(L(y, \tilde{y})\),
 \begin{align}	
@@ -210,71 +227,7 @@ where we can use backpropagation through time (BPTT) to write \cite{superGood}:
 \begin{align}	\label{eq:dL_dW_bare}
 	\frac{\partial L}{\partial W} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial \tilde{y}_{n}}{\partial h_{n}} \frac{\partial h_{n}}{\partial h_{k}} \frac{\partial h_{k}}{\partial W}.
 \end{align}
-Applying the chain rule in succession we obtain: 
-\begin{align}
-	\frac{\partial h_n}{\partial h_k} &= \frac{\partial h_n}{\partial h_{n-1}} \frac{\partial h_{n-1}}{\partial h_{n-1}} ... \frac{\partial h_{k+1}}{\partial h_{k}} \notag \\
-	&= \left[ W_{hh}^{T}\cdot\sigma'_{h}(z_n) \right]\left[ W_{hh}^{T}\cdot\sigma'_{h}(z_{n-1}) \right] ... \left[ W_{hh}^{T}\cdot\sigma'_{h}(z_{k+1}) \right] \notag\\
-	&= \prod_{j=k+1}^{n}\left[ W_{hh}^{T}\cdot\sigma'_{h}(z_{j})\right],
-\end{align}
-meaning that
-\begin{align}	\label{eq:dL_dW_alone}
-	\frac{\partial L}{\partial W} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial \tilde{y}_{n}}{\partial h_{n}} \prod_{j=k+1}^{n}\left[ W_{hh}^{T}\cdot\sigma'_{h}(z_{j})\right] \frac{\partial h_{k}}{\partial W}.
-\end{align}
-
-Up until now we have considered only one hidden layer. Implementing the stacked RNN is done by essentially creating a hidden state for each `stack' of RNN. The output of the stacked RNN is computed by feeding the hidden states to each other in succession, starting from the first hidden layer. The \(l\)-th hidden states in some time window \(n\) are given by (cf. \cite{pascanu2014constructdeeprecurrentneural})
-\begin{align}
-	h^{l}_{n} = \begin{cases}
-		\sigma^{(h)}\left( W_{hx}^{1}X_{n} + W_{hh}^{1}h_{n-1}^{1} + b_{h}^{1}\right), &l=1, \\
-		\sigma^{(h)}\left( W_{hx}^{l}h_{n}^{l-1} + W_{hh}^{l}h_{n-1}^{l} + b_{h}^{l}\right), &l\geq 2,
-	\end{cases}
-\end{align}	
-and the output of the stacked RNN in time window \(n\) as
-\begin{align}
-	\tilde{y}_{n} &= \sigma^{(\text{out})}\left( W_{yh}h^{L}_{n} + b_{y} \right),
-\end{align}
-with \(L\) being the total amount of hidden layers. 
-Here, the dimensions are \(W^{l}_{hx}\in\mathbb{R}^{d_{l}\times d_{l-1}}\), \(W^{l}_{hh}\in\mathbb{R}^{d_{l}\times d_{l}}\), with \(d_l\) being the dimension of the \(l\)-th hidden state, \(l_0\) the dimension of the input and \(l^{L}\) the dimension of the output. The BTT algorithm for a stacked RNN takes on the same form, except that we now have \(L\) hidden states. 
-
-
-To update the weights, we define the errors:
-\begin{align}
-	\delta^{k,l}_{hh}\equiv \frac{\partial h_{k}^{l}}{\partial W_{hh}^{l}}, \ \delta^{k,l}_{hx}\equiv \frac{\partial h_{k}^{l}}{\partial W_{hx}^{l}}.
-\end{align}
-
-We can then summarize how the hidden-layer weights and biases are updated (cf. \cite{superGood}):
-\begin{subequations}	\label{eq:gradients_hidden}
-	\begin{align}
-		\frac{\partial L}{\partial W_{hh}^{l}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}^{l}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j}^{l})W_{hh}^{l}\right] \delta^{k,l}_{hh}, \\
-		\frac{\partial L}{\partial W_{hx}^{l}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}^{l}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j}^{l})W_{hh}^{l}\right] \delta^{k,l}_{hx}, \\
-		\frac{\partial L}{\partial b_{h}^{l}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}^{l}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j}^{l})W_{hh}^{l}\right] \sigma'_{h}(z_k^l),
-	\end{align}
-\end{subequations}
-since \(\partial h^{l}_{n}/\partial b_{h}^{l} = \sigma'_{h}(z_k^l)\). For the output layer, \(\partial h_n/\partial W_{yh}\) is only non zero of \(n=N\), hence
-\begin{subequations}	\label{eq:gradients_out}
-	\begin{align}
-		\frac{\partial L}{\partial W_{yh}} &= \frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial z_N}{\partial h_{n}} \sigma'_{\text{out}} h_{N}, \\
-		\frac{\partial L}{\partial b_{y}} &= \frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial z_N}{\partial h_{n}} \sigma'_{\text{out}}.
-	\end{align}
-\end{subequations}
-
-The \(\delta\)-errors can be computed recursively through time. This can be seen by writing them out explicitly. For \(\delta^{k,l}_{hh}\) we have: 
-\begin{align}
-	\delta^{1,l}_{hh} &= 0, \notag\\
-	\delta^{2,l}_{hh} &= \sigma'_{h}(z_2^{l}) h_1^{l},  \notag\\
-	\delta^{3,l}_{hh} &= \sigma'_{h}(z_3^{l}) \left( h_2^{l} + W_{hh}\sigma'_{h}(z_2^{l})h_1^{l} \right), \\
-	&\ \ \vdots \notag \\
-	\delta^{k,l}_{hh} &= \sigma'_{h}(z_{k}^{l}) \left( h_{k-1}^{l} + W_{hh}\delta^{k-1,l}_{hh}\right).
-\end{align}
-and for \(\delta^{k,l}_{hx}\),
-\begin{align}
-	\delta^{k,1}_{hx} &= \sigma'(z_{k}^{1})X_{k}, \notag\\
-	\delta^{k,2}_{hx} &= \sigma'_{h}(z_{k}^{2}) \left( h_{k}^{1} + W^{2}_{hh}\sigma'(z_{k-1}^{2})X_{k} \right),  \notag\\
-	% \delta^{k,3}_{hx} &= \sigma'_{h}(z_{k}^{3}) \left( h_{k}^{2} + W_{hh}^{3}\delta^{k,2}_{hx} \right), \\
-	&\ \ \vdots \notag \\
-	\delta^{k,l}_{hx} &= \sigma'_{h}(z_{k}^{l}) \left( h_{k}^{l-1} + W_{hh}^{l}\delta^{k-1,l}_{hx}\right).
-\end{align}
-
-The dependency for each error term \(\delta^{k,l}\) on `past' error terms, together with the general temporal dependency seen already in \eqref{eq:dL_dW_bare}, leads to a much greater computation time, compared to that of FFNN. Every gradient computation needs an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm, commonly referred to as `truncated backpropagation through time' (see e.g.~\cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on.
+For the specific algorithm we implemented for our own RNN, we refer to appendix \ref{app:appendix_RNN}, in particular \eqref{eq:gradients_hidden}, which summarizes the update rules.
 
 \subsection{Convolutional Neural Networks}  
 Convolutional Neural Networks (CNNs) are specialized deep learning architectures used to process data with a spatial or temporal structure, such as images, time series, or signals. The mathematical operation of convolution is the main feature of CNNs, which is inspired by signal processing and serves as a powerful tool for feature extraction.
@@ -474,8 +427,14 @@ The RNN's both performed appreciably worse than the CNN, even if we spent much m
 
 In retrospect, GW detection was not ideal for this project as it was simply too difficult given our limited time and expertise on this topic. Once we saw the lack of performance from the RNN's we should have immediately attempted different methods. Whilst we did this in the end, it was however too late to do a proper analysis to find optimal parameters for the CNN.
 
+
 % Bibliography
 \bibliographystyle{JHEP}
 \bibliography{project3}
-	
+
+\newpage
+\ 
+\newpage
+\appendix
+\subfile{appendix.tex}
 \end{document}

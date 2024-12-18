@@ -1,0 +1,51 @@
+
+\section{RNN Algorithm} \label{app:appendix_RNN}
+Consider \eqref{eq:dL_dW_bare}. Applying the chain rule in succession we obtain: 
+\begin{align}
+	\frac{\partial h_n}{\partial h_k} &= \frac{\partial h_n}{\partial h_{n-1}} \frac{\partial h_{n-1}}{\partial h_{n-1}} ... \frac{\partial h_{k+1}}{\partial h_{k}} \notag \\
+	&= \left[ W_{hh}^{T}\cdot\sigma'_{h}(z_n) \right]\left[ W_{hh}^{T}\cdot\sigma'_{h}(z_{n-1}) \right] ... \left[ W_{hh}^{T}\cdot\sigma'_{h}(z_{k+1}) \right] \notag\\
+	&= \prod_{j=k+1}^{n}\left[ W_{hh}^{T}\cdot\sigma'_{h}(z_{j})\right],
+\end{align}
+meaning that
+\begin{align}	\label{eq:dL_dW_alone}
+	\frac{\partial L}{\partial W} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial \tilde{y}_{n}}{\partial h_{n}} \prod_{j=k+1}^{n}\left[ W_{hh}^{T}\cdot\sigma'_{h}(z_{j})\right] \frac{\partial h_{k}}{\partial W}.
+\end{align}
+
+We now consider the stacked RNN, containing \(L\) hidden layers, indexed by \(l\). The equations for the \(l\)-th hidden states are given in \eqref{eq:hidden_states_L}. To update the associated weights, we define the errors:
+\begin{align}
+	\delta^{k,l}_{hh}\equiv \frac{\partial h_{k}^{l}}{\partial W_{hh}^{l}}, \ \delta^{k,l}_{hx}\equiv \frac{\partial h_{k}^{l}}{\partial W_{hx}^{l}}.
+\end{align}
+We can then summarize how the hidden-layer weights and biases are updated (cf. \cite{superGood}):
+\begin{subequations}	\label{eq:gradients_hidden}
+	\begin{align}
+		\frac{\partial L}{\partial W_{hh}^{l}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}^{l}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j}^{l})W_{hh}^{l}\right] \delta^{k,l}_{hh}, \\
+		\frac{\partial L}{\partial W_{hx}^{l}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}^{l}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j}^{l})W_{hh}^{l}\right] \delta^{k,l}_{hx}, \\
+		\frac{\partial L}{\partial b_{h}^{l}} &= \sum_{n=1}^{N}\sum_{k=1}^{n}\frac{\partial L}{\partial h_{n}^{l}}  \left[ \prod_{j=k+1}^{n} \sigma'_{h}(z_{j}^{l})W_{hh}^{l}\right] \sigma'_{h}(z_k^l),
+	\end{align}
+\end{subequations}
+since \(\partial h^{l}_{n}/\partial b_{h}^{l} = \sigma'_{h}(z_k^l)\). For the output layer, \(\partial h_n/\partial W_{yh}\) is only non-zero for \(n=N\), hence
+\begin{subequations}	\label{eq:gradients_out}
+	\begin{align}
+		\frac{\partial L}{\partial W_{yh}} &= \frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial z_N}{\partial h_{n}} \sigma'_{\text{out}} h_{N}, \\
+		\frac{\partial L}{\partial b_{y}} &= \frac{\partial L}{\partial \tilde{y}_{n}} \frac{\partial z_N}{\partial h_{n}} \sigma'_{\text{out}}.
+	\end{align}
+\end{subequations}
+
+The \(\delta\)-errors can be computed recursively through time. This can be seen by writing them out explicitly. For \(\delta^{k,l}_{hh}\) we have: 
+\begin{align}
+	\delta^{1,l}_{hh} &= 0, \notag\\
+	\delta^{2,l}_{hh} &= \sigma'_{h}(z_2^{l}) h_1^{l},  \notag\\
+	\delta^{3,l}_{hh} &= \sigma'_{h}(z_3^{l}) \left( h_2^{l} + W_{hh}\sigma'_{h}(z_2^{l})h_1^{l} \right), \\
+	&\ \ \vdots \notag \\
+	\delta^{k,l}_{hh} &= \sigma'_{h}(z_{k}^{l}) \left( h_{k-1}^{l} + W_{hh}\delta^{k-1,l}_{hh}\right).
+\end{align}
+and for \(\delta^{k,l}_{hx}\),
+\begin{align}
+	\delta^{k,1}_{hx} &= \sigma'(z_{k}^{1})X_{k}, \notag\\
+	\delta^{k,2}_{hx} &= \sigma'_{h}(z_{k}^{2}) \left( h_{k}^{1} + W^{2}_{hh}\sigma'(z_{k-1}^{2})X_{k} \right),  \notag\\
+	% \delta^{k,3}_{hx} &= \sigma'_{h}(z_{k}^{3}) \left( h_{k}^{2} + W_{hh}^{3}\delta^{k,2}_{hx} \right), \\
+	&\ \ \vdots \notag \\
+	\delta^{k,l}_{hx} &= \sigma'_{h}(z_{k}^{l}) \left( h_{k}^{l-1} + W_{hh}^{l}\delta^{k-1,l}_{hx}\right).
+\end{align}
+
+The dependency for each error term \(\delta^{k,l}\) on `past' error terms, together with the general temporal dependency seen already in \eqref{eq:dL_dW_bare}, leads to a much greater computation time, compared to that of FFNN. Every gradient computation needs an additional propagation through all time-windows. This can lead to gradients blowing up due to only (relatively) minor errors. However, there are multiple ways of resolving this issue. Perhaps the most obvious one is to simply truncate the amount of terms in the algorithm, commonly referred to as `truncated backpropagation through time' (see e.g.~\cite{tallec2017unbiasingtruncatedbackpropagationtime}). Apart from that it is an actual simplification, it has the immediate consequence of ignoring long-term dependencies of the data, which in some cases is just the type of information you do not want your model to train on.

@@ -161,7 +161,8 @@ class NeuralNetwork:
 
             sequences.append(seq)
             average_label = np.mean(label_seq)
-            labels.append(average_label)
+            # labels.append(average_label)
+            labels.append(label_seq[-1])
 
         X_seq, y_seq = np.array(sequences).reshape(-1, window_size, input_size), np.array(labels)
 
@@ -270,10 +271,6 @@ class RNN(NeuralNetwork):
         self.clip_value = clip_value
 
         # # Prepare sequences for training
-        # self.store_train_test_from_data(X, y, split_data=split_data) # applies scaling
-        # self.X_seq, self.y_seq = self.prepare_sequences_RNN(self.X_train_scaled, self.y_train, window_size, self.input_size)
-        # self.X_seq_test, self.y_seq_test = self.prepare_sequences_RNN(self.X_test_scaled, self.y_test, window_size, self.input_size)
-
         self.split_scale_data(X, y, window_size) # Stored as self.X_train_seq, self.X_val_seq, self.y_train_seq, self.y_val_seq 
 
         self.truncation_steps = truncation_steps # Sent to backward propagation method 
@@ -291,20 +288,24 @@ class RNN(NeuralNetwork):
         best_loss = float('inf')
         best_weights = None
         for epoch in range(epochs):
-            for i in range(0, self.X_seq.shape[0], batch_size):
-                X_batch = self.X_seq[i:i + batch_size]
-                y_batch = self.y_seq[i:i + batch_size]
+            for i in range(0, self.X_train_seq.shape[0], batch_size):
+                X_batch = self.X_train_seq[i:i + batch_size]
+                y_batch = self.y_train_seq[i:i + batch_size]
 
                 # Forward pass
                 y_pred = self._forward(X_batch)
 
-                y_pred[:, :] = np.mean(y_pred[:,])
+                y_pred = y_pred[:, -1, :]  # Take the last timestep's prediction
+
                 # Backward pass
                 self._backward(X_batch, y_batch, y_pred, epoch, i)
 
             # Validation after each epoch
-            y_pred = self.predict(self.X_seq_test)
-            test_loss = self.calculate_loss(self.y_seq_test, y_pred, epoch)
+            
+            y_pred = self._forward(self.X_val_seq)
+            y_pred = y_pred[:, -1, :]  # Take the last timestep's prediction
+
+            test_loss = self.calculate_loss(self.y_val_seq, y_pred, epoch)
 
             if test_loss < best_loss:
                 best_loss = test_loss
@@ -365,8 +366,8 @@ class RNN(NeuralNetwork):
                     y_pred = self._forward(X_mini_batch)
                     
                     # Reduce predictions if sequence-to-single-output task
-                    # y_pred = y_pred[:, -1, :]  # Take the last timestep's prediction
-                    y_pred = np.mean(y_pred, axis=1)  # Average over the time (window_size) dimension
+                    y_pred = y_pred[:, -1, :]  # Take the last timestep's prediction
+                    # y_pred = np.mean(y_pred, axis=1)  # Average over the time (window_size) dimension
 
                     # Backward pass
                     self._backward(X_mini_batch, y_mini_batch, y_pred, epoch, i)
@@ -393,18 +394,17 @@ class RNN(NeuralNetwork):
         """
         return self._loss_function(y_true, y_pred, epoch_index)
     
-    def predict(self, X_test, y_test, window_size, verbose=1):
+    def predict(self, X_test, y_test, window_size):
         """
         Predicts labels for the test set using the trained RNN model.
         
         Parameters:
-        - X_test: Input data for prediction.
-        - y_test: True labels for the test data.
-        - window_size: Length of the input sequences.
-        - verbose: Verbosity level (default is 1, progress bar style).
+        * X_test: Input data for prediction.
+        * y_test: True labels for the test data.
+        * window_size: Length of the input sequences.
         
         Returns:
-        - y_pred: Predicted labels for the test data.
+        * y_pred: Predicted labels for the test data.
         """
         X_test_seq, _ = self.prepare_sequences_RNN(X_test, y_test, window_size)
         y_pred = self._forward(X_test_seq)
@@ -511,7 +511,7 @@ class RNN(NeuralNetwork):
         """
         for k in range(k_start, k_stop):
             # Gradient from output layer
-            dL_dy = self._loss_function.gradient(y_batch[k, :], y_pred[k, :], epoch)  # (B, d_out)
+            dL_dy = self._loss_function.gradient(y_batch[k], y_pred[k], epoch)  # (B, d_out)
             dL_dhL = dL_dy * self.activation_func_out_derivative(self.z[-1][k]).T  # (d_out, B) * (d_out, B)
             
             # Starting from layer l+1:
@@ -542,7 +542,7 @@ class RNN(NeuralNetwork):
         for k in range(k_start, k_stop):
             ### dL_dh_n:
             # Gradient from output layer
-            dL_dy = self._loss_function.gradient(y_batch[k, :], y_pred[k, :], epoch)  # (B, d_out)
+            dL_dy = self._loss_function.gradient(y_batch[k], y_pred[k], epoch)  # (B, d_out)
             dL_dhL = dL_dy * self.activation_func_out_derivative(self.z[-1][k]).T  # (d_out, B) * (d_out, B)
             
             # Starting from layer l+1:
@@ -1029,7 +1029,7 @@ class KerasRNN(NeuralNetwork):
         """
         Computes the weighted binary cross-entropy loss.
         """
-        weighted_Acc = weighted_Accuracy(y_true, y_pred_binary)
+        weighted_Acc = weighted_Accuracy(y_true, y_pred)
 
         self._loss_function.labels = y_true.flatten()
         loss = self._loss_function(y_true, y_pred, epoch=0)

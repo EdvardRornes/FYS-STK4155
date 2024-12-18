@@ -79,16 +79,15 @@ def parameter_scan(X:np.ndarray, y:np.ndarray, t:np.ndarray, model:NeuralNetwork
                         I_am_the_trainer.train(y_train, train_labels, epochs, batch_size=batch_size, window_size=window_size, clip_value=clip_value)
 
                         # Predict with the trained model
-                        predictions = I_am_the_trainer.predict(y_test.reshape(-1, 1, 1))
+                        predictions = I_am_the_trainer.predict(y_test.reshape(-1,1), test_labels.reshape(-1,1), window_size)
 
-                        predictions = predictions[:, 0, 0]
-                        predicted_labels = 1 * (predictions >= 0.5)
+                        predictions = predictions[:, -1, :]
 
-                        loss = I_am_the_trainer.calculate_loss(test_labels, predicted_labels, epochs)
+                        loss = I_am_the_trainer.calculate_loss(test_labels, predictions, epochs)
 
 
-                        predicted_labels = np.array(predicted_labels, dtype=int); test_labels = np.array(test_labels, dtype=int)
-                        accuracy = accuracy_score(test_labels, predicted_labels)
+                        predictions = np.array(predictions, dtype=int); test_labels = np.array(test_labels, dtype=int)
+                        accuracy = accuracy_score(test_labels, predictions)
                         x_pred = x[window_size - 1:]
 
                         results.append({
@@ -116,6 +115,9 @@ def parameter_scan(X:np.ndarray, y:np.ndarray, t:np.ndarray, model:NeuralNetwork
                     save_results_incrementally(results, base_filename, save_path=save_path)
 
 if __name__ == "__main__":
+
+    save_path = "RNN_Data/Custom_RNN/GW_Parameter_Search_V1"
+
     # Create the GWSignalGenerator instance
     time_steps = 5000
     time_for_1_sample = 50
@@ -123,12 +125,13 @@ if __name__ == "__main__":
     num_samples = 5
 
     window_size = time_steps//100
-    batch_size = time_steps//50*(num_samples-1)
+    window_size = 10
+    batch_size = 516
 
-    learning_rates = [1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 5e-2, 1e-1, 5e-1]
-    regularization_values = np.logspace(-10, 0, 11)
+    learning_rates = [1e-2, 1e-3, 1e-4, 1e-5]
+    regularization_values = np.logspace(-12, -6, 4)
 
-    gw_earlyboosts = np.linspace(1, 1.5, 6)
+    gw_earlyboosts = np.linspace(1, 1.5, 4)
     epoch_list = [10, 25, 50, 100]
     SNR = 100
 
@@ -162,6 +165,6 @@ if __name__ == "__main__":
     X = np.array(X)
     y = np.array(y)
 
-    parameter_scan(X, y, t, KerasRNN, Adam(), epoch_list, gw_earlyboosts, learning_rates, regularization_values,
+    parameter_scan(X, y, t, RNN, Adam(), epoch_list, gw_earlyboosts, learning_rates, regularization_values,
                    batch_size, window_size, 
-                   save_path="GW_Merged_Results/RNN", clip_value=2)
+                   save_path=save_path, clip_value=2)

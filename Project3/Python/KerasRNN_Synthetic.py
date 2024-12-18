@@ -8,7 +8,7 @@ from NNs import KerasRNN
 from utils import * 
 np.random.seed(0)
 
-latex_fonts()
+# latex_fonts()
 savefigs = True
 
 # Parameters
@@ -18,11 +18,11 @@ num_samples = 5
 window_size = time_steps//100
 batch_size = time_steps//50*(num_samples-1)
 batch_size = 128
-learning_rates = [1e-2]
-regularization_values = [1e-8]#np.logspace(-12, -6, 7)
-gw_earlyboosts = np.linspace(1, 1.5, 6)
-gw_earlyboosts = [1.4]
-epoch_list = [30]#[10, 25, 50, 100]
+learning_rates = [1e-2, 1e-3, 1e-4, 1e-5]
+regularization_values = np.logspace(-12, -6, 4)
+gw_earlyboosts = np.linspace(1, 1.5, 4)
+# gw_earlyboosts = [1.4]
+epoch_list = [10, 25, 50, 100]
 SNR = 30
 
 x = np.linspace(0, time_for_1_sample, time_steps)
@@ -69,7 +69,7 @@ labels = np.array(labels)
 y = y.reshape((y.shape[0], y.shape[1], 1))
 
 # Prepare to save data
-save_path = "GW_Parameter_Search_V2"
+save_path = "RNN_Data/Custom_RNN/GW_Parameter_Search_V1"
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
