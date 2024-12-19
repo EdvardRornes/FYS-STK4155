@@ -327,6 +327,7 @@ def on_click(event, lambdas, etas, epochs, boosts, unique_lambdas, unique_etas, 
                     plt.savefig(save_path)
                     print(f"Figure saved to {save_path}")
 
+############ Synthetic GWs ############
 class GWSignalGenerator:
     def __init__(self, signal_length:int):
         """
@@ -436,7 +437,7 @@ class GWSignalGenerator:
             self.add_gw_event(y, start, end, amplitude_factor=amplitude, spike_factor=spike, spin_start=spin_start, spin_end=spin_end)
 
 ############ Activation functions ############
-class Activation:
+class Activation: # Just for type-hints
     def __init__(self):
         pass 
 
