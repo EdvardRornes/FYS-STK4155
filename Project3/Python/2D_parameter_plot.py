@@ -10,10 +10,12 @@ latex_fonts()
 save_option = input("Would you like to be prompted to save files? y/n\nNB! If you choose yes, THE TERMINAL WILL CRASH if you do not give the later prompts an answer!! \n")
 
 # Define the input and output paths
-pkl_dir = "GW_Merged_Results_SNR5"  # Merged results path
-pkl_dir = "CNN_Data/Merged_Results_mac"  # Merged results path
-time_steps = 5000
+### Remove RNN comment (along with the RNN SNR) to see the CNN results ###
+pkl_dir = "CNN_Data/Merged_Results"  # Merged results path
 SNR = 5
+pkl_dir = "RNN_Data/Merged_Results"  # Merged results path
+SNR = 100
+time_steps = 5000
 
 # Containers for the parameters and results
 lambdas = []

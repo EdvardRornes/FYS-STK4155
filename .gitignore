@@ -15,7 +15,8 @@
 .*.lb
 
 ## Large data folder
-Project3/Python/RNN_Data/GW_Parameter_Search/
+Project3/Python/RNN_Data/Parameter_Search/
+Project3/Python/RNN_Data/Merged_Results/RNN
 Project3/Python/CNN_Data/Parameter_Search_V1/
 Project3/Python/CNN_Data/Parameter_Search_V2/
 Project3/Python/RNN_Data/Custom_RNN/

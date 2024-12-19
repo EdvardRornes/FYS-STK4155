@@ -6,7 +6,7 @@ from collections import defaultdict
 
 # Define the input and output paths
 input_path = "CNN_Data/Parameter_Search_V1"
-output_path = "CNN_Data/Merged_Results_mac"#"GW_Merged_Results"
+output_path = "CNN_Data/Merged_Results"
 time_steps = 5000
 SNR = 5
 
